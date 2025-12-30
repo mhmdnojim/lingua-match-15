@@ -73,21 +73,23 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         </button>
       </div>
 
-      {/* Pinyin Toggle (only in 2-column mode) */}
-      {mode === '2-column' && (
-        <button
-          onClick={() => onShowPinyinChange(!showPinyin)}
-          className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
-            showPinyin 
+      {/* Pinyin Toggle - always visible, controls visibility in 2-col mode, disabled in 3-col */}
+      <button
+        onClick={() => onShowPinyinChange(!showPinyin)}
+        disabled={mode === '3-column'}
+        className={cn(
+          'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
+          mode === '3-column'
+            ? 'bg-primary/50 border-primary/50 text-primary-foreground/70 cursor-not-allowed'
+            : showPinyin 
               ? 'bg-primary border-primary text-primary-foreground' 
               : 'bg-secondary border-border text-muted-foreground'
-          )}
-        >
-          {showPinyin ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-          <span>Pinyin</span>
-        </button>
-      )}
+        )}
+        title={mode === '3-column' ? 'Pinyin always shown in 3-column mode' : (showPinyin ? 'Hide Pinyin' : 'Show Pinyin')}
+      >
+        {(showPinyin || mode === '3-column') ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+        <span>Pinyin</span>
+      </button>
 
       {/* Voice Type Toggle */}
       {onVoiceTypeChange && (
