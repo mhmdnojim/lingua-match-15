@@ -1,5 +1,8 @@
 import { GameMode } from './gameLogic';
 
+export type VoiceType = 'free' | 'premium';
+export type FontSize = 'small' | 'medium' | 'large';
+
 const STORAGE_KEYS = {
   CURRENT_BATCH: 'vocab-game-current-batch',
   COMPLETED_BATCHES: 'vocab-game-completed-batches',
@@ -9,6 +12,8 @@ const STORAGE_KEYS = {
   MUTE_VOICE: 'vocab-game-mute-voice',
   MUTE_SFX: 'vocab-game-mute-sfx',
   SELECTED_FILE: 'vocab-game-selected-file',
+  VOICE_TYPE: 'vocab-game-voice-type',
+  FONT_SIZE: 'vocab-game-font-size',
 } as const;
 
 export interface GameProgress {
@@ -20,6 +25,8 @@ export interface GameProgress {
   muteVoice: boolean;
   muteSfx: boolean;
   selectedFile: string | null;
+  voiceType: VoiceType;
+  fontSize: FontSize;
 }
 
 export function saveProgress(progress: Partial<GameProgress>): void {
@@ -48,6 +55,12 @@ export function saveProgress(progress: Partial<GameProgress>): void {
     if (progress.selectedFile !== undefined) {
       localStorage.setItem(STORAGE_KEYS.SELECTED_FILE, progress.selectedFile || '');
     }
+    if (progress.voiceType !== undefined) {
+      localStorage.setItem(STORAGE_KEYS.VOICE_TYPE, progress.voiceType);
+    }
+    if (progress.fontSize !== undefined) {
+      localStorage.setItem(STORAGE_KEYS.FONT_SIZE, progress.fontSize);
+    }
   } catch (error) {
     console.warn('Failed to save progress to localStorage:', error);
   }
@@ -66,6 +79,8 @@ export function loadProgress(): GameProgress {
       muteVoice: localStorage.getItem(STORAGE_KEYS.MUTE_VOICE) === 'true',
       muteSfx: localStorage.getItem(STORAGE_KEYS.MUTE_SFX) === 'true',
       selectedFile: localStorage.getItem(STORAGE_KEYS.SELECTED_FILE) || null,
+      voiceType: (localStorage.getItem(STORAGE_KEYS.VOICE_TYPE) as VoiceType) || 'free',
+      fontSize: (localStorage.getItem(STORAGE_KEYS.FONT_SIZE) as FontSize) || 'medium',
     };
   } catch (error) {
     console.warn('Failed to load progress from localStorage:', error);
@@ -78,6 +93,8 @@ export function loadProgress(): GameProgress {
       muteVoice: false,
       muteSfx: false,
       selectedFile: null,
+      voiceType: 'free',
+      fontSize: 'medium',
     };
   }
 }

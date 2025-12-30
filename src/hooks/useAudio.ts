@@ -1,11 +1,14 @@
 import { useCallback, useRef } from 'react';
 
+export type VoiceType = 'free' | 'premium';
+
 interface UseAudioOptions {
   muteVoice: boolean;
   muteSfx: boolean;
+  voiceType?: VoiceType;
 }
 
-export function useAudio({ muteVoice, muteSfx }: UseAudioOptions) {
+export function useAudio({ muteVoice, muteSfx, voiceType = 'free' }: UseAudioOptions) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const speakWithWebSpeech = useCallback((text: string, language: 'chinese' | 'english') => {
@@ -17,9 +20,7 @@ export function useAudio({ muteVoice, muteSfx }: UseAudioOptions) {
     }
   }, []);
 
-  const speak = useCallback(async (text: string, language: 'chinese' | 'english') => {
-    if (muteVoice) return;
-
+  const speakWithPremium = useCallback(async (text: string, language: 'chinese' | 'english'): Promise<boolean> => {
     try {
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/text-to-speech`,
@@ -35,11 +36,7 @@ export function useAudio({ muteVoice, muteSfx }: UseAudioOptions) {
       );
 
       if (!response.ok) {
-        // Check for specific error types that indicate we should fallback
-        const errorData = await response.json().catch(() => ({}));
-        console.warn('ElevenLabs TTS failed, using Web Speech API fallback:', errorData);
-        speakWithWebSpeech(text, language);
-        return;
+        return false;
       }
 
       const audioBlob = await response.blob();
@@ -51,11 +48,27 @@ export function useAudio({ muteVoice, muteSfx }: UseAudioOptions) {
       
       audioRef.current = new Audio(audioUrl);
       await audioRef.current.play();
+      return true;
     } catch (error) {
-      console.warn('TTS request failed, using Web Speech API fallback:', error);
+      console.warn('Premium TTS failed:', error);
+      return false;
+    }
+  }, []);
+
+  const speak = useCallback(async (text: string, language: 'chinese' | 'english') => {
+    if (muteVoice) return;
+
+    if (voiceType === 'premium') {
+      const success = await speakWithPremium(text, language);
+      if (!success) {
+        // Fallback to free voice if premium fails
+        console.warn('Premium voice failed, falling back to free voice');
+        speakWithWebSpeech(text, language);
+      }
+    } else {
       speakWithWebSpeech(text, language);
     }
-  }, [muteVoice, speakWithWebSpeech]);
+  }, [muteVoice, voiceType, speakWithPremium, speakWithWebSpeech]);
 
   const playSuccess = useCallback(() => {
     if (muteSfx) return;

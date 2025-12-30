@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { VocabularyItem, fetchExcelFromUrl, parseExcelFile, createBatches } from '@/utils/excelParser';
 import { GameCard, GameMode, createGameCards, checkMatch, getRequiredSelections, calculateAccuracy } from '@/utils/gameLogic';
-import { saveProgress, loadProgress, clearProgress } from '@/utils/storage';
+import { saveProgress, loadProgress, clearProgress, VoiceType, FontSize } from '@/utils/storage';
 import { useAudio } from '@/hooks/useAudio';
 import GameBoard from './GameBoard';
 import StatsPanel from './StatsPanel';
@@ -45,6 +45,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [showPinyin, setShowPinyin] = useState(initialShowPinyin ?? savedProgress.showPinyin);
   const [muteVoice, setMuteVoice] = useState(savedProgress.muteVoice);
   const [muteSfx, setMuteSfx] = useState(savedProgress.muteSfx);
+  const [voiceType, setVoiceType] = useState<VoiceType>((savedProgress as any).voiceType || 'free');
+  const [fontSize, setFontSize] = useState<FontSize>((savedProgress as any).fontSize || 'medium');
   // Default to sample vocabulary if no file selected
   const [selectedFile, setSelectedFile] = useState<string | null>(dataSource || savedProgress.selectedFile || DEFAULT_FILE);
   const [chineseCards, setChineseCards] = useState<GameCard[]>([]);
@@ -61,7 +63,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
 
-  const { speak, playSuccess, playError, playCelebration, stopAudio } = useAudio({ muteVoice, muteSfx });
+  const { speak, playSuccess, playError, playCelebration, stopAudio } = useAudio({ muteVoice, muteSfx, voiceType });
 
   // Timer
   useEffect(() => {
@@ -239,12 +241,12 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   };
 
   useEffect(() => {
-    saveProgress({ gameMode, showPinyin, muteVoice, muteSfx });
-  }, [gameMode, showPinyin, muteVoice, muteSfx]);
+    saveProgress({ gameMode, showPinyin, muteVoice, muteSfx, voiceType, fontSize } as any);
+  }, [gameMode, showPinyin, muteVoice, muteSfx, voiceType, fontSize]);
 
   return (
     <div className={cn('min-h-screen bg-background p-4 md:p-6', className)}>
-      <div className="max-w-6xl mx-auto space-y-4">
+      <div className="max-w-6xl mx-auto space-y-3">
         {/* Header with logo and title */}
         <header className="flex items-center gap-3 mb-2">
           <div className="p-2 bg-primary rounded-lg">
@@ -258,8 +260,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           </div>
         </header>
 
-        {/* Top bar: File selector + Stats on same line */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        {/* Top bar: File selector + Stats on same line - compact */}
+        <div className="flex flex-wrap items-center gap-2">
           <FileSelector
             selectedFile={selectedFile}
             availableFiles={AVAILABLE_FILES}
@@ -280,6 +282,14 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           showPinyin={showPinyin}
           onModeChange={setGameMode}
           onShowPinyinChange={setShowPinyin}
+          muteVoice={muteVoice}
+          muteSfx={muteSfx}
+          voiceType={voiceType}
+          fontSize={fontSize}
+          onMuteVoiceChange={setMuteVoice}
+          onMuteSfxChange={setMuteSfx}
+          onVoiceTypeChange={setVoiceType}
+          onFontSizeChange={setFontSize}
           onReset={handleReset}
           disabled={isLoading}
         />
@@ -303,6 +313,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               englishCards={englishCards}
               mode={gameMode}
               showPinyin={showPinyin}
+              fontSize={fontSize}
               onCardClick={handleCardClick}
               onSpeak={speak}
             />
