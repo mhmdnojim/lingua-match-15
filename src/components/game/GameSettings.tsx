@@ -171,11 +171,10 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         <button
           onClick={() => onMuteVoiceChange(!muteVoice)}
           className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
-            'border border-border bg-secondary',
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
             muteVoice 
-              ? 'text-muted-foreground' 
-              : 'text-foreground'
+              ? 'bg-secondary border-border text-muted-foreground' 
+              : 'bg-primary border-primary text-primary-foreground'
           )}
           title={muteVoice ? 'Unmute voice' : 'Mute voice'}
         >
@@ -188,11 +187,10 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         <button
           onClick={() => onMuteSfxChange(!muteSfx)}
           className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
-            'border border-border bg-secondary',
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
             muteSfx 
-              ? 'text-muted-foreground' 
-              : 'text-foreground'
+              ? 'bg-secondary border-border text-muted-foreground' 
+              : 'bg-primary border-primary text-primary-foreground'
           )}
           title={muteSfx ? 'Unmute effects' : 'Mute effects'}
         >
