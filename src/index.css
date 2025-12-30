@@ -46,14 +46,14 @@
 
     --radius: 0.75rem;
 
-    /* Game Specific Colors */
-    --game-chinese: 270 70% 55%;
-    --game-english: 145 65% 50%;
-    --game-pinyin: 35 95% 55%;
-    --game-selected: 270 70% 65%;
-    --game-matched: 145 65% 50%;
-    --game-error: 0 84% 60%;
-    --game-glow: 270 70% 55%;
+    /* Game Specific Colors - Brighter and more vibrant */
+    --game-chinese: 270 85% 60%;
+    --game-english: 150 80% 50%;
+    --game-pinyin: 30 100% 58%;
+    --game-selected: 270 85% 70%;
+    --game-matched: 150 80% 55%;
+    --game-error: 0 90% 60%;
+    --game-glow: 30 100% 60%;
 
     --sidebar-background: 222 47% 11%;
     --sidebar-foreground: 210 40% 98%;
@@ -100,13 +100,13 @@
     --input: 220 30% 18%;
     --ring: 270 70% 55%;
 
-    --game-chinese: 270 70% 55%;
-    --game-english: 145 65% 50%;
-    --game-pinyin: 35 95% 55%;
-    --game-selected: 270 70% 65%;
-    --game-matched: 145 65% 50%;
-    --game-error: 0 84% 60%;
-    --game-glow: 270 70% 55%;
+    --game-chinese: 270 85% 60%;
+    --game-english: 150 80% 50%;
+    --game-pinyin: 30 100% 58%;
+    --game-selected: 270 85% 70%;
+    --game-matched: 150 80% 55%;
+    --game-error: 0 90% 60%;
+    --game-glow: 30 100% 60%;
 
     --sidebar-background: 222 47% 11%;
     --sidebar-foreground: 210 40% 98%;

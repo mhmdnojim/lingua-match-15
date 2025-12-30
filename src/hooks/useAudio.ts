@@ -35,7 +35,10 @@ export function useAudio({ muteVoice, muteSfx, voiceType = 'free' }: UseAudioOpt
         }
       );
 
-      if (!response.ok) {
+      // Check if response is audio or error JSON
+      const contentType = response.headers.get('content-type');
+      if (!response.ok || !contentType?.includes('audio')) {
+        console.warn('Premium TTS not available, will fallback to free voice');
         return false;
       }
 

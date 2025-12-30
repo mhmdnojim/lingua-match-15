@@ -15,14 +15,30 @@ serve(async (req) => {
     const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
 
     if (!ELEVENLABS_API_KEY) {
-      throw new Error('ELEVENLABS_API_KEY is not configured');
+      console.log('ELEVENLABS_API_KEY not configured, returning error for fallback');
+      return new Response(
+        JSON.stringify({ error: 'API key not configured', fallback: true }),
+        {
+          status: 503,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     if (!text) {
-      throw new Error('Text is required');
+      return new Response(
+        JSON.stringify({ error: 'Text is required' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
 
+    // Lily (Chinese) and George (English) voices
     const voiceId = language === 'chinese' ? 'pFZP5JQG7iQjIQuC4Bku' : 'JBFqnCBsd6RMkjVDRZzb';
+
+    console.log(`TTS request: "${text}" in ${language} with voice ${voiceId}`);
 
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
@@ -47,10 +63,18 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('ElevenLabs error:', errorText);
-      throw new Error(`ElevenLabs API error: ${response.status}`);
+      // Return 503 to signal client should use fallback
+      return new Response(
+        JSON.stringify({ error: `ElevenLabs API error: ${response.status}`, fallback: true }),
+        {
+          status: 503,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     const audioBuffer = await response.arrayBuffer();
+    console.log(`TTS success: ${audioBuffer.byteLength} bytes`);
 
     return new Response(audioBuffer, {
       headers: {
@@ -62,9 +86,9 @@ serve(async (req) => {
     console.error('TTS error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: errorMessage, fallback: true }),
       {
-        status: 500,
+        status: 503,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
