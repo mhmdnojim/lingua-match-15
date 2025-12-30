@@ -99,11 +99,11 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     }
   }, [selectedFile, loadVocabulary]);
 
-  // Initialize batch cards
+  // Initialize batch cards - only when batch changes, not when mode changes
   const initializeBatch = useCallback((batchIndex: number) => {
     if (!batches[batchIndex]) return;
-    // Always create cards with pinyin data - showPinyin only controls visibility, not card creation
-    const cards = createGameCards(batches[batchIndex], gameMode, true);
+    // Always create cards with pinyin data for both modes
+    const cards = createGameCards(batches[batchIndex], '3-column', true);
     setChineseCards(cards.chinese);
     setPinyinCards(cards.pinyin);
     setEnglishCards(cards.english);
@@ -114,7 +114,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     setCorrectMatches(0);
     setBatchScore(0);
     setGameStarted(true);
-  }, [batches, gameMode]);
+  }, [batches]);
 
   useEffect(() => {
     if (batches.length > 0) {
