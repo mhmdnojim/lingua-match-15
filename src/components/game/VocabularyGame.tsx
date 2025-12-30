@@ -102,7 +102,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   // Initialize batch cards
   const initializeBatch = useCallback((batchIndex: number) => {
     if (!batches[batchIndex]) return;
-    const cards = createGameCards(batches[batchIndex], gameMode, showPinyin);
+    // Always create cards with pinyin data - showPinyin only controls visibility, not card creation
+    const cards = createGameCards(batches[batchIndex], gameMode, true);
     setChineseCards(cards.chinese);
     setPinyinCards(cards.pinyin);
     setEnglishCards(cards.english);
@@ -113,13 +114,13 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     setCorrectMatches(0);
     setBatchScore(0);
     setGameStarted(true);
-  }, [batches, gameMode, showPinyin]);
+  }, [batches, gameMode]);
 
   useEffect(() => {
     if (batches.length > 0) {
       initializeBatch(currentBatch);
     }
-  }, [batches, currentBatch, gameMode, showPinyin, initializeBatch]);
+  }, [batches, currentBatch, gameMode, initializeBatch]);
 
   // Handle card click
   const handleCardClick = useCallback((card: GameCard) => {
