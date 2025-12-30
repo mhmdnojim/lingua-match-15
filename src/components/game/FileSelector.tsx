@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { Upload, FileSpreadsheet } from 'lucide-react';
+import { Upload, FileSpreadsheet, ChevronDown } from 'lucide-react';
 
 interface FileSelectorProps {
   selectedFile: string | null;
@@ -31,37 +31,39 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
   };
 
   return (
-    <div className={cn('flex flex-col sm:flex-row items-stretch sm:items-center gap-3', className)}>
-      <div className="flex items-center gap-2 flex-1">
-        <FileSpreadsheet className="w-5 h-5 text-muted-foreground shrink-0" />
+    <div className={cn('flex items-center gap-3', className)}>
+      <div className="relative">
+        <FileSpreadsheet className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
         <select
           value={selectedFile || ''}
           onChange={(e) => onSelectFile(e.target.value)}
           className={cn(
-            'flex-1 bg-secondary border border-border rounded-lg px-3 py-2',
-            'text-foreground focus:outline-none focus:ring-2 focus:ring-primary',
-            'cursor-pointer'
+            'appearance-none bg-secondary border border-border rounded-lg pl-9 pr-8 py-2',
+            'text-foreground focus:outline-none focus:ring-2 focus:ring-warning',
+            'cursor-pointer text-sm min-w-[180px]'
           )}
         >
-          <option value="" disabled>Select vocabulary file...</option>
+          <option value="" disabled>Select vocabulary...</option>
           {availableFiles.map((file) => (
             <option key={file} value={file}>
               {file.replace('.xlsx', '')}
             </option>
           ))}
         </select>
+        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
       </div>
 
       <button
         onClick={handleUploadClick}
         className={cn(
           'flex items-center justify-center gap-2 px-4 py-2 rounded-lg',
-          'bg-secondary hover:bg-secondary/80 border border-border',
-          'transition-colors duration-200'
+          'border border-warning text-warning',
+          'hover:bg-warning/10 transition-colors duration-200',
+          'text-sm font-medium'
         )}
       >
         <Upload className="w-4 h-4" />
-        <span>Upload Excel</span>
+        <span>Upload</span>
       </button>
 
       <input

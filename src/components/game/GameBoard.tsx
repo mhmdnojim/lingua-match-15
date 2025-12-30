@@ -29,8 +29,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     )}>
       {/* Chinese Column */}
       <div className="flex flex-col gap-3">
-        <h3 className="text-center text-sm font-medium text-game-chinese mb-2">
-          中文 (Chinese)
+        <h3 className="text-center text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider">
+          中文 CHINESE
         </h3>
         {chineseCards.map((card) => (
           <Card
@@ -46,8 +46,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       {/* Pinyin Column (3-column mode only) */}
       {mode === '3-column' && (
         <div className="flex flex-col gap-3">
-          <h3 className="text-center text-sm font-medium text-game-pinyin mb-2">
-            拼音 (Pinyin)
+          <h3 className="text-center text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider">
+            拼音 PINYIN
           </h3>
           {pinyinCards.map((card) => (
             <Card
@@ -61,8 +61,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
       {/* English Column */}
       <div className="flex flex-col gap-3">
-        <h3 className="text-center text-sm font-medium text-game-english mb-2">
-          English
+        <h3 className="text-center text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider">
+          ENGLISH
         </h3>
         {englishCards.map((card) => (
           <Card
