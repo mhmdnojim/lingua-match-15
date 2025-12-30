@@ -35,10 +35,18 @@ export function useAudio({ muteVoice, muteSfx, voiceType = 'free' }: UseAudioOpt
         }
       );
 
-      // Check if response is audio or error JSON
+      // Check content type first - if it's JSON, it's an error response
       const contentType = response.headers.get('content-type');
+      
+      // Handle any non-success response or non-audio content
       if (!response.ok || !contentType?.includes('audio')) {
-        console.warn('Premium TTS not available, will fallback to free voice');
+        // Try to get error details for logging
+        try {
+          const errorData = await response.json();
+          console.warn('Premium TTS error:', errorData.error || 'Unknown error');
+        } catch {
+          console.warn('Premium TTS not available, status:', response.status);
+        }
         return false;
       }
 

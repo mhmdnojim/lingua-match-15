@@ -45,28 +45,29 @@ export const Card: React.FC<CardProps> = ({ card, showPinyin = true, fontSize = 
   };
 
   // Font sizes based on setting
+  // Font sizes - small is now what was medium, medium is what was large, large is even bigger
   const getFontSizes = () => {
     switch (fontSize) {
       case 'small':
-        return {
-          chinese: 'text-lg md:text-xl',
-          pinyin: 'text-sm md:text-base',
-          english: 'text-xs md:text-sm',
-          pinyinLabel: 'text-[8px]',
-        };
-      case 'large':
-        return {
-          chinese: 'text-3xl md:text-4xl',
-          pinyin: 'text-xl md:text-2xl',
-          english: 'text-lg md:text-xl',
-          pinyinLabel: 'text-sm',
-        };
-      default: // medium
         return {
           chinese: 'text-2xl md:text-3xl',
           pinyin: 'text-lg md:text-xl',
           english: 'text-base md:text-lg',
           pinyinLabel: 'text-xs',
+        };
+      case 'large':
+        return {
+          chinese: 'text-5xl md:text-6xl',
+          pinyin: 'text-2xl md:text-3xl',
+          english: 'text-xl md:text-2xl',
+          pinyinLabel: 'text-base',
+        };
+      default: // medium
+        return {
+          chinese: 'text-3xl md:text-4xl',
+          pinyin: 'text-xl md:text-2xl',
+          english: 'text-lg md:text-xl',
+          pinyinLabel: 'text-sm',
         };
     }
   };
