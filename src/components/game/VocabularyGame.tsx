@@ -120,7 +120,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     if (batches.length > 0) {
       initializeBatch(currentBatch);
     }
-  }, [batches, currentBatch, gameMode, initializeBatch]);
+    // Note: gameMode is intentionally excluded to prevent reshuffling when switching modes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [batches, currentBatch, initializeBatch]);
 
   // Handle card click
   const handleCardClick = useCallback((card: GameCard) => {
@@ -273,7 +275,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           <StatsPanel 
             score={score} 
             time={time} 
-            accuracy={calculateAccuracy(correctMatches, attempts)} 
+            accuracy={calculateAccuracy(correctMatches, attempts)}
+            onReset={handleReset}
           />
         </div>
 
@@ -291,7 +294,6 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onMuteSfxChange={setMuteSfx}
           onVoiceTypeChange={setVoiceType}
           onFontSizeChange={setFontSize}
-          onReset={handleReset}
           disabled={isLoading}
         />
 

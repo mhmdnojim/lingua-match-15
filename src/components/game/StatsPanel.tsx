@@ -1,12 +1,13 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Trophy, Clock, Target } from 'lucide-react';
+import { Trophy, Clock, Target, RotateCcw } from 'lucide-react';
 import { formatTime } from '@/utils/gameLogic';
 
 interface StatsPanelProps {
   score: number;
   time: number;
   accuracy: number;
+  onReset?: () => void;
   className?: string;
 }
 
@@ -14,6 +15,7 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({
   score,
   time,
   accuracy,
+  onReset,
   className,
 }) => {
   return (
@@ -42,6 +44,20 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({
           {accuracy}%
         </span>
       </div>
+
+      {/* Reset Button */}
+      {onReset && (
+        <button
+          onClick={onReset}
+          className={cn(
+            'flex items-center gap-1.5 px-2 py-1 rounded-lg text-sm font-medium transition-all',
+            'bg-secondary/50 border border-destructive/50 text-destructive hover:bg-destructive/10'
+          )}
+          title="Reset game"
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+        </button>
+      )}
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { GameMode } from '@/utils/gameLogic';
-import { Columns2, Columns3, Eye, EyeOff, RotateCcw, Volume2, VolumeX, Music, Music2, Mic, Crown, Type } from 'lucide-react';
+import { Columns2, Columns3, Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type } from 'lucide-react';
 
 export type VoiceType = 'free' | 'premium';
 export type FontSize = 'small' | 'medium' | 'large';
@@ -19,7 +19,6 @@ interface GameSettingsProps {
   onMuteSfxChange?: (mute: boolean) => void;
   onVoiceTypeChange?: (type: VoiceType) => void;
   onFontSizeChange?: (size: FontSize) => void;
-  onReset?: () => void;
   disabled?: boolean;
   className?: string;
 }
@@ -37,7 +36,6 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   onMuteSfxChange,
   onVoiceTypeChange,
   onFontSizeChange,
-  onReset,
   disabled = false,
   className,
 }) => {
@@ -194,20 +192,6 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
           title={muteSfx ? 'Unmute effects' : 'Mute effects'}
         >
           {muteSfx ? <Music2 className="w-4 h-4" /> : <Music className="w-4 h-4" />}
-        </button>
-      )}
-
-      {/* Reset Button */}
-      {onReset && (
-        <button
-          onClick={onReset}
-          className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
-            'border border-destructive/50 text-destructive hover:bg-destructive/10'
-          )}
-        >
-          <RotateCcw className="w-4 h-4" />
-          <span>Reset</span>
         </button>
       )}
     </div>
