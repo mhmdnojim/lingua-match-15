@@ -51,7 +51,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
             mode === '2-column' 
-              ? 'bg-card text-foreground border border-border' 
+              ? 'bg-primary text-primary-foreground' 
               : 'text-muted-foreground hover:text-foreground',
             disabled && 'opacity-50 cursor-not-allowed'
           )}
@@ -65,7 +65,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
             mode === '3-column' 
-              ? 'bg-card text-foreground border border-border' 
+              ? 'bg-primary text-primary-foreground' 
               : 'text-muted-foreground hover:text-foreground',
             disabled && 'opacity-50 cursor-not-allowed'
           )}
@@ -99,7 +99,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
             className={cn(
               'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-all',
               voiceType === 'free' 
-                ? 'bg-card text-foreground border border-border' 
+                ? 'bg-primary text-primary-foreground' 
                 : 'text-muted-foreground hover:text-foreground'
             )}
             title="Free voice (browser)"
@@ -112,7 +112,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
             className={cn(
               'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-all',
               voiceType === 'premium' 
-                ? 'bg-card text-warning border border-warning/50' 
+                ? 'bg-warning text-warning-foreground' 
                 : 'text-muted-foreground hover:text-foreground'
             )}
             title="Premium voice (ElevenLabs)"
@@ -131,7 +131,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
             className={cn(
               'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all',
               fontSize === 'small' 
-                ? 'bg-card text-foreground border border-border' 
+                ? 'bg-primary text-primary-foreground' 
                 : 'text-muted-foreground hover:text-foreground'
             )}
             title="Small font"
@@ -143,7 +143,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
             className={cn(
               'flex items-center gap-1 px-2 py-1.5 rounded-md text-sm font-medium transition-all',
               fontSize === 'medium' 
-                ? 'bg-card text-foreground border border-border' 
+                ? 'bg-primary text-primary-foreground' 
                 : 'text-muted-foreground hover:text-foreground'
             )}
             title="Medium font"
@@ -155,7 +155,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
             className={cn(
               'flex items-center gap-1 px-2 py-1.5 rounded-md text-base font-medium transition-all',
               fontSize === 'large' 
-                ? 'bg-card text-foreground border border-border' 
+                ? 'bg-primary text-primary-foreground' 
                 : 'text-muted-foreground hover:text-foreground'
             )}
             title="Large font"
