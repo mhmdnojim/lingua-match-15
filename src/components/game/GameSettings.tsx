@@ -80,14 +80,13 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         <button
           onClick={() => onShowPinyinChange(!showPinyin)}
           className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
-            'border border-border bg-secondary',
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
             showPinyin 
-              ? 'text-foreground' 
-              : 'text-muted-foreground'
+              ? 'bg-primary border-primary text-primary-foreground' 
+              : 'bg-secondary border-border text-muted-foreground'
           )}
         >
-          {showPinyin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          {showPinyin ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
           <span>Pinyin</span>
         </button>
       )}
