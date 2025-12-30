@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { VocabularyItem, fetchExcelFromUrl, parseExcelFile, createBatches } from '@/utils/excelParser';
 import { GameCard, GameMode, createGameCards, checkMatch, getRequiredSelections, calculateAccuracy } from '@/utils/gameLogic';
 import { saveProgress, loadProgress, clearProgress, VoiceType, FontSize } from '@/utils/storage';
 import { useAudio } from '@/hooks/useAudio';
+import { supabase } from '@/integrations/supabase/client';
 import GameBoard from './GameBoard';
 import StatsPanel from './StatsPanel';
 import ProgressBar from './ProgressBar';
@@ -11,7 +13,8 @@ import FileSelector from './FileSelector';
 import GameSettings from './GameSettings';
 import CelebrationModal from './CelebrationModal';
 import { useToast } from '@/hooks/use-toast';
-import { BookOpen } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { BookOpen, LogIn, LogOut, User } from 'lucide-react';
 
 const AVAILABLE_FILES = ['sample-vocabulary.xlsx'];
 const BATCH_SIZE = 5;
@@ -35,7 +38,10 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   className,
 }) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const savedProgress = loadProgress();
+
+  const [user, setUser] = useState<any>(null);
 
   const [vocabulary, setVocabulary] = useState<VocabularyItem[]>([]);
   const [batches, setBatches] = useState<VocabularyItem[][]>([]);
@@ -64,6 +70,19 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [gameStarted, setGameStarted] = useState(false);
 
   const { speak, playSuccess, playError, playCelebration, stopAudio } = useAudio({ muteVoice, muteSfx, voiceType });
+
+  // Auth state listener
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Timer
   useEffect(() => {
@@ -243,6 +262,11 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     toast({ title: 'Game reset', description: 'All progress has been cleared' });
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast({ title: 'Logged out', description: 'You have been signed out' });
+  };
+
   useEffect(() => {
     saveProgress({ gameMode, showPinyin, muteVoice, muteSfx, voiceType, fontSize } as any);
   }, [gameMode, showPinyin, muteVoice, muteSfx, voiceType, fontSize]);
@@ -250,17 +274,47 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   return (
     <div className={cn('min-h-screen bg-background p-4 md:p-6', className)}>
       <div className="max-w-6xl mx-auto space-y-3">
-        {/* Header with logo and title */}
-        <header className="flex items-center gap-3 mb-2">
-          <div className="p-2 bg-primary rounded-lg">
-            <BookOpen className="w-5 h-5 text-primary-foreground" />
+        {/* Header with logo, title and auth */}
+        <header className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary rounded-lg">
+              <BookOpen className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-foreground">
+                Vocabulary Match
+              </h1>
+              <p className="text-xs text-muted-foreground">Chinese • Pinyin • English</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-foreground">
-              Vocabulary Match
-            </h1>
-            <p className="text-xs text-muted-foreground">Chinese • Pinyin • English</p>
-          </div>
+
+          {/* Auth button */}
+          {user ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground hidden sm:inline">
+                {user.email}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLogout}
+                className="gap-1.5"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Logout</span>
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => navigate('/auth')}
+              className="gap-1.5"
+            >
+              <LogIn className="w-4 h-4" />
+              <span className="hidden sm:inline">Login</span>
+            </Button>
+          )}
         </header>
 
         {/* Top bar: File selector + Stats on same line - compact */}
