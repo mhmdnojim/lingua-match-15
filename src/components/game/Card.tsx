@@ -3,17 +3,27 @@ import { cn } from '@/lib/utils';
 import { GameCard, CardType } from '@/utils/gameLogic';
 import { Volume2 } from 'lucide-react';
 
+export type FontSize = 'small' | 'medium' | 'large';
+
 interface CardProps {
   card: GameCard;
   showPinyin?: boolean;
+  fontSize?: FontSize;
   onClick: (card: GameCard) => void;
   onSpeak?: (text: string, language: 'chinese' | 'english') => void;
 }
 
-export const Card: React.FC<CardProps> = ({ card, showPinyin = true, onClick, onSpeak }) => {
+export const Card: React.FC<CardProps> = ({ card, showPinyin = true, fontSize = 'medium', onClick, onSpeak }) => {
   const handleClick = () => {
     if (card.isMatched) return;
     onClick(card);
+    
+    // Speak when clicking the card
+    if (onSpeak && !card.isMatched) {
+      const language = card.type === 'english' ? 'english' : 'chinese';
+      const text = card.type === 'pinyin' ? card.content : card.content;
+      onSpeak(text, language);
+    }
   };
 
   const handleSpeak = (e: React.MouseEvent) => {
@@ -34,6 +44,35 @@ export const Card: React.FC<CardProps> = ({ card, showPinyin = true, onClick, on
     return 'bg-game-pinyin/60 hover:bg-game-pinyin/70';
   };
 
+  // Font sizes based on setting
+  const getFontSizes = () => {
+    switch (fontSize) {
+      case 'small':
+        return {
+          chinese: 'text-lg md:text-xl',
+          pinyin: 'text-sm md:text-base',
+          english: 'text-xs md:text-sm',
+          pinyinLabel: 'text-[8px]',
+        };
+      case 'large':
+        return {
+          chinese: 'text-3xl md:text-4xl',
+          pinyin: 'text-xl md:text-2xl',
+          english: 'text-lg md:text-xl',
+          pinyinLabel: 'text-sm',
+        };
+      default: // medium
+        return {
+          chinese: 'text-2xl md:text-3xl',
+          pinyin: 'text-lg md:text-xl',
+          english: 'text-base md:text-lg',
+          pinyinLabel: 'text-xs',
+        };
+    }
+  };
+
+  const fontSizes = getFontSizes();
+
   return (
     <div
       onClick={handleClick}
@@ -48,7 +87,8 @@ export const Card: React.FC<CardProps> = ({ card, showPinyin = true, onClick, on
       {/* Pinyin display for Chinese cards - always reserve space */}
       {card.type === 'chinese' && (
         <span className={cn(
-          'text-xs text-foreground/70 mb-1 font-medium h-4',
+          'text-foreground/70 mb-1 font-medium h-4',
+          fontSizes.pinyinLabel,
           !showPinyin && 'invisible'
         )}>
           {card.pinyin || '\u00A0'}
@@ -59,9 +99,9 @@ export const Card: React.FC<CardProps> = ({ card, showPinyin = true, onClick, on
       <span
         className={cn(
           'text-center font-medium transition-all text-foreground',
-          card.type === 'chinese' && 'text-2xl md:text-3xl font-chinese',
-          card.type === 'pinyin' && 'text-lg md:text-xl italic',
-          card.type === 'english' && 'text-base md:text-lg'
+          card.type === 'chinese' && cn(fontSizes.chinese, 'font-chinese'),
+          card.type === 'pinyin' && cn(fontSizes.pinyin, 'italic'),
+          card.type === 'english' && fontSizes.english
         )}
       >
         {card.content}

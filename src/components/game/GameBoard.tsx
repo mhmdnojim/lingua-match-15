@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import Card from './Card';
+import Card, { FontSize } from './Card';
 import { GameCard, GameMode } from '@/utils/gameLogic';
 
 interface GameBoardProps {
@@ -9,6 +9,7 @@ interface GameBoardProps {
   englishCards: GameCard[];
   mode: GameMode;
   showPinyin: boolean;
+  fontSize?: FontSize;
   onCardClick: (card: GameCard) => void;
   onSpeak: (text: string, language: 'chinese' | 'english') => void;
 }
@@ -19,6 +20,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   englishCards,
   mode,
   showPinyin,
+  fontSize = 'medium',
   onCardClick,
   onSpeak,
 }) => {
@@ -37,6 +39,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             key={card.id}
             card={card}
             showPinyin={showPinyin}
+            fontSize={fontSize}
             onClick={onCardClick}
             onSpeak={onSpeak}
           />
@@ -53,6 +56,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             <Card
               key={card.id}
               card={card}
+              fontSize={fontSize}
               onClick={onCardClick}
             />
           ))}
@@ -68,6 +72,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           <Card
             key={card.id}
             card={card}
+            fontSize={fontSize}
             onClick={onCardClick}
             onSpeak={onSpeak}
           />

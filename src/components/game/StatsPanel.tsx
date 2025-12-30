@@ -17,33 +17,30 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({
   className,
 }) => {
   return (
-    <div className={cn('flex items-center gap-4', className)}>
+    <div className={cn('flex items-center gap-2', className)}>
       {/* Score */}
-      <div className="flex flex-col items-center px-4 py-2 bg-secondary/50 rounded-lg border border-border min-w-[80px]">
-        <Trophy className="w-4 h-4 text-warning mb-1" />
-        <span className="text-xl font-bold text-warning">{score}</span>
-        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Score</span>
+      <div className="flex items-center gap-1.5 px-2 py-1 bg-secondary/50 rounded-lg border border-border">
+        <Trophy className="w-3.5 h-3.5 text-warning" />
+        <span className="text-sm font-bold text-warning">{score}</span>
       </div>
 
       {/* Time */}
-      <div className="flex flex-col items-center px-4 py-2 bg-secondary/50 rounded-lg border border-border min-w-[80px]">
-        <Clock className="w-4 h-4 text-muted-foreground mb-1" />
-        <span className="text-xl font-bold font-mono">{formatTime(time)}</span>
-        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Time</span>
+      <div className="flex items-center gap-1.5 px-2 py-1 bg-secondary/50 rounded-lg border border-border">
+        <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+        <span className="text-sm font-bold font-mono">{formatTime(time)}</span>
       </div>
 
       {/* Accuracy */}
-      <div className="flex flex-col items-center px-4 py-2 bg-secondary/50 rounded-lg border border-border min-w-[80px]">
-        <Target className="w-4 h-4 text-warning mb-1" />
+      <div className="flex items-center gap-1.5 px-2 py-1 bg-secondary/50 rounded-lg border border-border">
+        <Target className="w-3.5 h-3.5 text-warning" />
         <span className={cn(
-          'text-xl font-bold',
-          accuracy >= 80 && 'text-warning',
+          'text-sm font-bold',
+          accuracy >= 80 && 'text-success',
           accuracy >= 50 && accuracy < 80 && 'text-warning',
           accuracy < 50 && 'text-destructive'
         )}>
           {accuracy}%
         </span>
-        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Accuracy</span>
       </div>
     </div>
   );
