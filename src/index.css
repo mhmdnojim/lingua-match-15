@@ -6,113 +6,116 @@
 
 @layer base {
   :root {
-    /* Game Primary Colors */
-    --background: 222 47% 5%;
+    /* Game Primary Colors - Dark slate blue background */
+    --background: 222 47% 8%;
     --foreground: 210 40% 98%;
 
-    --card: 222 47% 8%;
+    --card: 222 47% 11%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 47% 8%;
+    --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 262 83% 58%;
+    /* Purple/Violet as primary */
+    --primary: 270 70% 55%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 217 33% 17%;
+    --secondary: 220 30% 18%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 220 30% 18%;
+    --muted-foreground: 215 20% 55%;
 
-    --accent: 173 80% 40%;
+    /* Accent color - green for English */
+    --accent: 145 65% 50%;
     --accent-foreground: 222 47% 5%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --success: 142 71% 45%;
+    --success: 145 65% 50%;
     --success-foreground: 210 40% 98%;
 
-    --warning: 38 92% 50%;
+    /* Warning/Highlight - Orange */
+    --warning: 35 95% 55%;
     --warning-foreground: 222 47% 5%;
 
-    --border: 217 33% 20%;
-    --input: 217 33% 17%;
-    --ring: 262 83% 58%;
+    --border: 220 25% 22%;
+    --input: 220 30% 18%;
+    --ring: 270 70% 55%;
 
     --radius: 0.75rem;
 
     /* Game Specific Colors */
-    --game-chinese: 262 83% 58%;
-    --game-english: 173 80% 40%;
-    --game-pinyin: 38 92% 50%;
-    --game-selected: 262 83% 70%;
-    --game-matched: 142 71% 45%;
+    --game-chinese: 270 70% 55%;
+    --game-english: 145 65% 50%;
+    --game-pinyin: 35 95% 55%;
+    --game-selected: 270 70% 65%;
+    --game-matched: 145 65% 50%;
     --game-error: 0 84% 60%;
-    --game-glow: 262 83% 58%;
+    --game-glow: 270 70% 55%;
 
-    --sidebar-background: 222 47% 8%;
+    --sidebar-background: 222 47% 11%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary: 270 70% 55%;
     --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent: 220 30% 18%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 20%;
-    --sidebar-ring: 262 83% 58%;
+    --sidebar-border: 220 25% 22%;
+    --sidebar-ring: 270 70% 55%;
   }
 
   .dark {
-    --background: 222 47% 5%;
+    --background: 222 47% 8%;
     --foreground: 210 40% 98%;
 
-    --card: 222 47% 8%;
+    --card: 222 47% 11%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 47% 8%;
+    --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 262 83% 58%;
+    --primary: 270 70% 55%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 217 33% 17%;
+    --secondary: 220 30% 18%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 220 30% 18%;
+    --muted-foreground: 215 20% 55%;
 
-    --accent: 173 80% 40%;
+    --accent: 145 65% 50%;
     --accent-foreground: 222 47% 5%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --success: 142 71% 45%;
+    --success: 145 65% 50%;
     --success-foreground: 210 40% 98%;
 
-    --warning: 38 92% 50%;
+    --warning: 35 95% 55%;
     --warning-foreground: 222 47% 5%;
 
-    --border: 217 33% 20%;
-    --input: 217 33% 17%;
-    --ring: 262 83% 58%;
+    --border: 220 25% 22%;
+    --input: 220 30% 18%;
+    --ring: 270 70% 55%;
 
-    --game-chinese: 262 83% 58%;
-    --game-english: 173 80% 40%;
-    --game-pinyin: 38 92% 50%;
-    --game-selected: 262 83% 70%;
-    --game-matched: 142 71% 45%;
+    --game-chinese: 270 70% 55%;
+    --game-english: 145 65% 50%;
+    --game-pinyin: 35 95% 55%;
+    --game-selected: 270 70% 65%;
+    --game-matched: 145 65% 50%;
     --game-error: 0 84% 60%;
-    --game-glow: 262 83% 58%;
+    --game-glow: 270 70% 55%;
 
-    --sidebar-background: 222 47% 8%;
+    --sidebar-background: 222 47% 11%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary: 270 70% 55%;
     --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 217 33% 17%;
+    --sidebar-accent: 220 30% 18%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 20%;
-    --sidebar-ring: 262 83% 58%;
+    --sidebar-border: 220 25% 22%;
+    --sidebar-ring: 270 70% 55%;
   }
 }
 

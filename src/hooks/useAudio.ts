@@ -1,5 +1,4 @@
 import { useCallback, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 
 interface UseAudioOptions {
   muteVoice: boolean;
@@ -8,9 +7,15 @@ interface UseAudioOptions {
 
 export function useAudio({ muteVoice, muteSfx }: UseAudioOptions) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const successAudioRef = useRef<HTMLAudioElement | null>(null);
-  const errorAudioRef = useRef<HTMLAudioElement | null>(null);
-  const celebrationAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const speakWithWebSpeech = useCallback((text: string, language: 'chinese' | 'english') => {
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = language === 'chinese' ? 'zh-CN' : 'en-US';
+      utterance.rate = 0.9;
+      speechSynthesis.speak(utterance);
+    }
+  }, []);
 
   const speak = useCallback(async (text: string, language: 'chinese' | 'english') => {
     if (muteVoice) return;
@@ -30,7 +35,11 @@ export function useAudio({ muteVoice, muteSfx }: UseAudioOptions) {
       );
 
       if (!response.ok) {
-        throw new Error('TTS request failed');
+        // Check for specific error types that indicate we should fallback
+        const errorData = await response.json().catch(() => ({}));
+        console.warn('ElevenLabs TTS failed, using Web Speech API fallback:', errorData);
+        speakWithWebSpeech(text, language);
+        return;
       }
 
       const audioBlob = await response.blob();
@@ -43,22 +52,15 @@ export function useAudio({ muteVoice, muteSfx }: UseAudioOptions) {
       audioRef.current = new Audio(audioUrl);
       await audioRef.current.play();
     } catch (error) {
-      console.error('Failed to play audio:', error);
-      // Fallback to Web Speech API
-      if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = language === 'chinese' ? 'zh-CN' : 'en-US';
-        utterance.rate = 0.9;
-        speechSynthesis.speak(utterance);
-      }
+      console.warn('TTS request failed, using Web Speech API fallback:', error);
+      speakWithWebSpeech(text, language);
     }
-  }, [muteVoice]);
+  }, [muteVoice, speakWithWebSpeech]);
 
   const playSuccess = useCallback(() => {
     if (muteSfx) return;
     
     try {
-      // Create a success sound using Web Audio API
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
@@ -67,9 +69,9 @@ export function useAudio({ muteVoice, muteSfx }: UseAudioOptions) {
       gainNode.connect(audioContext.destination);
       
       oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
-      oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
-      oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2); // G5
+      oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime);
+      oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1);
+      oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2);
       
       gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
       gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);

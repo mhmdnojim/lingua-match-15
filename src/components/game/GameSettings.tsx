@@ -1,17 +1,14 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { GameMode } from '@/utils/gameLogic';
-import { Columns2, Columns3, Eye, EyeOff, Volume2, VolumeX, Music, Music2 } from 'lucide-react';
+import { Columns2, Columns3, Eye, EyeOff, RotateCcw } from 'lucide-react';
 
 interface GameSettingsProps {
   mode: GameMode;
   showPinyin: boolean;
-  muteVoice: boolean;
-  muteSfx: boolean;
   onModeChange: (mode: GameMode) => void;
   onShowPinyinChange: (show: boolean) => void;
-  onMuteVoiceChange: (mute: boolean) => void;
-  onMuteSfxChange: (mute: boolean) => void;
+  onReset?: () => void;
   disabled?: boolean;
   className?: string;
 }
@@ -19,17 +16,14 @@ interface GameSettingsProps {
 export const GameSettings: React.FC<GameSettingsProps> = ({
   mode,
   showPinyin,
-  muteVoice,
-  muteSfx,
   onModeChange,
   onShowPinyinChange,
-  onMuteVoiceChange,
-  onMuteSfxChange,
+  onReset,
   disabled = false,
   className,
 }) => {
   return (
-    <div className={cn('flex flex-wrap items-center gap-3', className)}>
+    <div className={cn('flex flex-wrap items-center justify-center gap-2', className)}>
       {/* Column Mode Toggle */}
       <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
         <button
@@ -38,13 +32,13 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
             mode === '2-column' 
-              ? 'bg-primary text-primary-foreground' 
+              ? 'bg-card text-foreground border border-border' 
               : 'text-muted-foreground hover:text-foreground',
             disabled && 'opacity-50 cursor-not-allowed'
           )}
         >
           <Columns2 className="w-4 h-4" />
-          <span className="hidden sm:inline">2-Column</span>
+          <span>2 Columns</span>
         </button>
         <button
           onClick={() => onModeChange('3-column')}
@@ -52,13 +46,13 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
             mode === '3-column' 
-              ? 'bg-primary text-primary-foreground' 
+              ? 'bg-card text-foreground border border-border' 
               : 'text-muted-foreground hover:text-foreground',
             disabled && 'opacity-50 cursor-not-allowed'
           )}
         >
           <Columns3 className="w-4 h-4" />
-          <span className="hidden sm:inline">3-Column</span>
+          <span>3 Columns</span>
         </button>
       </div>
 
@@ -68,47 +62,30 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
           onClick={() => onShowPinyinChange(!showPinyin)}
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
-            'border border-border',
+            'border border-border bg-secondary',
             showPinyin 
-              ? 'bg-accent/20 text-accent border-accent/50' 
-              : 'bg-secondary text-muted-foreground'
+              ? 'text-foreground' 
+              : 'text-muted-foreground'
           )}
         >
-          {showPinyin ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-          <span className="hidden sm:inline">Pinyin</span>
+          {showPinyin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          <span>Pinyin</span>
         </button>
       )}
 
-      {/* Audio Controls */}
-      <div className="flex items-center gap-1">
+      {/* Reset Button */}
+      {onReset && (
         <button
-          onClick={() => onMuteVoiceChange(!muteVoice)}
+          onClick={onReset}
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
-            'border border-border',
-            !muteVoice 
-              ? 'bg-primary/20 text-primary border-primary/50' 
-              : 'bg-secondary text-muted-foreground'
+            'border border-destructive/50 text-destructive hover:bg-destructive/10'
           )}
-          title={muteVoice ? 'Unmute voice' : 'Mute voice'}
         >
-          {muteVoice ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          <RotateCcw className="w-4 h-4" />
+          <span>Reset</span>
         </button>
-
-        <button
-          onClick={() => onMuteSfxChange(!muteSfx)}
-          className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
-            'border border-border',
-            !muteSfx 
-              ? 'bg-warning/20 text-warning border-warning/50' 
-              : 'bg-secondary text-muted-foreground'
-          )}
-          title={muteSfx ? 'Unmute sound effects' : 'Mute sound effects'}
-        >
-          {muteSfx ? <Music2 className="w-4 h-4" /> : <Music className="w-4 h-4" />}
-        </button>
-      </div>
+      )}
     </div>
   );
 };

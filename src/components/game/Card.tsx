@@ -10,12 +10,6 @@ interface CardProps {
   onSpeak?: (text: string, language: 'chinese' | 'english') => void;
 }
 
-const cardTypeStyles: Record<CardType, string> = {
-  chinese: 'border-l-4 border-l-game-chinese hover:shadow-[0_0_20px_hsl(var(--game-chinese)/0.3)]',
-  pinyin: 'border-l-4 border-l-game-pinyin hover:shadow-[0_0_20px_hsl(var(--game-pinyin)/0.3)]',
-  english: 'border-l-4 border-l-game-english hover:shadow-[0_0_20px_hsl(var(--game-english)/0.3)]',
-};
-
 export const Card: React.FC<CardProps> = ({ card, showPinyin = true, onClick, onSpeak }) => {
   const handleClick = () => {
     if (card.isMatched) return;
@@ -31,35 +25,51 @@ export const Card: React.FC<CardProps> = ({ card, showPinyin = true, onClick, on
     onSpeak(text, language);
   };
 
+  // Card background colors based on type
+  const getCardBackground = () => {
+    if (card.isMatched) return 'bg-muted/30';
+    if (card.isSelected) return card.type === 'chinese' ? 'bg-game-chinese/80' : card.type === 'english' ? 'bg-game-english/80' : 'bg-game-pinyin/80';
+    if (card.type === 'chinese') return 'bg-game-chinese/60 hover:bg-game-chinese/70';
+    if (card.type === 'english') return 'bg-game-english/60 hover:bg-game-english/70';
+    return 'bg-game-pinyin/60 hover:bg-game-pinyin/70';
+  };
+
   return (
     <div
       onClick={handleClick}
       className={cn(
-        'relative flex flex-col items-center justify-center min-h-[100px] p-4 rounded-lg cursor-pointer transition-all duration-300',
-        'bg-card border border-border hover:border-primary/50',
-        cardTypeStyles[card.type],
-        card.isSelected && !card.isMatched && 'card-selected border-game-selected bg-secondary',
+        'relative flex flex-col items-center justify-center h-[100px] p-4 rounded-lg cursor-pointer transition-all duration-300',
+        getCardBackground(),
+        card.isSelected && !card.isMatched && 'card-selected ring-2 ring-foreground/30',
         card.isMatched && 'card-matched opacity-50 cursor-default',
         card.isError && 'card-shake card-flash-error'
       )}
     >
-      {/* Pinyin display for Chinese cards */}
-      {card.type === 'chinese' && showPinyin && card.pinyin && (
-        <span className="text-xs text-muted-foreground mb-1 font-medium">
-          {card.pinyin}
+      {/* Pinyin display for Chinese cards - always reserve space */}
+      {card.type === 'chinese' && (
+        <span className={cn(
+          'text-xs text-foreground/70 mb-1 font-medium h-4',
+          !showPinyin && 'invisible'
+        )}>
+          {card.pinyin || '\u00A0'}
         </span>
       )}
       
       {/* Main content */}
       <span
         className={cn(
-          'text-center font-medium transition-all',
+          'text-center font-medium transition-all text-foreground',
           card.type === 'chinese' && 'text-2xl md:text-3xl font-chinese',
-          card.type === 'pinyin' && 'text-lg md:text-xl italic text-game-pinyin',
+          card.type === 'pinyin' && 'text-lg md:text-xl italic',
           card.type === 'english' && 'text-base md:text-lg'
         )}
       >
         {card.content}
+      </span>
+
+      {/* Type label */}
+      <span className="text-[10px] text-foreground/50 mt-1 uppercase tracking-wider">
+        {card.type === 'chinese' ? 'CHINESE' : card.type === 'english' ? 'ENGLISH' : 'PINYIN'}
       </span>
 
       {/* Audio button */}
@@ -67,13 +77,13 @@ export const Card: React.FC<CardProps> = ({ card, showPinyin = true, onClick, on
         <button
           onClick={handleSpeak}
           className={cn(
-            'absolute bottom-2 right-2 p-1.5 rounded-full transition-all',
-            'bg-secondary/80 hover:bg-primary hover:text-primary-foreground',
+            'absolute top-2 right-2 p-1.5 rounded-full transition-all',
+            'bg-foreground/10 hover:bg-foreground/20',
             'opacity-60 hover:opacity-100'
           )}
           aria-label="Speak"
         >
-          <Volume2 className="w-3.5 h-3.5" />
+          <Volume2 className="w-3.5 h-3.5 text-foreground/80" />
         </button>
       )}
 

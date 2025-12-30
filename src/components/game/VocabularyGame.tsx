@@ -2,19 +2,20 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { VocabularyItem, fetchExcelFromUrl, parseExcelFile, createBatches } from '@/utils/excelParser';
 import { GameCard, GameMode, createGameCards, checkMatch, getRequiredSelections, calculateAccuracy } from '@/utils/gameLogic';
-import { saveProgress, loadProgress } from '@/utils/storage';
+import { saveProgress, loadProgress, clearProgress } from '@/utils/storage';
 import { useAudio } from '@/hooks/useAudio';
 import GameBoard from './GameBoard';
-import BatchNavigator from './BatchNavigator';
 import StatsPanel from './StatsPanel';
 import ProgressBar from './ProgressBar';
 import FileSelector from './FileSelector';
 import GameSettings from './GameSettings';
 import CelebrationModal from './CelebrationModal';
 import { useToast } from '@/hooks/use-toast';
+import { BookOpen } from 'lucide-react';
 
 const AVAILABLE_FILES = ['sample-vocabulary.xlsx'];
 const BATCH_SIZE = 5;
+const DEFAULT_FILE = 'sample-vocabulary.xlsx';
 
 export interface VocabularyGameProps {
   dataSource?: string;
@@ -44,7 +45,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [showPinyin, setShowPinyin] = useState(initialShowPinyin ?? savedProgress.showPinyin);
   const [muteVoice, setMuteVoice] = useState(savedProgress.muteVoice);
   const [muteSfx, setMuteSfx] = useState(savedProgress.muteSfx);
-  const [selectedFile, setSelectedFile] = useState<string | null>(dataSource || savedProgress.selectedFile);
+  // Default to sample vocabulary if no file selected
+  const [selectedFile, setSelectedFile] = useState<string | null>(dataSource || savedProgress.selectedFile || DEFAULT_FILE);
   const [chineseCards, setChineseCards] = useState<GameCard[]>([]);
   const [pinyinCards, setPinyinCards] = useState<GameCard[]>([]);
   const [englishCards, setEnglishCards] = useState<GameCard[]>([]);
@@ -218,11 +220,22 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       setVocabulary(result.data);
       setBatches(createBatches(result.data, batchSize));
       setCurrentBatch(0);
+      setScore(0);
+      setCompletedBatches([]);
       toast({ title: 'File uploaded', description: `${result.data.length} words loaded` });
     } else {
       toast({ title: 'Error', description: result.error, variant: 'destructive' });
     }
     setIsLoading(false);
+  };
+
+  const handleReset = () => {
+    clearProgress();
+    setScore(0);
+    setCompletedBatches([]);
+    setCurrentBatch(0);
+    initializeBatch(0);
+    toast({ title: 'Game reset', description: 'All progress has been cleared' });
   };
 
   useEffect(() => {
@@ -231,45 +244,57 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
   return (
     <div className={cn('min-h-screen bg-background p-4 md:p-6', className)}>
-      <div className="max-w-5xl mx-auto space-y-6">
-        <header className="text-center">
-          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary via-accent to-game-english bg-clip-text text-transparent">
-            词汇配对 Vocabulary Match
-          </h1>
-          <p className="text-muted-foreground mt-2">Match Chinese characters with their English meanings</p>
+      <div className="max-w-6xl mx-auto space-y-4">
+        {/* Header with logo and title */}
+        <header className="flex items-center gap-3 mb-2">
+          <div className="p-2 bg-primary rounded-lg">
+            <BookOpen className="w-5 h-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold text-foreground">
+              Vocabulary Match
+            </h1>
+            <p className="text-xs text-muted-foreground">Chinese • Pinyin • English</p>
+          </div>
         </header>
 
-        <FileSelector
-          selectedFile={selectedFile}
-          availableFiles={AVAILABLE_FILES}
-          onSelectFile={setSelectedFile}
-          onUploadFile={handleUploadFile}
-        />
+        {/* Top bar: File selector + Stats on same line */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <FileSelector
+            selectedFile={selectedFile}
+            availableFiles={AVAILABLE_FILES}
+            onSelectFile={setSelectedFile}
+            onUploadFile={handleUploadFile}
+          />
+          
+          <StatsPanel 
+            score={score} 
+            time={time} 
+            accuracy={calculateAccuracy(correctMatches, attempts)} 
+          />
+        </div>
 
+        {/* Game settings */}
         <GameSettings
           mode={gameMode}
           showPinyin={showPinyin}
-          muteVoice={muteVoice}
-          muteSfx={muteSfx}
           onModeChange={setGameMode}
           onShowPinyinChange={setShowPinyin}
-          onMuteVoiceChange={setMuteVoice}
-          onMuteSfxChange={setMuteSfx}
+          onReset={handleReset}
           disabled={isLoading}
         />
 
         {batches.length > 0 && (
           <>
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <StatsPanel score={score} time={time} accuracy={calculateAccuracy(correctMatches, attempts)} />
-              <ProgressBar matched={matchedPairs} total={batches[currentBatch]?.length || 0} className="w-full md:w-64" />
-            </div>
-
-            <BatchNavigator
-              totalBatches={batches.length}
+            {/* Progress bar with navigation */}
+            <ProgressBar
               currentBatch={currentBatch}
+              totalBatches={batches.length}
               completedBatches={completedBatches}
               onSelectBatch={handleSelectBatch}
+              matched={matchedPairs}
+              total={batches[currentBatch]?.length || 0}
+              className="max-w-xl mx-auto"
             />
 
             <GameBoard
