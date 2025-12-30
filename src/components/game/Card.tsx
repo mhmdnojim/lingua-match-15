@@ -35,13 +35,13 @@ export const Card: React.FC<CardProps> = ({ card, showPinyin = true, fontSize = 
     onSpeak(text, language);
   };
 
-  // Card background colors based on type
+  // Card background colors based on type - brighter and more vibrant
   const getCardBackground = () => {
-    if (card.isMatched) return 'bg-muted/30';
-    if (card.isSelected) return card.type === 'chinese' ? 'bg-game-chinese/80' : card.type === 'english' ? 'bg-game-english/80' : 'bg-game-pinyin/80';
-    if (card.type === 'chinese') return 'bg-game-chinese/60 hover:bg-game-chinese/70';
-    if (card.type === 'english') return 'bg-game-english/60 hover:bg-game-english/70';
-    return 'bg-game-pinyin/60 hover:bg-game-pinyin/70';
+    if (card.isMatched) return 'bg-muted/40';
+    if (card.isSelected) return card.type === 'chinese' ? 'bg-game-chinese' : card.type === 'english' ? 'bg-game-english' : 'bg-game-pinyin';
+    if (card.type === 'chinese') return 'bg-game-chinese/70 hover:bg-game-chinese/90 hover:scale-105 hover:shadow-lg hover:shadow-game-chinese/30';
+    if (card.type === 'english') return 'bg-game-english/70 hover:bg-game-english/90 hover:scale-105 hover:shadow-lg hover:shadow-game-english/30';
+    return 'bg-game-pinyin/70 hover:bg-game-pinyin/90 hover:scale-105 hover:shadow-lg hover:shadow-game-pinyin/30';
   };
 
   // Font sizes based on setting
