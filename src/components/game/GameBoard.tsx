@@ -38,7 +38,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           <Card
             key={card.id}
             card={card}
-            showPinyin={showPinyin}
+            showPinyin={mode === '2-column' && showPinyin}
             fontSize={fontSize}
             onClick={onCardClick}
             onSpeak={onSpeak}
