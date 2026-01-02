@@ -11,6 +11,7 @@ interface GameSettingsProps {
   showPinyin: boolean;
   showArabic: boolean;
   hasArabicData: boolean;
+  fourthColumnLabel?: string;
   onModeChange: (mode: GameMode) => void;
   onShowPinyinChange: (show: boolean) => void;
   onShowArabicChange: (show: boolean) => void;
@@ -31,6 +32,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   showPinyin,
   showArabic,
   hasArabicData,
+  fourthColumnLabel,
   onModeChange,
   onShowPinyinChange,
   onShowArabicChange,
@@ -112,7 +114,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
           title={showArabic ? 'Hide Arabic' : 'Show Arabic'}
         >
           {showArabic ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-          <span>عربي</span>
+          <span>{fourthColumnLabel || 'عربي'}</span>
         </button>
       )}
 

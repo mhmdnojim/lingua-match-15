@@ -11,6 +11,7 @@ export interface VocabularyItem {
 export interface ParseResult {
   success: boolean;
   data: VocabularyItem[];
+  fourthColumnHeader?: string;
   error?: string;
 }
 
@@ -49,6 +50,9 @@ export async function parseExcelFile(file: File): Promise<ParseResult> {
     const englishHeader = originalHeaders.find(h => h.toLowerCase().trim() === englishKey);
     const arabicHeader = arabicKey ? originalHeaders.find(h => h.toLowerCase().trim() === arabicKey) : null;
 
+    // Get the original header name for the 4th column (Arabic column)
+    const fourthColumnHeader = arabicHeader ? arabicHeader : undefined;
+
     const data: VocabularyItem[] = jsonData.map((row, index) => ({
       id: `vocab-${index}-${Date.now()}`,
       chinese: String(row[chineseHeader!] || '').trim(),
@@ -57,7 +61,7 @@ export async function parseExcelFile(file: File): Promise<ParseResult> {
       arabic: arabicHeader ? String(row[arabicHeader] || '').trim() : undefined,
     })).filter(item => item.chinese && item.english);
 
-    return { success: true, data };
+    return { success: true, data, fourthColumnHeader };
   } catch (error) {
     return { 
       success: false, 
@@ -107,6 +111,9 @@ export async function fetchExcelFromUrl(url: string): Promise<ParseResult> {
     const englishHeader = originalHeaders.find(h => h.toLowerCase().trim() === englishKey);
     const arabicHeader = arabicKey ? originalHeaders.find(h => h.toLowerCase().trim() === arabicKey) : null;
 
+    // Get the original header name for the 4th column (Arabic column)
+    const fourthColumnHeader = arabicHeader ? arabicHeader : undefined;
+
     const data: VocabularyItem[] = jsonData.map((row, index) => ({
       id: `vocab-${index}-${Date.now()}`,
       chinese: String(row[chineseHeader!] || '').trim(),
@@ -115,7 +122,7 @@ export async function fetchExcelFromUrl(url: string): Promise<ParseResult> {
       arabic: arabicHeader ? String(row[arabicHeader] || '').trim() : undefined,
     })).filter(item => item.chinese && item.english);
 
-    return { success: true, data };
+    return { success: true, data, fourthColumnHeader };
   } catch (error) {
     return { 
       success: false, 
