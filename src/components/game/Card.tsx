@@ -38,9 +38,10 @@ export const Card: React.FC<CardProps> = ({ card, showPinyin = true, fontSize = 
   // Card background colors based on type - brighter and more vibrant
   const getCardBackground = () => {
     if (card.isMatched) return 'bg-muted/40';
-    if (card.isSelected) return card.type === 'chinese' ? 'bg-game-chinese' : card.type === 'english' ? 'bg-game-english' : 'bg-game-pinyin';
+    if (card.isSelected) return card.type === 'chinese' ? 'bg-game-chinese' : card.type === 'english' ? 'bg-game-english' : card.type === 'arabic' ? 'bg-game-arabic' : 'bg-game-pinyin';
     if (card.type === 'chinese') return 'bg-game-chinese/70 hover:bg-game-chinese/90 hover:scale-105 hover:shadow-lg hover:shadow-game-chinese/30';
     if (card.type === 'english') return 'bg-game-english/70 hover:bg-game-english/90 hover:scale-105 hover:shadow-lg hover:shadow-game-english/30';
+    if (card.type === 'arabic') return 'bg-game-arabic/70 hover:bg-game-arabic/90 hover:scale-105 hover:shadow-lg hover:shadow-game-arabic/30';
     return 'bg-game-pinyin/70 hover:bg-game-pinyin/90 hover:scale-105 hover:shadow-lg hover:shadow-game-pinyin/30';
   };
 
@@ -53,6 +54,7 @@ export const Card: React.FC<CardProps> = ({ card, showPinyin = true, fontSize = 
           chinese: 'text-2xl md:text-3xl',
           pinyin: 'text-lg md:text-xl',
           english: 'text-base md:text-lg',
+          arabic: 'text-xl md:text-2xl',
           pinyinLabel: 'text-xs',
         };
       case 'large':
@@ -60,6 +62,7 @@ export const Card: React.FC<CardProps> = ({ card, showPinyin = true, fontSize = 
           chinese: 'text-5xl md:text-6xl',
           pinyin: 'text-2xl md:text-3xl',
           english: 'text-xl md:text-2xl',
+          arabic: 'text-3xl md:text-4xl',
           pinyinLabel: 'text-base',
         };
       default: // medium
@@ -67,6 +70,7 @@ export const Card: React.FC<CardProps> = ({ card, showPinyin = true, fontSize = 
           chinese: 'text-3xl md:text-4xl',
           pinyin: 'text-xl md:text-2xl',
           english: 'text-lg md:text-xl',
+          arabic: 'text-2xl md:text-3xl',
           pinyinLabel: 'text-sm',
         };
     }
@@ -102,7 +106,8 @@ export const Card: React.FC<CardProps> = ({ card, showPinyin = true, fontSize = 
           'text-center font-medium transition-all text-foreground',
           card.type === 'chinese' && cn(fontSizes.chinese, 'font-chinese'),
           card.type === 'pinyin' && cn(fontSizes.pinyin, 'italic'),
-          card.type === 'english' && fontSizes.english
+          card.type === 'english' && fontSizes.english,
+          card.type === 'arabic' && cn(fontSizes.arabic, 'font-arabic')
         )}
       >
         {card.content}
@@ -110,7 +115,7 @@ export const Card: React.FC<CardProps> = ({ card, showPinyin = true, fontSize = 
 
       {/* Type label */}
       <span className="text-[10px] text-foreground/50 mt-1 uppercase tracking-wider">
-        {card.type === 'chinese' ? 'CHINESE' : card.type === 'english' ? 'ENGLISH' : 'PINYIN'}
+        {card.type === 'chinese' ? 'CHINESE' : card.type === 'english' ? 'ENGLISH' : card.type === 'arabic' ? 'عربي' : 'PINYIN'}
       </span>
 
       {/* Audio button */}

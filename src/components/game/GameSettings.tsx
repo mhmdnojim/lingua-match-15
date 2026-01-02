@@ -9,8 +9,11 @@ export type FontSize = 'small' | 'medium' | 'large';
 interface GameSettingsProps {
   mode: GameMode;
   showPinyin: boolean;
+  showArabic: boolean;
+  hasArabicData: boolean;
   onModeChange: (mode: GameMode) => void;
   onShowPinyinChange: (show: boolean) => void;
+  onShowArabicChange: (show: boolean) => void;
   muteVoice?: boolean;
   muteSfx?: boolean;
   voiceType?: VoiceType;
@@ -26,8 +29,11 @@ interface GameSettingsProps {
 export const GameSettings: React.FC<GameSettingsProps> = ({
   mode,
   showPinyin,
+  showArabic,
+  hasArabicData,
   onModeChange,
   onShowPinyinChange,
+  onShowArabicChange,
   muteVoice = false,
   muteSfx = false,
   voiceType = 'free',
@@ -90,6 +96,25 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         {(showPinyin || mode === '3-column') ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
         <span>Pinyin</span>
       </button>
+
+      {/* Arabic Toggle - only show if data has Arabic */}
+      {hasArabicData && (
+        <button
+          onClick={() => onShowArabicChange(!showArabic)}
+          disabled={disabled}
+          className={cn(
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
+            showArabic 
+              ? 'bg-game-arabic border-game-arabic text-white' 
+              : 'bg-secondary border-border text-muted-foreground',
+            disabled && 'opacity-50 cursor-not-allowed'
+          )}
+          title={showArabic ? 'Hide Arabic' : 'Show Arabic'}
+        >
+          {showArabic ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+          <span>عربي</span>
+        </button>
+      )}
 
       {/* Voice Type Toggle */}
       {onVoiceTypeChange && (

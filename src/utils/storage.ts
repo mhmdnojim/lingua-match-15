@@ -9,6 +9,7 @@ const STORAGE_KEYS = {
   SCORE: 'vocab-game-score',
   GAME_MODE: 'vocab-game-mode',
   SHOW_PINYIN: 'vocab-game-show-pinyin',
+  SHOW_ARABIC: 'vocab-game-show-arabic',
   MUTE_VOICE: 'vocab-game-mute-voice',
   MUTE_SFX: 'vocab-game-mute-sfx',
   SELECTED_FILE: 'vocab-game-selected-file',
@@ -22,6 +23,7 @@ export interface GameProgress {
   score: number;
   gameMode: GameMode;
   showPinyin: boolean;
+  showArabic: boolean;
   muteVoice: boolean;
   muteSfx: boolean;
   selectedFile: string | null;
@@ -45,6 +47,9 @@ export function saveProgress(progress: Partial<GameProgress>): void {
     }
     if (progress.showPinyin !== undefined) {
       localStorage.setItem(STORAGE_KEYS.SHOW_PINYIN, String(progress.showPinyin));
+    }
+    if (progress.showArabic !== undefined) {
+      localStorage.setItem(STORAGE_KEYS.SHOW_ARABIC, String(progress.showArabic));
     }
     if (progress.muteVoice !== undefined) {
       localStorage.setItem(STORAGE_KEYS.MUTE_VOICE, String(progress.muteVoice));
@@ -76,6 +81,7 @@ export function loadProgress(): GameProgress {
       score: parseInt(localStorage.getItem(STORAGE_KEYS.SCORE) || '0', 10),
       gameMode: (localStorage.getItem(STORAGE_KEYS.GAME_MODE) as GameMode) || '2-column',
       showPinyin: localStorage.getItem(STORAGE_KEYS.SHOW_PINYIN) !== 'false',
+      showArabic: localStorage.getItem(STORAGE_KEYS.SHOW_ARABIC) === 'true',
       muteVoice: localStorage.getItem(STORAGE_KEYS.MUTE_VOICE) === 'true',
       muteSfx: localStorage.getItem(STORAGE_KEYS.MUTE_SFX) === 'true',
       selectedFile: localStorage.getItem(STORAGE_KEYS.SELECTED_FILE) || null,
@@ -90,6 +96,7 @@ export function loadProgress(): GameProgress {
       score: 0,
       gameMode: '2-column',
       showPinyin: true,
+      showArabic: false,
       muteVoice: false,
       muteSfx: false,
       selectedFile: null,
