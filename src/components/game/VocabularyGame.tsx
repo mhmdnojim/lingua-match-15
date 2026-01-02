@@ -70,6 +70,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [batchScore, setBatchScore] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
+  const [fourthColumnHeader, setFourthColumnHeader] = useState<string | undefined>();
 
   const { speak, playSuccess, playError, playCelebration, stopAudio } = useAudio({ muteVoice, muteSfx, voiceType });
 
@@ -100,6 +101,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       const result = await fetchExcelFromUrl(`/datasets/${fileName}`);
       if (result.success) {
         setVocabulary(result.data);
+        setFourthColumnHeader(result.fourthColumnHeader);
         const newBatches = createBatches(result.data, batchSize);
         setBatches(newBatches);
         toast({ title: 'Vocabulary loaded', description: `${result.data.length} words loaded` });
@@ -252,6 +254,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     const result = await parseExcelFile(file);
     if (result.success) {
       setVocabulary(result.data);
+      setFourthColumnHeader(result.fourthColumnHeader);
       setBatches(createBatches(result.data, batchSize));
       setCurrentBatch(0);
       setScore(0);
@@ -316,10 +319,11 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
             </div>
           ) : (
             <Button
-              variant="default"
+              variant="outline"
               size="sm"
-              onClick={() => navigate('/auth')}
-              className="gap-1.5"
+              disabled
+              className="gap-1.5 opacity-50 cursor-not-allowed"
+              title="Login temporarily disabled"
             >
               <LogIn className="w-4 h-4" />
               <span className="hidden sm:inline">Login</span>
@@ -350,6 +354,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           showPinyin={showPinyin}
           showArabic={showArabic}
           hasArabicData={hasArabicData}
+          fourthColumnLabel={fourthColumnHeader}
           onModeChange={setGameMode}
           onShowPinyinChange={setShowPinyin}
           onShowArabicChange={setShowArabic}
