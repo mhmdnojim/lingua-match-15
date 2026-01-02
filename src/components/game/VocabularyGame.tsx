@@ -49,6 +49,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [completedBatches, setCompletedBatches] = useState<number[]>(savedProgress.completedBatches);
   const [gameMode, setGameMode] = useState<GameMode>(initialMode || savedProgress.gameMode);
   const [showPinyin, setShowPinyin] = useState(initialShowPinyin ?? savedProgress.showPinyin);
+  const [showArabic, setShowArabic] = useState(savedProgress.showArabic);
   const [muteVoice, setMuteVoice] = useState(savedProgress.muteVoice);
   const [muteSfx, setMuteSfx] = useState(savedProgress.muteSfx);
   const [voiceType, setVoiceType] = useState<VoiceType>((savedProgress as any).voiceType || 'free');
@@ -58,6 +59,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [chineseCards, setChineseCards] = useState<GameCard[]>([]);
   const [pinyinCards, setPinyinCards] = useState<GameCard[]>([]);
   const [englishCards, setEnglishCards] = useState<GameCard[]>([]);
+  const [arabicCards, setArabicCards] = useState<GameCard[]>([]);
   const [selectedCards, setSelectedCards] = useState<GameCard[]>([]);
   const [score, setScore] = useState(savedProgress.score);
   const [time, setTime] = useState(0);
@@ -118,14 +120,18 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     }
   }, [selectedFile, loadVocabulary]);
 
+  // Check if vocabulary has Arabic data
+  const hasArabicData = vocabulary.some(item => item.arabic && item.arabic.trim() !== '');
+
   // Initialize batch cards - only when batch changes, not when mode changes
   const initializeBatch = useCallback((batchIndex: number) => {
     if (!batches[batchIndex]) return;
     // Always create cards with pinyin data for both modes
-    const cards = createGameCards(batches[batchIndex], '3-column', true);
+    const cards = createGameCards(batches[batchIndex], '3-column', true, showArabic);
     setChineseCards(cards.chinese);
     setPinyinCards(cards.pinyin);
     setEnglishCards(cards.english);
+    setArabicCards(cards.arabic);
     setSelectedCards([]);
     setMatchedPairs(0);
     setTime(0);
@@ -133,7 +139,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     setCorrectMatches(0);
     setBatchScore(0);
     setGameStarted(true);
-  }, [batches]);
+  }, [batches, showArabic]);
 
   useEffect(() => {
     if (batches.length > 0) {
@@ -167,15 +173,16 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     setChineseCards(update);
     setPinyinCards(update);
     setEnglishCards(update);
+    setArabicCards(update);
   };
 
   // Check for match
   useEffect(() => {
-    const required = getRequiredSelections(gameMode);
+    const required = getRequiredSelections(gameMode, showArabic);
     if (selectedCards.length !== required) return;
 
     setAttempts(a => a + 1);
-    const result = checkMatch(selectedCards, gameMode);
+    const result = checkMatch(selectedCards, gameMode, showArabic);
 
     if (result.isMatch) {
       playSuccess();
@@ -190,6 +197,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       setChineseCards(matchCards);
       setPinyinCards(matchCards);
       setEnglishCards(matchCards);
+      setArabicCards(matchCards);
       setSelectedCards([]);
 
       if (matchedPairs + 1 === batches[currentBatch]?.length) {
@@ -211,16 +219,18 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       setChineseCards(errorCards);
       setPinyinCards(errorCards);
       setEnglishCards(errorCards);
+      setArabicCards(errorCards);
 
       setTimeout(() => {
         const clearError = (cards: GameCard[]) => cards.map(c => ({ ...c, isError: false, isSelected: false }));
         setChineseCards(clearError);
         setPinyinCards(clearError);
         setEnglishCards(clearError);
+        setArabicCards(clearError);
         setSelectedCards([]);
       }, 500);
     }
-  }, [selectedCards, gameMode, playSuccess, playError, playCelebration, matchedPairs, batches, currentBatch, completedBatches, score]);
+  }, [selectedCards, gameMode, showArabic, playSuccess, playError, playCelebration, matchedPairs, batches, currentBatch, completedBatches, score]);
 
   const handleSelectBatch = (index: number) => {
     setCurrentBatch(index);
@@ -268,8 +278,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   };
 
   useEffect(() => {
-    saveProgress({ gameMode, showPinyin, muteVoice, muteSfx, voiceType, fontSize } as any);
-  }, [gameMode, showPinyin, muteVoice, muteSfx, voiceType, fontSize]);
+    saveProgress({ gameMode, showPinyin, showArabic, muteVoice, muteSfx, voiceType, fontSize } as any);
+  }, [gameMode, showPinyin, showArabic, muteVoice, muteSfx, voiceType, fontSize]);
 
   return (
     <div className={cn('min-h-screen bg-background p-4 md:p-6', className)}>
@@ -338,8 +348,11 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         <GameSettings
           mode={gameMode}
           showPinyin={showPinyin}
+          showArabic={showArabic}
+          hasArabicData={hasArabicData}
           onModeChange={setGameMode}
           onShowPinyinChange={setShowPinyin}
+          onShowArabicChange={setShowArabic}
           muteVoice={muteVoice}
           muteSfx={muteSfx}
           voiceType={voiceType}
@@ -368,8 +381,10 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               chineseCards={chineseCards}
               pinyinCards={pinyinCards}
               englishCards={englishCards}
+              arabicCards={arabicCards}
               mode={gameMode}
               showPinyin={showPinyin}
+              showArabic={showArabic}
               fontSize={fontSize}
               onCardClick={handleCardClick}
               onSpeak={speak}

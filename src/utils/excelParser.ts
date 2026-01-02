@@ -5,6 +5,7 @@ export interface VocabularyItem {
   chinese: string;
   pinyin: string;
   english: string;
+  arabic?: string;
 }
 
 export interface ParseResult {
@@ -32,6 +33,7 @@ export async function parseExcelFile(file: File): Promise<ParseResult> {
     const chineseKey = findColumnKey(headers, ['chinese', '中文', 'hanzi', '汉字']);
     const pinyinKey = findColumnKey(headers, ['pinyin', '拼音', 'pronunciation']);
     const englishKey = findColumnKey(headers, ['english', '英文', 'meaning', 'definition']);
+    const arabicKey = findColumnKey(headers, ['arabic', 'عربي', 'العربية']);
 
     if (!chineseKey || !englishKey) {
       return { 
@@ -45,12 +47,14 @@ export async function parseExcelFile(file: File): Promise<ParseResult> {
     const chineseHeader = originalHeaders.find(h => h.toLowerCase().trim() === chineseKey);
     const pinyinHeader = pinyinKey ? originalHeaders.find(h => h.toLowerCase().trim() === pinyinKey) : null;
     const englishHeader = originalHeaders.find(h => h.toLowerCase().trim() === englishKey);
+    const arabicHeader = arabicKey ? originalHeaders.find(h => h.toLowerCase().trim() === arabicKey) : null;
 
     const data: VocabularyItem[] = jsonData.map((row, index) => ({
       id: `vocab-${index}-${Date.now()}`,
       chinese: String(row[chineseHeader!] || '').trim(),
       pinyin: pinyinHeader ? String(row[pinyinHeader] || '').trim() : '',
       english: String(row[englishHeader!] || '').trim(),
+      arabic: arabicHeader ? String(row[arabicHeader] || '').trim() : undefined,
     })).filter(item => item.chinese && item.english);
 
     return { success: true, data };
@@ -87,6 +91,7 @@ export async function fetchExcelFromUrl(url: string): Promise<ParseResult> {
     const chineseKey = findColumnKey(headers, ['chinese', '中文', 'hanzi', '汉字']);
     const pinyinKey = findColumnKey(headers, ['pinyin', '拼音', 'pronunciation']);
     const englishKey = findColumnKey(headers, ['english', '英文', 'meaning', 'definition']);
+    const arabicKey = findColumnKey(headers, ['arabic', 'عربي', 'العربية']);
 
     if (!chineseKey || !englishKey) {
       return { 
@@ -100,12 +105,14 @@ export async function fetchExcelFromUrl(url: string): Promise<ParseResult> {
     const chineseHeader = originalHeaders.find(h => h.toLowerCase().trim() === chineseKey);
     const pinyinHeader = pinyinKey ? originalHeaders.find(h => h.toLowerCase().trim() === pinyinKey) : null;
     const englishHeader = originalHeaders.find(h => h.toLowerCase().trim() === englishKey);
+    const arabicHeader = arabicKey ? originalHeaders.find(h => h.toLowerCase().trim() === arabicKey) : null;
 
     const data: VocabularyItem[] = jsonData.map((row, index) => ({
       id: `vocab-${index}-${Date.now()}`,
       chinese: String(row[chineseHeader!] || '').trim(),
       pinyin: pinyinHeader ? String(row[pinyinHeader] || '').trim() : '',
       english: String(row[englishHeader!] || '').trim(),
+      arabic: arabicHeader ? String(row[arabicHeader] || '').trim() : undefined,
     })).filter(item => item.chinese && item.english);
 
     return { success: true, data };

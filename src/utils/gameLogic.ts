@@ -1,6 +1,6 @@
 import { VocabularyItem } from './excelParser';
 
-export type CardType = 'chinese' | 'pinyin' | 'english';
+export type CardType = 'chinese' | 'pinyin' | 'english' | 'arabic';
 export type GameMode = '2-column' | '3-column';
 
 export interface GameCard {
@@ -31,8 +31,9 @@ export function shuffleArray<T>(array: T[]): T[] {
 export function createGameCards(
   vocabulary: VocabularyItem[],
   mode: GameMode,
-  showPinyin: boolean
-): { chinese: GameCard[]; pinyin: GameCard[]; english: GameCard[] } {
+  showPinyin: boolean,
+  showArabic: boolean = false
+): { chinese: GameCard[]; pinyin: GameCard[]; english: GameCard[]; arabic: GameCard[] } {
   const chineseCards: GameCard[] = vocabulary.map(item => ({
     id: `chinese-${item.id}`,
     vocabId: item.id,
@@ -66,33 +67,39 @@ export function createGameCards(
       }))
     : [];
 
+  const arabicCards: GameCard[] = showArabic
+    ? vocabulary.filter(item => item.arabic).map(item => ({
+        id: `arabic-${item.id}`,
+        vocabId: item.id,
+        type: 'arabic' as CardType,
+        content: item.arabic!,
+        isSelected: false,
+        isMatched: false,
+        isError: false,
+      }))
+    : [];
+
   return {
     chinese: shuffleArray(chineseCards),
     pinyin: shuffleArray(pinyinCards),
     english: shuffleArray(englishCards),
+    arabic: shuffleArray(arabicCards),
   };
 }
 
-export function checkMatch(selectedCards: GameCard[], mode: GameMode): MatchResult {
-  if (mode === '2-column') {
-    if (selectedCards.length !== 2) {
-      return { isMatch: false };
-    }
-    const [card1, card2] = selectedCards;
-    const isMatch = card1.vocabId === card2.vocabId;
-    return { isMatch, matchedVocabId: isMatch ? card1.vocabId : undefined };
-  } else {
-    if (selectedCards.length !== 3) {
-      return { isMatch: false };
-    }
-    const vocabIds = selectedCards.map(c => c.vocabId);
-    const isMatch = vocabIds.every(id => id === vocabIds[0]);
-    return { isMatch, matchedVocabId: isMatch ? vocabIds[0] : undefined };
+export function checkMatch(selectedCards: GameCard[], mode: GameMode, showArabic: boolean = false): MatchResult {
+  const requiredCount = getRequiredSelections(mode, showArabic);
+  if (selectedCards.length !== requiredCount) {
+    return { isMatch: false };
   }
+  const vocabIds = selectedCards.map(c => c.vocabId);
+  const isMatch = vocabIds.every(id => id === vocabIds[0]);
+  return { isMatch, matchedVocabId: isMatch ? vocabIds[0] : undefined };
 }
 
-export function getRequiredSelections(mode: GameMode): number {
-  return mode === '2-column' ? 2 : 3;
+export function getRequiredSelections(mode: GameMode, showArabic: boolean = false): number {
+  const base = mode === '2-column' ? 2 : 3;
+  return showArabic ? base + 1 : base;
 }
 
 export function calculateAccuracy(correct: number, total: number): number {

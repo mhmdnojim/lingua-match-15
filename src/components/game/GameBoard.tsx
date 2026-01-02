@@ -7,8 +7,10 @@ interface GameBoardProps {
   chineseCards: GameCard[];
   pinyinCards: GameCard[];
   englishCards: GameCard[];
+  arabicCards: GameCard[];
   mode: GameMode;
   showPinyin: boolean;
+  showArabic: boolean;
   fontSize?: FontSize;
   onCardClick: (card: GameCard) => void;
   onSpeak: (text: string, language: 'chinese' | 'english') => void;
@@ -18,16 +20,23 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   chineseCards,
   pinyinCards,
   englishCards,
+  arabicCards,
   mode,
   showPinyin,
+  showArabic,
   fontSize = 'medium',
   onCardClick,
   onSpeak,
 }) => {
+  // Calculate column count based on mode and Arabic visibility
+  const columnCount = (mode === '3-column' ? 3 : 2) + (showArabic ? 1 : 0);
+  
   return (
     <div className={cn(
       'grid gap-4 md:gap-6',
-      mode === '2-column' ? 'grid-cols-2' : 'grid-cols-3'
+      columnCount === 2 && 'grid-cols-2',
+      columnCount === 3 && 'grid-cols-3',
+      columnCount === 4 && 'grid-cols-4'
     )}>
       {/* Chinese Column */}
       <div className="flex flex-col gap-3">
@@ -78,6 +87,23 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           />
         ))}
       </div>
+
+      {/* Arabic Column (optional) */}
+      {showArabic && arabicCards.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <h3 className="text-center text-sm font-medium text-muted-foreground mb-2 tracking-wider">
+            عربي ARABIC
+          </h3>
+          {arabicCards.map((card) => (
+            <Card
+              key={card.id}
+              card={card}
+              fontSize={fontSize}
+              onClick={onCardClick}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

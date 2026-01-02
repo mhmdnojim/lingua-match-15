@@ -59,6 +59,7 @@ export default {
           chinese: "hsl(var(--game-chinese))",
           english: "hsl(var(--game-english))",
           pinyin: "hsl(var(--game-pinyin))",
+          arabic: "hsl(var(--game-arabic))",
           selected: "hsl(var(--game-selected))",
           matched: "hsl(var(--game-matched))",
           error: "hsl(var(--game-error))",
@@ -82,6 +83,7 @@ export default {
       },
       fontFamily: {
         chinese: ["Noto Sans SC", "PingFang SC", "Microsoft YaHei", "sans-serif"],
+        arabic: ["Noto Sans Arabic", "Tahoma", "Arial", "sans-serif"],
       },
       keyframes: {
         "accordion-down": {
