@@ -38,11 +38,8 @@ export const Card: React.FC<CardProps> = ({ card, showPinyin = true, fontSize = 
     if (card.isMatched) return 'bg-muted/40';
     if (card.isError) return 'bg-destructive/80';
     if (card.isSelected) {
-      // Selected state - full color with glow and scale
-      if (card.type === 'chinese') return 'bg-game-chinese scale-110 shadow-xl shadow-game-chinese/50 ring-4 ring-white/40';
-      if (card.type === 'english') return 'bg-game-english scale-110 shadow-xl shadow-game-english/50 ring-4 ring-white/40';
-      if (card.type === 'arabic') return 'bg-game-arabic scale-110 shadow-xl shadow-game-arabic/50 ring-4 ring-white/40';
-      return 'bg-game-pinyin scale-110 shadow-xl shadow-game-pinyin/50 ring-4 ring-white/40';
+      // Selected state - bright yellow/gold background with glow
+      return 'bg-yellow-400 scale-110 shadow-xl shadow-yellow-400/50 ring-4 ring-white/60';
     }
     // Default state
     if (card.type === 'chinese') return 'bg-game-chinese/70 hover:bg-game-chinese/90 hover:scale-105 hover:shadow-lg hover:shadow-game-chinese/30';
