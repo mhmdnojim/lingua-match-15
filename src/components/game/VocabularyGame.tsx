@@ -10,7 +10,7 @@ import GameBoard from './GameBoard';
 import StatsPanel from './StatsPanel';
 import ProgressBar from './ProgressBar';
 import FileSelector from './FileSelector';
-import GameSettings from './GameSettings';
+import GameSettings, { ColumnVisibility } from './GameSettings';
 import CelebrationModal from './CelebrationModal';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -50,6 +50,13 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [gameMode, setGameMode] = useState<GameMode>(initialMode || savedProgress.gameMode);
   const [showPinyin, setShowPinyin] = useState(initialShowPinyin ?? savedProgress.showPinyin);
   const [showArabic, setShowArabic] = useState(savedProgress.showArabic);
+  const [shuffleMode, setShuffleMode] = useState(true);
+  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>({
+    chinese: true,
+    pinyin: true,
+    english: true,
+    arabic: true,
+  });
   const [muteVoice, setMuteVoice] = useState(savedProgress.muteVoice);
   const [muteSfx, setMuteSfx] = useState(savedProgress.muteSfx);
   const [voiceType, setVoiceType] = useState<VoiceType>((savedProgress as any).voiceType || 'free');
@@ -125,11 +132,11 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   // Check if vocabulary has Arabic data
   const hasArabicData = vocabulary.some(item => item.arabic && item.arabic.trim() !== '');
 
-  // Initialize batch cards - only when batch changes, not when mode changes
+  // Initialize batch cards - only when batch changes or shuffle mode changes
   const initializeBatch = useCallback((batchIndex: number) => {
     if (!batches[batchIndex]) return;
     // Always create cards with pinyin data for both modes
-    const cards = createGameCards(batches[batchIndex], '3-column', true, showArabic);
+    const cards = createGameCards(batches[batchIndex], '3-column', true, showArabic, shuffleMode);
     setChineseCards(cards.chinese);
     setPinyinCards(cards.pinyin);
     setEnglishCards(cards.english);
@@ -141,7 +148,53 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     setCorrectMatches(0);
     setBatchScore(0);
     setGameStarted(true);
-  }, [batches, showArabic]);
+  }, [batches, showArabic, shuffleMode]);
+
+  // Handle shuffle mode change - reinitialize batch with new shuffle setting
+  const handleShuffleModeChange = useCallback((shuffle: boolean) => {
+    setShuffleMode(shuffle);
+    // Reinitialize current batch with new shuffle mode
+    if (batches[currentBatch]) {
+      const cards = createGameCards(batches[currentBatch], '3-column', true, showArabic, shuffle);
+      setChineseCards(cards.chinese);
+      setPinyinCards(cards.pinyin);
+      setEnglishCards(cards.english);
+      setArabicCards(cards.arabic);
+      setSelectedCards([]);
+    }
+  }, [batches, currentBatch, showArabic]);
+
+  // Handle column visibility change
+  const handleColumnVisibilityChange = useCallback((column: keyof ColumnVisibility, visible: boolean) => {
+    setColumnVisibility(prev => ({ ...prev, [column]: visible }));
+  }, []);
+
+  // Handle hint request - reveal matching cards for the selected card
+  const handleHint = useCallback((card: GameCard) => {
+    const vocabId = card.vocabId;
+    
+    // Find all matching cards across all columns
+    const highlightMatching = (cards: GameCard[]) => 
+      cards.map(c => c.vocabId === vocabId && !c.isMatched ? { ...c, isSelected: true } : c);
+    
+    setChineseCards(highlightMatching);
+    setPinyinCards(highlightMatching);
+    setEnglishCards(highlightMatching);
+    setArabicCards(highlightMatching);
+    
+    // Auto-select all matching cards
+    const allCards = [...chineseCards, ...pinyinCards, ...englishCards, ...arabicCards];
+    const matchingCards = allCards.filter(c => c.vocabId === vocabId && !c.isMatched);
+    setSelectedCards(matchingCards);
+    
+    toast({ 
+      title: 'Hint used', 
+      description: 'Matching cards highlighted! -5 points',
+      variant: 'default'
+    });
+    setScore(s => Math.max(0, s - 5));
+    setBatchScore(s => Math.max(0, s - 5));
+  }, [chineseCards, pinyinCards, englishCards, arabicCards, toast]);
 
   useEffect(() => {
     if (batches.length > 0) {
@@ -355,9 +408,13 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           showArabic={showArabic}
           hasArabicData={hasArabicData}
           fourthColumnLabel={fourthColumnHeader}
+          shuffleMode={shuffleMode}
+          columnVisibility={columnVisibility}
           onModeChange={setGameMode}
           onShowPinyinChange={setShowPinyin}
           onShowArabicChange={setShowArabic}
+          onShuffleModeChange={handleShuffleModeChange}
+          onColumnVisibilityChange={handleColumnVisibilityChange}
           muteVoice={muteVoice}
           muteSfx={muteSfx}
           voiceType={voiceType}
@@ -390,9 +447,11 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               mode={gameMode}
               showPinyin={showPinyin}
               showArabic={showArabic}
+              columnVisibility={columnVisibility}
               fontSize={fontSize}
               onCardClick={handleCardClick}
               onSpeak={speak}
+              onHint={handleHint}
             />
           </>
         )}

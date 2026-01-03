@@ -1,10 +1,17 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { GameMode } from '@/utils/gameLogic';
-import { Columns2, Columns3, Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type } from 'lucide-react';
+import { Columns2, Columns3, Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered } from 'lucide-react';
 
 export type VoiceType = 'free' | 'premium';
 export type FontSize = 'small' | 'medium' | 'large';
+
+export interface ColumnVisibility {
+  chinese: boolean;
+  pinyin: boolean;
+  english: boolean;
+  arabic: boolean;
+}
 
 interface GameSettingsProps {
   mode: GameMode;
@@ -12,9 +19,13 @@ interface GameSettingsProps {
   showArabic: boolean;
   hasArabicData: boolean;
   fourthColumnLabel?: string;
+  shuffleMode: boolean;
+  columnVisibility: ColumnVisibility;
   onModeChange: (mode: GameMode) => void;
   onShowPinyinChange: (show: boolean) => void;
   onShowArabicChange: (show: boolean) => void;
+  onShuffleModeChange: (shuffle: boolean) => void;
+  onColumnVisibilityChange: (column: keyof ColumnVisibility, visible: boolean) => void;
   muteVoice?: boolean;
   muteSfx?: boolean;
   voiceType?: VoiceType;
@@ -33,9 +44,13 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   showArabic,
   hasArabicData,
   fourthColumnLabel,
+  shuffleMode,
+  columnVisibility,
   onModeChange,
   onShowPinyinChange,
   onShowArabicChange,
+  onShuffleModeChange,
+  onColumnVisibilityChange,
   muteVoice = false,
   muteSfx = false,
   voiceType = 'free',
@@ -81,42 +96,107 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         </button>
       </div>
 
-      {/* Pinyin Toggle - always visible, controls visibility in 2-col mode, disabled in 3-col */}
-      <button
-        onClick={() => onShowPinyinChange(!showPinyin)}
-        disabled={mode === '3-column'}
-        className={cn(
-          'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
-          mode === '3-column'
-            ? 'bg-primary/50 border-primary/50 text-primary-foreground/70 cursor-not-allowed'
-            : showPinyin 
-              ? 'bg-primary border-primary text-primary-foreground' 
-              : 'bg-secondary border-border text-muted-foreground'
-        )}
-        title={mode === '3-column' ? 'Pinyin always shown in 3-column mode' : (showPinyin ? 'Hide Pinyin' : 'Show Pinyin')}
-      >
-        {(showPinyin || mode === '3-column') ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-        <span>Pinyin</span>
-      </button>
-
-      {/* Arabic Toggle - only show if data has Arabic */}
-      {hasArabicData && (
+      {/* Shuffle/Sequential Toggle */}
+      <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
         <button
-          onClick={() => onShowArabicChange(!showArabic)}
+          onClick={() => onShuffleModeChange(true)}
           disabled={disabled}
           className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
-            showArabic 
-              ? 'bg-game-arabic border-game-arabic text-white' 
-              : 'bg-secondary border-border text-muted-foreground',
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+            shuffleMode 
+              ? 'bg-primary text-primary-foreground' 
+              : 'text-muted-foreground hover:text-foreground',
             disabled && 'opacity-50 cursor-not-allowed'
           )}
-          title={showArabic ? 'Hide Arabic' : 'Show Arabic'}
+          title="Shuffle words randomly"
         >
-          {showArabic ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-          <span>{fourthColumnLabel || 'عربي'}</span>
+          <Shuffle className="w-4 h-4" />
+          <span className="hidden sm:inline">Shuffle</span>
         </button>
-      )}
+        <button
+          onClick={() => onShuffleModeChange(false)}
+          disabled={disabled}
+          className={cn(
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all',
+            !shuffleMode 
+              ? 'bg-primary text-primary-foreground' 
+              : 'text-muted-foreground hover:text-foreground',
+            disabled && 'opacity-50 cursor-not-allowed'
+          )}
+          title="Show words in order"
+        >
+          <ListOrdered className="w-4 h-4" />
+          <span className="hidden sm:inline">Order</span>
+        </button>
+      </div>
+
+      {/* Column Visibility Toggles */}
+      <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
+        <button
+          onClick={() => onColumnVisibilityChange('chinese', !columnVisibility.chinese)}
+          disabled={disabled}
+          className={cn(
+            'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all',
+            columnVisibility.chinese 
+              ? 'bg-game-chinese text-white' 
+              : 'text-muted-foreground hover:text-foreground',
+            disabled && 'opacity-50 cursor-not-allowed'
+          )}
+          title={columnVisibility.chinese ? 'Hide Chinese' : 'Show Chinese'}
+        >
+          {columnVisibility.chinese ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+          <span>中</span>
+        </button>
+        <button
+          onClick={() => onColumnVisibilityChange('pinyin', !columnVisibility.pinyin)}
+          disabled={disabled || mode === '2-column'}
+          className={cn(
+            'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all',
+            mode === '2-column' 
+              ? 'opacity-50 cursor-not-allowed text-muted-foreground'
+              : columnVisibility.pinyin 
+                ? 'bg-game-pinyin text-white' 
+                : 'text-muted-foreground hover:text-foreground',
+            disabled && 'opacity-50 cursor-not-allowed'
+          )}
+          title={mode === '2-column' ? 'Pinyin column only in 3-col mode' : (columnVisibility.pinyin ? 'Hide Pinyin' : 'Show Pinyin')}
+        >
+          {columnVisibility.pinyin ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+          <span>拼</span>
+        </button>
+        <button
+          onClick={() => onColumnVisibilityChange('english', !columnVisibility.english)}
+          disabled={disabled}
+          className={cn(
+            'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all',
+            columnVisibility.english 
+              ? 'bg-game-english text-white' 
+              : 'text-muted-foreground hover:text-foreground',
+            disabled && 'opacity-50 cursor-not-allowed'
+          )}
+          title={columnVisibility.english ? 'Hide English' : 'Show English'}
+        >
+          {columnVisibility.english ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+          <span>EN</span>
+        </button>
+        {hasArabicData && (
+          <button
+            onClick={() => onColumnVisibilityChange('arabic', !columnVisibility.arabic)}
+            disabled={disabled}
+            className={cn(
+              'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all',
+              columnVisibility.arabic 
+                ? 'bg-game-arabic text-white' 
+                : 'text-muted-foreground hover:text-foreground',
+              disabled && 'opacity-50 cursor-not-allowed'
+            )}
+            title={columnVisibility.arabic ? 'Hide ' + (fourthColumnLabel || 'Arabic') : 'Show ' + (fourthColumnLabel || 'Arabic')}
+          >
+            {columnVisibility.arabic ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+            <span>{fourthColumnLabel?.substring(0, 2) || 'ع'}</span>
+          </button>
+        )}
+      </div>
 
       {/* Voice Type Toggle */}
       {onVoiceTypeChange && (
