@@ -15,10 +15,11 @@ import CelebrationModal from './CelebrationModal';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { BookOpen, LogIn, LogOut, User } from 'lucide-react';
+import { sampleVocabulary, sampleFourthColumnHeader } from '@/data/sampleVocabulary';
 
 const AVAILABLE_FILES = ['sample-vocabulary.xlsx'];
 const BATCH_SIZE = 5;
-const DEFAULT_FILE = 'sample-vocabulary.xlsx';
+const DEFAULT_FILE = null; // Start with sample data, no file selected
 
 export interface VocabularyGameProps {
   dataSource?: string;
@@ -127,12 +128,21 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     }
   }, [batchSize, toast, shuffleMode]);
 
+// Load sample vocabulary on startup, or file when selected
   useEffect(() => {
     if (selectedFile) {
       loadVocabulary(selectedFile);
       saveProgress({ selectedFile });
+    } else {
+      // Load sample vocabulary
+      setVocabulary(sampleVocabulary);
+      setFourthColumnHeader(sampleFourthColumnHeader);
+      setShowArabic(true);
+      const orderedData = shuffleMode ? sampleVocabulary : sortByPinyin(sampleVocabulary);
+      setBatches(createBatches(orderedData, batchSize));
+      setGameStarted(true);
     }
-  }, [selectedFile, loadVocabulary]);
+  }, [selectedFile, loadVocabulary, shuffleMode, batchSize]);
 
   // Check if vocabulary has Arabic data
   const hasArabicData = vocabulary.some(item => item.arabic && item.arabic.trim() !== '');
@@ -337,13 +347,19 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     }
   };
 
-  const handleUploadFile = async (file: File) => {
+const handleUploadFile = async (file: File) => {
     setIsLoading(true);
     const result = await parseExcelFile(file);
     if (result.success) {
       setVocabulary(result.data);
       setFourthColumnHeader(result.fourthColumnHeader);
-      setBatches(createBatches(result.data, batchSize));
+      // Check if uploaded data has Arabic/4th column data
+      const hasArabic = result.data.some(item => item.arabic && item.arabic.trim() !== '');
+      if (hasArabic) {
+        setShowArabic(true);
+      }
+      const orderedData = shuffleMode ? result.data : sortByPinyin(result.data);
+      setBatches(createBatches(orderedData, batchSize));
       setCurrentBatch(0);
       setScore(0);
       setCompletedBatches([]);
