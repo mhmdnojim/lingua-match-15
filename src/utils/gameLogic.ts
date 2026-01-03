@@ -32,7 +32,8 @@ export function createGameCards(
   vocabulary: VocabularyItem[],
   mode: GameMode,
   showPinyin: boolean,
-  showArabic: boolean = false
+  showArabic: boolean = false,
+  shuffle: boolean = true
 ): { chinese: GameCard[]; pinyin: GameCard[]; english: GameCard[]; arabic: GameCard[] } {
   const chineseCards: GameCard[] = vocabulary.map(item => ({
     id: `chinese-${item.id}`,
@@ -80,10 +81,10 @@ export function createGameCards(
     : [];
 
   return {
-    chinese: shuffleArray(chineseCards),
-    pinyin: shuffleArray(pinyinCards),
-    english: shuffleArray(englishCards),
-    arabic: shuffleArray(arabicCards),
+    chinese: shuffle ? shuffleArray(chineseCards) : chineseCards,
+    pinyin: shuffle ? shuffleArray(pinyinCards) : pinyinCards,
+    english: shuffle ? shuffleArray(englishCards) : englishCards,
+    arabic: shuffle ? shuffleArray(arabicCards) : arabicCards,
   };
 }
 
