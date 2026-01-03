@@ -10,7 +10,7 @@ interface CardProps {
   showPinyin?: boolean;
   fontSize?: FontSize;
   onClick: (card: GameCard) => void;
-  onSpeak?: (text: string, language: 'chinese' | 'english') => void;
+  onSpeak?: (text: string, language: 'chinese' | 'english' | 'arabic') => void;
 }
 
 export const Card: React.FC<CardProps> = ({ card, showPinyin = true, fontSize = 'medium', onClick, onSpeak }) => {
@@ -20,9 +20,8 @@ export const Card: React.FC<CardProps> = ({ card, showPinyin = true, fontSize = 
     
     // Speak when clicking the card
     if (onSpeak && !card.isMatched) {
-      const language = card.type === 'english' ? 'english' : 'chinese';
-      const text = card.type === 'pinyin' ? card.content : card.content;
-      onSpeak(text, language);
+      const language = card.type === 'english' ? 'english' : card.type === 'arabic' ? 'arabic' : 'chinese';
+      onSpeak(card.content, language);
     }
   };
 
@@ -30,9 +29,8 @@ export const Card: React.FC<CardProps> = ({ card, showPinyin = true, fontSize = 
     e.stopPropagation();
     if (!onSpeak) return;
     
-    const language = card.type === 'english' ? 'english' : 'chinese';
-    const text = card.type === 'pinyin' ? card.content : card.content;
-    onSpeak(text, language);
+    const language = card.type === 'english' ? 'english' : card.type === 'arabic' ? 'arabic' : 'chinese';
+    onSpeak(card.content, language);
   };
 
   // Card background colors based on type - brighter and more vibrant
@@ -118,8 +116,8 @@ export const Card: React.FC<CardProps> = ({ card, showPinyin = true, fontSize = 
         {card.type === 'chinese' ? 'CHINESE' : card.type === 'english' ? 'ENGLISH' : card.type === 'arabic' ? 'عربي' : 'PINYIN'}
       </span>
 
-      {/* Audio button */}
-      {(card.type === 'chinese' || card.type === 'english') && onSpeak && !card.isMatched && (
+      {/* Audio button - for Chinese, English, and Arabic */}
+      {(card.type === 'chinese' || card.type === 'english' || card.type === 'arabic') && onSpeak && !card.isMatched && (
         <button
           onClick={handleSpeak}
           className={cn(

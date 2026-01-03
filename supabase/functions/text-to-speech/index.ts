@@ -35,8 +35,15 @@ serve(async (req) => {
       );
     }
 
-    // Lily (Chinese) and George (English) voices
-    const voiceId = language === 'chinese' ? 'pFZP5JQG7iQjIQuC4Bku' : 'JBFqnCBsd6RMkjVDRZzb';
+    // Voice selection: Lily (Chinese), George (English), Sarah (Arabic)
+    let voiceId: string;
+    if (language === 'chinese') {
+      voiceId = 'pFZP5JQG7iQjIQuC4Bku'; // Lily - Chinese
+    } else if (language === 'arabic') {
+      voiceId = 'EXAVITQu4vr4xnSDxMaL'; // Sarah - multilingual, good for Arabic
+    } else {
+      voiceId = 'JBFqnCBsd6RMkjVDRZzb'; // George - English
+    }
 
     console.log(`TTS request: "${text}" in ${language} with voice ${voiceId}`);
 

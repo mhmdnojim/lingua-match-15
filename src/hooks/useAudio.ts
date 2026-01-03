@@ -11,16 +11,16 @@ interface UseAudioOptions {
 export function useAudio({ muteVoice, muteSfx, voiceType = 'free' }: UseAudioOptions) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const speakWithWebSpeech = useCallback((text: string, language: 'chinese' | 'english') => {
+  const speakWithWebSpeech = useCallback((text: string, language: 'chinese' | 'english' | 'arabic') => {
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = language === 'chinese' ? 'zh-CN' : 'en-US';
+      utterance.lang = language === 'chinese' ? 'zh-CN' : language === 'arabic' ? 'ar-SA' : 'en-US';
       utterance.rate = 0.9;
       speechSynthesis.speak(utterance);
     }
   }, []);
 
-  const speakWithPremium = useCallback(async (text: string, language: 'chinese' | 'english'): Promise<boolean> => {
+  const speakWithPremium = useCallback(async (text: string, language: 'chinese' | 'english' | 'arabic'): Promise<boolean> => {
     try {
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/text-to-speech`,
@@ -66,7 +66,7 @@ export function useAudio({ muteVoice, muteSfx, voiceType = 'free' }: UseAudioOpt
     }
   }, []);
 
-  const speak = useCallback(async (text: string, language: 'chinese' | 'english') => {
+  const speak = useCallback(async (text: string, language: 'chinese' | 'english' | 'arabic') => {
     if (muteVoice) return;
 
     if (voiceType === 'premium') {
