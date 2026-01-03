@@ -128,7 +128,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     }
   }, [batchSize, toast, shuffleMode]);
 
-// Load sample vocabulary on startup, or file when selected
+// Load sample vocabulary on startup, or file when selected - only when file changes
   useEffect(() => {
     if (selectedFile) {
       loadVocabulary(selectedFile);
@@ -142,7 +142,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       setBatches(createBatches(orderedData, batchSize));
       setGameStarted(true);
     }
-  }, [selectedFile, loadVocabulary, shuffleMode, batchSize]);
+    // Note: shuffleMode is intentionally excluded - handleShuffleModeChange handles shuffle changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFile, batchSize]);
 
   // Check if vocabulary has Arabic data
   const hasArabicData = vocabulary.some(item => item.arabic && item.arabic.trim() !== '');
