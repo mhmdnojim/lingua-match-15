@@ -36,7 +36,15 @@ export const Card: React.FC<CardProps> = ({ card, showPinyin = true, fontSize = 
   // Card background colors based on type - brighter and more vibrant
   const getCardBackground = () => {
     if (card.isMatched) return 'bg-muted/40';
-    if (card.isSelected) return card.type === 'chinese' ? 'bg-game-chinese' : card.type === 'english' ? 'bg-game-english' : card.type === 'arabic' ? 'bg-game-arabic' : 'bg-game-pinyin';
+    if (card.isError) return 'bg-destructive/80';
+    if (card.isSelected) {
+      // Selected state - full color with glow and scale
+      if (card.type === 'chinese') return 'bg-game-chinese scale-110 shadow-xl shadow-game-chinese/50 ring-4 ring-white/40';
+      if (card.type === 'english') return 'bg-game-english scale-110 shadow-xl shadow-game-english/50 ring-4 ring-white/40';
+      if (card.type === 'arabic') return 'bg-game-arabic scale-110 shadow-xl shadow-game-arabic/50 ring-4 ring-white/40';
+      return 'bg-game-pinyin scale-110 shadow-xl shadow-game-pinyin/50 ring-4 ring-white/40';
+    }
+    // Default state
     if (card.type === 'chinese') return 'bg-game-chinese/70 hover:bg-game-chinese/90 hover:scale-105 hover:shadow-lg hover:shadow-game-chinese/30';
     if (card.type === 'english') return 'bg-game-english/70 hover:bg-game-english/90 hover:scale-105 hover:shadow-lg hover:shadow-game-english/30';
     if (card.type === 'arabic') return 'bg-game-arabic/70 hover:bg-game-arabic/90 hover:scale-105 hover:shadow-lg hover:shadow-game-arabic/30';
@@ -80,11 +88,11 @@ export const Card: React.FC<CardProps> = ({ card, showPinyin = true, fontSize = 
     <div
       onClick={handleClick}
       className={cn(
-        'relative flex flex-col items-center justify-center h-[100px] p-4 rounded-lg cursor-pointer transition-all duration-300',
+        'relative flex flex-col items-center justify-center h-[100px] p-4 rounded-lg cursor-pointer transition-all duration-300 z-0',
         getCardBackground(),
-        card.isSelected && !card.isMatched && 'card-selected ring-2 ring-foreground/30',
+        card.isSelected && !card.isMatched && 'z-10',
         card.isMatched && 'card-matched opacity-50 cursor-default',
-        card.isError && 'card-shake card-flash-error'
+        card.isError && 'card-shake'
       )}
     >
       {/* Pinyin display for Chinese cards - always reserve space */}
