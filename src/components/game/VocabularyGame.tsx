@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { VocabularyItem, fetchExcelFromUrl, parseExcelFile, createBatches } from '@/utils/excelParser';
-import { GameCard, GameMode, createGameCards, checkMatch, getRequiredSelections, calculateAccuracy } from '@/utils/gameLogic';
+import { GameCard, createGameCards, checkMatch, getRequiredSelections, calculateAccuracy, shuffleArray } from '@/utils/gameLogic';
 import { saveProgress, loadProgress, clearProgress, VoiceType, FontSize } from '@/utils/storage';
 import { useAudio } from '@/hooks/useAudio';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,7 +10,7 @@ import GameBoard from './GameBoard';
 import StatsPanel from './StatsPanel';
 import ProgressBar from './ProgressBar';
 import FileSelector from './FileSelector';
-import GameSettings, { ColumnVisibility } from './GameSettings';
+import GameSettings, { ColumnVisibility, ColumnMute } from './GameSettings';
 import CelebrationModal from './CelebrationModal';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,6 @@ const DEFAULT_FILE = 'sample-vocabulary.xlsx';
 
 export interface VocabularyGameProps {
   dataSource?: string;
-  mode?: GameMode;
   batchSize?: number;
   showPinyin?: boolean;
   onComplete?: () => void;
@@ -31,7 +30,6 @@ export interface VocabularyGameProps {
 
 export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   dataSource,
-  mode: initialMode,
   batchSize = BATCH_SIZE,
   showPinyin: initialShowPinyin,
   onComplete,
@@ -47,17 +45,22 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [batches, setBatches] = useState<VocabularyItem[][]>([]);
   const [currentBatch, setCurrentBatch] = useState(savedProgress.currentBatch);
   const [completedBatches, setCompletedBatches] = useState<number[]>(savedProgress.completedBatches);
-  const [gameMode, setGameMode] = useState<GameMode>(initialMode || savedProgress.gameMode);
   const [showPinyin, setShowPinyin] = useState(initialShowPinyin ?? savedProgress.showPinyin);
   const [showArabic, setShowArabic] = useState(savedProgress.showArabic);
   const [shuffleMode, setShuffleMode] = useState(true);
+  const [shuffledVocabulary, setShuffledVocabulary] = useState<VocabularyItem[]>([]);
   const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>({
     chinese: true,
     pinyin: true,
     english: true,
     arabic: true,
   });
-  const [muteVoice, setMuteVoice] = useState(savedProgress.muteVoice);
+  const [columnMute, setColumnMute] = useState<ColumnMute>({
+    chinese: false,
+    pinyin: false,
+    english: false,
+    arabic: false,
+  });
   const [muteSfx, setMuteSfx] = useState(savedProgress.muteSfx);
   const [voiceType, setVoiceType] = useState<VoiceType>((savedProgress as any).voiceType || 'free');
   const [fontSize, setFontSize] = useState<FontSize>((savedProgress as any).fontSize || 'medium');
@@ -79,7 +82,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [gameStarted, setGameStarted] = useState(false);
   const [fourthColumnHeader, setFourthColumnHeader] = useState<string | undefined>();
 
-  const { speak, playSuccess, playError, playCelebration, stopAudio } = useAudio({ muteVoice, muteSfx, voiceType });
+  const { speak, playSuccess, playError, playCelebration, stopAudio } = useAudio({ muteVoice: false, muteSfx, voiceType });
 
   // Auth state listener
   useEffect(() => {
@@ -169,6 +172,19 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     setColumnVisibility(prev => ({ ...prev, [column]: visible }));
   }, []);
 
+  // Handle column mute change
+  const handleColumnMuteChange = useCallback((column: keyof ColumnMute, mute: boolean) => {
+    setColumnMute(prev => ({ ...prev, [column]: mute }));
+  }, []);
+
+  // Speak with column mute awareness
+  const speakWithMute = useCallback((text: string, language: 'chinese' | 'english' | 'arabic', cardType: string) => {
+    if (cardType === 'chinese' && columnMute.chinese) return;
+    if (cardType === 'english' && columnMute.english) return;
+    if (cardType === 'arabic' && columnMute.arabic) return;
+    speak(text, language as 'chinese' | 'english');
+  }, [speak, columnMute]);
+
   // Handle hint request - reveal matching cards for the selected card
   const handleHint = useCallback((card: GameCard) => {
     const vocabId = card.vocabId;
@@ -231,15 +247,24 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     setArabicCards(update);
   };
 
-  // Check for match
+  // Check for match - count visible columns for required selections
   useEffect(() => {
-    const required = getRequiredSelections(gameMode, showArabic);
-    if (selectedCards.length !== required) return;
+    // Calculate required selections based on visible columns
+    let requiredCount = 0;
+    if (columnVisibility.chinese) requiredCount++;
+    if (columnVisibility.pinyin && pinyinCards.length > 0) requiredCount++;
+    if (columnVisibility.english) requiredCount++;
+    if (columnVisibility.arabic && showArabic && arabicCards.length > 0) requiredCount++;
+    
+    if (selectedCards.length !== requiredCount || requiredCount < 2) return;
 
     setAttempts(a => a + 1);
-    const result = checkMatch(selectedCards, gameMode, showArabic);
+    
+    // Check if all selected cards have the same vocabId
+    const vocabIds = selectedCards.map(c => c.vocabId);
+    const isMatch = vocabIds.every(id => id === vocabIds[0]);
 
-    if (result.isMatch) {
+    if (isMatch) {
       playSuccess();
       setCorrectMatches(c => c + 1);
       setScore(s => s + 10);
@@ -285,7 +310,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         setSelectedCards([]);
       }, 500);
     }
-  }, [selectedCards, gameMode, showArabic, playSuccess, playError, playCelebration, matchedPairs, batches, currentBatch, completedBatches, score]);
+  }, [selectedCards, columnVisibility, showArabic, pinyinCards.length, arabicCards.length, playSuccess, playError, playCelebration, matchedPairs, batches, currentBatch, completedBatches, score]);
 
   const handleSelectBatch = (index: number) => {
     setCurrentBatch(index);
@@ -334,8 +359,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   };
 
   useEffect(() => {
-    saveProgress({ gameMode, showPinyin, showArabic, muteVoice, muteSfx, voiceType, fontSize } as any);
-  }, [gameMode, showPinyin, showArabic, muteVoice, muteSfx, voiceType, fontSize]);
+    saveProgress({ showPinyin, showArabic, muteSfx, voiceType, fontSize } as any);
+  }, [showPinyin, showArabic, muteSfx, voiceType, fontSize]);
 
   return (
     <div className={cn('min-h-screen bg-background p-4 md:p-6', className)}>
@@ -403,23 +428,21 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
         {/* Game settings */}
         <GameSettings
-          mode={gameMode}
           showPinyin={showPinyin}
           showArabic={showArabic}
           hasArabicData={hasArabicData}
           fourthColumnLabel={fourthColumnHeader}
           shuffleMode={shuffleMode}
           columnVisibility={columnVisibility}
-          onModeChange={setGameMode}
+          columnMute={columnMute}
           onShowPinyinChange={setShowPinyin}
           onShowArabicChange={setShowArabic}
           onShuffleModeChange={handleShuffleModeChange}
           onColumnVisibilityChange={handleColumnVisibilityChange}
-          muteVoice={muteVoice}
+          onColumnMuteChange={handleColumnMuteChange}
           muteSfx={muteSfx}
           voiceType={voiceType}
           fontSize={fontSize}
-          onMuteVoiceChange={setMuteVoice}
           onMuteSfxChange={setMuteSfx}
           onVoiceTypeChange={setVoiceType}
           onFontSizeChange={setFontSize}
@@ -444,13 +467,13 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               pinyinCards={pinyinCards}
               englishCards={englishCards}
               arabicCards={arabicCards}
-              mode={gameMode}
               showPinyin={showPinyin}
               showArabic={showArabic}
               columnVisibility={columnVisibility}
+              columnMute={columnMute}
               fontSize={fontSize}
               onCardClick={handleCardClick}
-              onSpeak={speak}
+              onSpeak={speakWithMute}
               onHint={handleHint}
             />
           </>

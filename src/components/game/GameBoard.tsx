@@ -1,8 +1,8 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import Card, { FontSize } from './Card';
-import { GameCard, GameMode } from '@/utils/gameLogic';
-import { ColumnVisibility } from './GameSettings';
+import { GameCard, CardType } from '@/utils/gameLogic';
+import { ColumnVisibility, ColumnMute } from './GameSettings';
 import { HelpCircle } from 'lucide-react';
 
 interface GameBoardProps {
@@ -10,13 +10,13 @@ interface GameBoardProps {
   pinyinCards: GameCard[];
   englishCards: GameCard[];
   arabicCards: GameCard[];
-  mode: GameMode;
   showPinyin: boolean;
   showArabic: boolean;
   columnVisibility: ColumnVisibility;
+  columnMute: ColumnMute;
   fontSize?: FontSize;
   onCardClick: (card: GameCard) => void;
-  onSpeak: (text: string, language: 'chinese' | 'english') => void;
+  onSpeak: (text: string, language: 'chinese' | 'english' | 'arabic', cardType: string) => void;
   onHint: (card: GameCard) => void;
 }
 
@@ -25,19 +25,19 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   pinyinCards,
   englishCards,
   arabicCards,
-  mode,
   showPinyin,
   showArabic,
   columnVisibility,
+  columnMute,
   fontSize = 'medium',
   onCardClick,
   onSpeak,
   onHint,
 }) => {
-  // Calculate visible columns based on mode and visibility settings
+  // Calculate visible columns based on visibility settings
   const visibleColumns: string[] = [];
   if (columnVisibility.chinese) visibleColumns.push('chinese');
-  if (mode === '3-column' && columnVisibility.pinyin) visibleColumns.push('pinyin');
+  if (columnVisibility.pinyin && pinyinCards.length > 0) visibleColumns.push('pinyin');
   if (columnVisibility.english) visibleColumns.push('english');
   if (showArabic && columnVisibility.arabic && arabicCards.length > 0) visibleColumns.push('arabic');
   
@@ -61,10 +61,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             <div key={card.id} className="relative group">
               <Card
                 card={card}
-                showPinyin={mode === '2-column' && showPinyin}
+                showPinyin={showPinyin}
                 fontSize={fontSize}
                 onClick={onCardClick}
-                onSpeak={onSpeak}
+                onSpeak={(text, lang) => onSpeak(text, lang, 'chinese')}
               />
               {!card.isMatched && (
                 <button
@@ -80,8 +80,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         </div>
       )}
 
-      {/* Pinyin Column (3-column mode only) */}
-      {mode === '3-column' && columnVisibility.pinyin && (
+      {/* Pinyin Column */}
+      {columnVisibility.pinyin && pinyinCards.length > 0 && (
         <div className="flex flex-col gap-3">
           <h3 className="text-center text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wider">
             拼音 PINYIN
@@ -119,7 +119,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 card={card}
                 fontSize={fontSize}
                 onClick={onCardClick}
-                onSpeak={onSpeak}
+                onSpeak={(text, lang) => onSpeak(text, lang, 'english')}
               />
               {!card.isMatched && (
                 <button
@@ -147,6 +147,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 card={card}
                 fontSize={fontSize}
                 onClick={onCardClick}
+                onSpeak={(text, lang) => onSpeak(text, lang, 'arabic')}
               />
               {!card.isMatched && (
                 <button
