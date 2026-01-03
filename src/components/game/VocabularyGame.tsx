@@ -65,8 +65,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [muteSfx, setMuteSfx] = useState(savedProgress.muteSfx);
   const [voiceType, setVoiceType] = useState<VoiceType>((savedProgress as any).voiceType || 'free');
   const [fontSize, setFontSize] = useState<FontSize>((savedProgress as any).fontSize || 'medium');
-  // Default to sample vocabulary if no file selected
-  const [selectedFile, setSelectedFile] = useState<string | null>(dataSource || savedProgress.selectedFile || DEFAULT_FILE);
+  // Start with sample vocabulary (null) - only use saved file if explicitly provided via dataSource
+  const [selectedFile, setSelectedFile] = useState<string | null>(dataSource || null);
   const [chineseCards, setChineseCards] = useState<GameCard[]>([]);
   const [pinyinCards, setPinyinCards] = useState<GameCard[]>([]);
   const [englishCards, setEnglishCards] = useState<GameCard[]>([]);
