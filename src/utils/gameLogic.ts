@@ -28,6 +28,15 @@ export function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
+// Sort by pinyin alphabetically (A-Z)
+export function sortByPinyin<T extends { pinyin?: string }>(array: T[]): T[] {
+  return [...array].sort((a, b) => {
+    const pinyinA = (a.pinyin || '').toLowerCase();
+    const pinyinB = (b.pinyin || '').toLowerCase();
+    return pinyinA.localeCompare(pinyinB, 'en');
+  });
+}
+
 export function createGameCards(
   vocabulary: VocabularyItem[],
   mode: GameMode,
@@ -35,7 +44,10 @@ export function createGameCards(
   showArabic: boolean = false,
   shuffle: boolean = true
 ): { chinese: GameCard[]; pinyin: GameCard[]; english: GameCard[]; arabic: GameCard[] } {
-  const chineseCards: GameCard[] = vocabulary.map(item => ({
+  // Sort vocabulary by pinyin when not shuffling
+  const sortedVocabulary = shuffle ? vocabulary : sortByPinyin(vocabulary);
+  
+  const chineseCards: GameCard[] = sortedVocabulary.map(item => ({
     id: `chinese-${item.id}`,
     vocabId: item.id,
     type: 'chinese' as CardType,
@@ -46,7 +58,7 @@ export function createGameCards(
     isError: false,
   }));
 
-  const englishCards: GameCard[] = vocabulary.map(item => ({
+  const englishCards: GameCard[] = sortedVocabulary.map(item => ({
     id: `english-${item.id}`,
     vocabId: item.id,
     type: 'english' as CardType,
@@ -57,7 +69,7 @@ export function createGameCards(
   }));
 
   const pinyinCards: GameCard[] = mode === '3-column' 
-    ? vocabulary.map(item => ({
+    ? sortedVocabulary.map(item => ({
         id: `pinyin-${item.id}`,
         vocabId: item.id,
         type: 'pinyin' as CardType,
@@ -69,7 +81,7 @@ export function createGameCards(
     : [];
 
   const arabicCards: GameCard[] = showArabic
-    ? vocabulary.filter(item => item.arabic).map(item => ({
+    ? sortedVocabulary.filter(item => item.arabic).map(item => ({
         id: `arabic-${item.id}`,
         vocabId: item.id,
         type: 'arabic' as CardType,
@@ -80,6 +92,7 @@ export function createGameCards(
       }))
     : [];
 
+  // Shuffle cards within each column when shuffle mode is on
   return {
     chinese: shuffle ? shuffleArray(chineseCards) : chineseCards,
     pinyin: shuffle ? shuffleArray(pinyinCards) : pinyinCards,

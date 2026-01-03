@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { VocabularyItem, fetchExcelFromUrl, parseExcelFile, createBatches } from '@/utils/excelParser';
-import { GameCard, createGameCards, checkMatch, getRequiredSelections, calculateAccuracy, shuffleArray } from '@/utils/gameLogic';
+import { GameCard, createGameCards, checkMatch, getRequiredSelections, calculateAccuracy, shuffleArray, sortByPinyin } from '@/utils/gameLogic';
 import { saveProgress, loadProgress, clearProgress, VoiceType, FontSize } from '@/utils/storage';
 import { useAudio } from '@/hooks/useAudio';
 import { supabase } from '@/integrations/supabase/client';
@@ -112,7 +112,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       if (result.success) {
         setVocabulary(result.data);
         setFourthColumnHeader(result.fourthColumnHeader);
-        const newBatches = createBatches(result.data, batchSize);
+        // Sort by pinyin when not shuffling, otherwise keep original order (will be shuffled per batch)
+        const orderedData = shuffleMode ? result.data : sortByPinyin(result.data);
+        const newBatches = createBatches(orderedData, batchSize);
         setBatches(newBatches);
         toast({ title: 'Vocabulary loaded', description: `${result.data.length} words loaded` });
       } else {
@@ -123,7 +125,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [batchSize, toast]);
+  }, [batchSize, toast, shuffleMode]);
 
   useEffect(() => {
     if (selectedFile) {
@@ -153,19 +155,27 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     setGameStarted(true);
   }, [batches, showArabic, shuffleMode]);
 
-  // Handle shuffle mode change - reinitialize batch with new shuffle setting
+  // Handle shuffle mode change - recreate batches with new ordering
   const handleShuffleModeChange = useCallback((shuffle: boolean) => {
     setShuffleMode(shuffle);
-    // Reinitialize current batch with new shuffle mode
-    if (batches[currentBatch]) {
-      const cards = createGameCards(batches[currentBatch], '3-column', true, showArabic, shuffle);
-      setChineseCards(cards.chinese);
-      setPinyinCards(cards.pinyin);
-      setEnglishCards(cards.english);
-      setArabicCards(cards.arabic);
-      setSelectedCards([]);
+    
+    // Recreate batches: sort by pinyin when not shuffling
+    if (vocabulary.length > 0) {
+      const orderedData = shuffle ? vocabulary : sortByPinyin(vocabulary);
+      const newBatches = createBatches(orderedData, batchSize);
+      setBatches(newBatches);
+      
+      // Reinitialize current batch with new cards
+      if (newBatches[currentBatch]) {
+        const cards = createGameCards(newBatches[currentBatch], '3-column', true, showArabic, shuffle);
+        setChineseCards(cards.chinese);
+        setPinyinCards(cards.pinyin);
+        setEnglishCards(cards.english);
+        setArabicCards(cards.arabic);
+        setSelectedCards([]);
+      }
     }
-  }, [batches, currentBatch, showArabic]);
+  }, [vocabulary, batchSize, currentBatch, showArabic]);
 
   // Handle column visibility change
   const handleColumnVisibilityChange = useCallback((column: keyof ColumnVisibility, visible: boolean) => {
