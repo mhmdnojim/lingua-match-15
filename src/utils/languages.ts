@@ -163,3 +163,9 @@ export const COLUMN_STYLES = [
 export function columnStyle(index: number) {
   return COLUMN_STYLES[index % COLUMN_STYLES.length];
 }
+
+/** Code of the romanization pseudo-language attached to a language, if any */
+export function romanizationCodeFor(code: string): string | null {
+  const found = LANGUAGES.find(l => l.romanizationOf === code);
+  return found ? found.code : null;
+}
