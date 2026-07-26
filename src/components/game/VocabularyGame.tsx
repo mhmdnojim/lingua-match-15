@@ -602,6 +602,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
             <GameBoard
               columns={columns}
               cards={cards}
+              loadingLangs={isTranslating ? columns.map(c => c.lang) : []}
               fontSize={fontSize}
               onCardClick={handleCardClick}
               onSpeak={handleSpeak}
