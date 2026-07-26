@@ -406,14 +406,15 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     autoTranslatedRef.current = key;
     translateMissing(scopeItems, translationColumns, mainLang);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [batches, currentBatch, translationColumns, mainLang, cloudReady, translateScope, vocabulary]);
+  }, [batches, currentBatch, translationColumns, mainLang, cloudReady, translateScope, vocabulary, translationHalted]);
 
   /** Translate every word still missing a translation in the whole file */
   const handleTranslateWholeFile = useCallback(() => {
     if (vocabulary.length === 0 || isTranslating) return;
-    autoTranslatedRef.current = '';
+    resumeTranslation();
     translateMissing(vocabulary, translationColumns, mainLang);
-  }, [vocabulary, translationColumns, mainLang, isTranslating, translateMissing]);
+  }, [vocabulary, translationColumns, mainLang, isTranslating, translateMissing, resumeTranslation]);
+
 
   // Pull the saved set from the account (or seed it) when signed in
   const cloudPulledRef = useRef<string>('');
