@@ -566,24 +566,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     if (totalWords > batchSize) setScopePrompt({ count: totalWords });
 
     const [first, ...rest] = sheets;
-    const auto = autoMapping(first);
 
-    if (auto) {
-      const langs = langOrder(first, auto);
-      const imported: string[] = [];
-      if (applyMapping(first, auto, first.fileName)) imported.push(first.fileName || 'upload');
-      rest.forEach(sheet => {
-        if (applyMapping(sheet, mappingByPosition(sheet, langs), sheet.fileName)) {
-          imported.push(sheet.fileName || 'upload');
-        }
-      });
-      if (imported.length > 1) {
-        toast({ title: `${imported.length} files imported`, description: imported.join(', ') });
-      }
-      return;
-    }
-
-    // Ask once for the first file, then reuse that language order for the rest
+    // Always let the user confirm column languages and roles for the first file,
+    // then reuse that language order for the rest
     setPendingQueue(rest);
     setPendingSheet(first);
   };
@@ -597,13 +582,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     });
   };
 
-  /** Import straight away when the first column's language is recognised */
+  /** Single file: always open the picker, pre-filled with the detected languages */
   const handleSheetReady = (sheet: SheetData) => {
-    const auto = autoMapping(sheet);
-    if (auto) {
-      applyMapping(sheet, auto, sheet.fileName);
-      return;
-    }
     setPendingSheet(sheet);
   };
 
