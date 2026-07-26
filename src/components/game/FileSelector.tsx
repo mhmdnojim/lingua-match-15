@@ -1,20 +1,24 @@
 import React, { useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { Upload, FileSpreadsheet, ChevronDown } from 'lucide-react';
+import { Upload, FileSpreadsheet, ChevronDown, Trash2 } from 'lucide-react';
 
 interface FileSelectorProps {
   selectedFile: string | null;
   availableFiles: string[];
   onSelectFile: (fileName: string) => void;
   onUploadFiles: (files: File[]) => void;
+  onDeleteFile?: (fileName: string) => void;
   className?: string;
 }
+
 
 export const FileSelector: React.FC<FileSelectorProps> = ({
   selectedFile,
   availableFiles,
   onSelectFile,
   onUploadFiles,
+  onDeleteFile,
+
   className,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -66,6 +70,25 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
         <Upload className="w-4 h-4" />
         <span>Upload</span>
       </button>
+
+      {onDeleteFile && selectedFile && (
+        <button
+          onClick={() => {
+            if (window.confirm(`Delete "${selectedFile}" from your vocabulary list?`)) {
+              onDeleteFile(selectedFile);
+            }
+          }}
+          title={`Delete ${selectedFile}`}
+          aria-label={`Delete ${selectedFile}`}
+          className={cn(
+            'flex items-center justify-center p-2 rounded-lg',
+            'border border-destructive text-destructive',
+            'hover:bg-destructive/10 transition-colors duration-200',
+          )}
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      )}
 
       <input
         ref={fileInputRef}

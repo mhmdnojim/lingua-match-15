@@ -204,3 +204,13 @@ export function loadVocabularySet(source: string): StoredVocabulary | null {
     return null;
   }
 }
+
+export function deleteVocabularySet(source: string): void {
+  try {
+    localStorage.removeItem(setKey(source));
+    const list = listLocalSources().filter(s => s !== source);
+    localStorage.setItem(LIBRARY_KEY, JSON.stringify(list));
+  } catch (error) {
+    console.warn('Failed to delete vocabulary set:', error);
+  }
+}

@@ -24,6 +24,7 @@ import {
   saveVocabulary,
   loadVocabularyCache,
   saveVocabularySet,
+  deleteVocabularySet,
   loadVocabularySet,
   listLocalSources,
   saveUiState,
@@ -35,7 +36,7 @@ import {
 import { getLanguage, romanizationCodeFor, hasRomanization } from '@/utils/languages';
 import { exportVocabularyToExcel } from '@/utils/exportExcel';
 import { translateWords } from '@/utils/translate';
-import { fetchCloudSet, saveCloudSet, filledCount } from '@/utils/cloudVocabulary';
+import { fetchCloudSet, saveCloudSet, deleteCloudSet, filledCount } from '@/utils/cloudVocabulary';
 import { useAudio } from '@/hooks/useAudio';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -461,7 +462,38 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFile]);
 
+  /** Keep every upload: an already used name gets " (1)", " (2)"… appended */
+  const uniqueSourceName = (name: string): string => {
+    const taken = new Set([...listLocalSources(), ...library]);
+    if (!taken.has(name)) return name;
+    const match = name.match(/^(.*?)(\.[^.]+)?$/);
+    const base = match?.[1] || name;
+    const ext = match?.[2] || '';
+    let index = 1;
+    while (taken.has(`${base} (${index})${ext}`)) index += 1;
+    return `${base} (${index})${ext}`;
+  };
+
+  /** Remove an uploaded file from the picker, locally and from the account */
+  const handleDeleteFile = (source: string) => {
+    deleteVocabularySet(source);
+    if (userRef.current) deleteCloudSet(source);
+    const remaining = library.filter(s => s !== source);
+    setLibrary(remaining);
+    if (selectedFile === source) {
+      const next = remaining[0] || null;
+      setSelectedFile(next);
+      if (!next) {
+        setVocabulary([]);
+        setCurrentBatch(0);
+        setCompletedBatches([]);
+      }
+    }
+    toast({ title: 'File deleted', description: `${source} was removed from your vocabulary list.` });
+  };
+
   /** Upload one or many Excel files — each becomes its own entry in the picker */
+
   /** Reuse one language order for every following file, matched by column position */
   const mappingByPosition = (sheet: SheetData, langs: string[]): ColumnMapping => {
     const mapping: ColumnMapping = {};
@@ -583,7 +615,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       return false;
     }
 
-    const source = sourceName || selectedFile || 'upload';
+    const source = sourceName ? uniqueSourceName(sourceName) : selectedFile || 'upload';
     saveVocabularySet({ items, mainLang: newMain, source });
     setLibrary(prev => (prev.includes(source) ? prev : [...prev, source]));
     if (userRef.current) {
@@ -997,6 +1029,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               availableFiles={library}
               onSelectFile={setSelectedFile}
               onUploadFiles={handleUploadFiles}
+              onDeleteFile={handleDeleteFile}
             />
           }
         />
