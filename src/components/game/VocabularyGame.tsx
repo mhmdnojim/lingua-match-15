@@ -174,6 +174,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     setBatches(createBatches(ordered, batchSize));
   }, [vocabulary, shuffleMode, mainLang, batchSize]);
 
+  const cancelTranslationRef = useRef(false);
+
   /** Fill in missing translations for the given items using AI */
   const translateMissing = useCallback(
     async (items: VocabularyItem[], activeColumns: ColumnConfig[], source: string, instruction?: string, force = false) => {
@@ -195,9 +197,15 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         effectiveSource = best;
       }
 
-      const targets = activeColumns.filter(c => c.lang !== effectiveSource);
+      // When the main column itself is empty, only fill the main column first —
+      // never translate other columns in the same pass.
+      const scopedColumns =
+        effectiveSource !== source ? activeColumns.filter(c => c.lang === source) : activeColumns;
+
+      const targets = scopedColumns.filter(c => c.lang !== effectiveSource);
       if (targets.length === 0) return;
 
+      cancelTranslationRef.current = false;
       setIsTranslating(true);
 
       // Total work = every word that needs a translation across all target columns
@@ -218,12 +226,14 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
       try {
         for (const column of targets) {
+          if (cancelTranslationRef.current) break;
           const pending = pendingByColumn.get(column.lang) || [];
           if (pending.length === 0) continue;
 
           // Translate in chunks so large datasets (all batches) stay within request limits
           const CHUNK = 25;
           for (let start = 0; start < pending.length; start += CHUNK) {
+            if (cancelTranslationRef.current) break;
             const chunk = pending.slice(start, start + CHUNK);
             const words = chunk.map(item => item.values[effectiveSource] || '');
             setTranslateProgress({
@@ -262,6 +272,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           variant: 'destructive',
         });
       } finally {
+        cancelTranslationRef.current = false;
         setIsTranslating(false);
         setTranslateProgress(null);
       }
@@ -833,11 +844,23 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
                   ? `Translating to ${getLanguage(translateProgress.lang).native}…`
                   : 'Generating translations…'}
               </span>
-              {translateProgress && translateProgress.total > 0 && (
-                <span className="text-muted-foreground tabular-nums">
-                  {translateProgress.done}/{translateProgress.total} words
-                </span>
-              )}
+              <span className="flex items-center gap-2">
+                {translateProgress && translateProgress.total > 0 && (
+                  <span className="text-muted-foreground tabular-nums">
+                    {translateProgress.done}/{translateProgress.total} words
+                  </span>
+                )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    cancelTranslationRef.current = true;
+                    autoTranslatedRef.current = 'cancelled';
+                  }}
+                >
+                  Stop
+                </Button>
+              </span>
             </div>
 
             <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
