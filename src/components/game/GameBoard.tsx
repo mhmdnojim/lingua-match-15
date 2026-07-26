@@ -95,7 +95,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="max-h-72">
-                    {(originalIndex === 0 ? MAIN_LANGUAGES : PICKABLE_LANGUAGES).map(option => (
+                    {(() => {
+                      const base = originalIndex === 0 ? MAIN_LANGUAGES : PICKABLE_LANGUAGES;
+                      return base.some(l => l.code === column.lang) ? base : [language, ...base];
+                    })().map(option => (
                       <SelectItem
                         key={option.code}
                         value={option.code}
