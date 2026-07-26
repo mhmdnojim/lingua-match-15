@@ -578,7 +578,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   };
 
   const handleUploadFiles = async (files: File[]) => {
+    resumeTranslation();
     setIsLoading(true);
+
     const sheets: SheetData[] = [];
 
     for (const file of files) {
