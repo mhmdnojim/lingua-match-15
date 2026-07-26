@@ -462,10 +462,33 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   }, [selectedFile]);
 
   /** Upload one or many Excel files — each becomes its own entry in the picker */
+  /** Reuse one language order for every following file, matched by column position */
+  const mappingByPosition = (sheet: SheetData, langs: string[]): ColumnMapping => {
+    const mapping: ColumnMapping = {};
+    sheet.headers.forEach((header, index) => {
+      mapping[header] = langs[index] || 'ignore';
+    });
+    return mapping;
+  };
+
+  const langOrder = (sheet: SheetData, mapping: ColumnMapping): string[] =>
+    sheet.headers.map(h => mapping[h] || 'ignore');
+
+  /** Import the remaining files with the language order chosen for the first file */
+  const applyOrderToRest = (sheets: SheetData[], langs: string[]) => {
+    const imported: string[] = [];
+    sheets.forEach(sheet => {
+      const mapping = mappingByPosition(sheet, langs);
+      if (applyMapping(sheet, mapping, sheet.fileName)) imported.push(sheet.fileName || 'upload');
+    });
+    if (imported.length > 0) {
+      toast({ title: `${imported.length} more file(s) imported`, description: imported.join(', ') });
+    }
+  };
+
   const handleUploadFiles = async (files: File[]) => {
     setIsLoading(true);
-    const imported: string[] = [];
-    const pending: SheetData[] = [];
+    const sheets: SheetData[] = [];
 
     for (const file of files) {
       const result = await parseExcelFile(file);
@@ -473,23 +496,32 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         toast({ title: `Could not read ${file.name}`, description: result.error, variant: 'destructive' });
         continue;
       }
-      const auto = autoMapping(result);
-      if (auto) {
-        if (applyMapping(result, auto, file.name)) imported.push(file.name);
-      } else {
-        pending.push({ ...result, fileName: file.name } as SheetData);
-      }
+      sheets.push({ ...result, fileName: file.name } as SheetData);
     }
     setIsLoading(false);
+    if (sheets.length === 0) return;
 
-    if (imported.length > 1) {
-      toast({ title: `${imported.length} files imported`, description: imported.join(', ') });
+    const [first, ...rest] = sheets;
+    const auto = autoMapping(first);
+
+    if (auto) {
+      const langs = langOrder(first, auto);
+      const imported: string[] = [];
+      if (applyMapping(first, auto, first.fileName)) imported.push(first.fileName || 'upload');
+      rest.forEach(sheet => {
+        if (applyMapping(sheet, mappingByPosition(sheet, langs), sheet.fileName)) {
+          imported.push(sheet.fileName || 'upload');
+        }
+      });
+      if (imported.length > 1) {
+        toast({ title: `${imported.length} files imported`, description: imported.join(', ') });
+      }
+      return;
     }
-    // Ask for a mapping one file at a time so no upload is dropped
-    if (pending.length > 0) {
-      setPendingQueue(pending.slice(1));
-      setPendingSheet(pending[0]);
-    }
+
+    // Ask once for the first file, then reuse that language order for the rest
+    setPendingQueue(rest);
+    setPendingSheet(first);
   };
 
   /** Move on to the next file that still needs a manual column mapping */
@@ -514,8 +546,14 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const handleConfirmMapping = (mapping: ColumnMapping) => {
     if (!pendingSheet) return;
     applyMapping(pendingSheet, mapping, pendingSheet.fileName);
-    advanceQueue();
+    const langs = langOrder(pendingSheet, mapping);
+    setPendingSheet(null);
+    setPendingQueue(queue => {
+      if (queue.length > 0) applyOrderToRest(queue, langs);
+      return [];
+    });
   };
+
 
 
   const applyMapping = (sheet: SheetData, mapping: ColumnMapping, sourceName?: string): boolean => {
