@@ -1069,7 +1069,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         <ImportMappingDialog
           open={pendingSheet !== null}
           sheet={pendingSheet}
-          onOpenChange={open => !open && setPendingSheet(null)}
+          onOpenChange={open => !open && advanceQueue()}
           onConfirm={handleConfirmMapping}
         />
 
