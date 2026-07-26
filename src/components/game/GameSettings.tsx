@@ -73,8 +73,11 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   onThemeChange,
 
 }) => {
+  const [themeOpen, setThemeOpen] = React.useState(false);
+  const activeTheme = THEMES.find(t => t.id === themeId);
 
   const romanizableColumns = columns.filter(c => getLanguage(c.lang).romanizationLabel);
+
 
   return (
     <div className={cn(settingsOpen ? 'space-y-2' : '', className)}>
