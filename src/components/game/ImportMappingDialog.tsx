@@ -211,7 +211,7 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
           </table>
         </div>
 
-        </div>
+
 
         {duplicate && (
           <p className="text-sm text-destructive">Two columns are mapped to the same language — pick different ones.</p>
