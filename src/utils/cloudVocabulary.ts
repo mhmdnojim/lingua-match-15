@@ -86,3 +86,20 @@ export async function saveCloudSet(set: Omit<CloudSet, 'updatedAt'>): Promise<bo
   }
   return true;
 }
+
+export async function deleteCloudSet(source: string): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { error } = await supabase
+    .from('vocabulary_sets')
+    .delete()
+    .eq('user_id', user.id)
+    .eq('source', source);
+
+  if (error) {
+    console.warn('Failed to delete cloud vocabulary:', error.message);
+    return false;
+  }
+  return true;
+}
