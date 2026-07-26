@@ -775,6 +775,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           disabled={isLoading}
           settingsOpen={settingsOpen}
           onSettingsOpenChange={setSettingsOpen}
+          showToggle={false}
+
         />
 
         {isTranslating && (
