@@ -87,6 +87,12 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [batchScore, setBatchScore] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [translateProgress, setTranslateProgress] = useState<{
+    lang: string;
+    done: number;
+    total: number;
+    words: string[];
+  } | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
   const [languagesOpen, setLanguagesOpen] = useState(false);
   const [wordEditorOpen, setWordEditorOpen] = useState(false);
