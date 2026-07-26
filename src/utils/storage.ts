@@ -166,3 +166,41 @@ export function clearProgress(): void {
     console.warn('Failed to clear progress from localStorage:', error);
   }
 }
+
+/* ------------------------------------------------------------------ *
+ * Library of uploaded files — every imported file is kept on its own *
+ * so the user can switch between them from the vocabulary picker.    *
+ * ------------------------------------------------------------------ */
+
+const LIBRARY_KEY = 'vocab-game-library';
+const setKey = (source: string) => `vocab-game-set:${source}`;
+
+export function listLocalSources(): string[] {
+  try {
+    const raw = localStorage.getItem(LIBRARY_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveVocabularySet(data: StoredVocabulary): void {
+  try {
+    localStorage.setItem(setKey(data.source), JSON.stringify(data));
+    const list = listLocalSources();
+    if (!list.includes(data.source)) {
+      localStorage.setItem(LIBRARY_KEY, JSON.stringify([...list, data.source]));
+    }
+  } catch (error) {
+    console.warn('Failed to save vocabulary set:', error);
+  }
+}
+
+export function loadVocabularySet(source: string): StoredVocabulary | null {
+  try {
+    const raw = localStorage.getItem(setKey(source));
+    return raw ? (JSON.parse(raw) as StoredVocabulary) : null;
+  } catch {
+    return null;
+  }
+}
