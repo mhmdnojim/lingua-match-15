@@ -1096,6 +1096,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onTranslateScopeChange={setTranslateScope}
           onTranslateWholeFile={handleTranslateWholeFile}
           translating={isTranslating}
+          themeId={themeId}
+          onThemeChange={setThemeId}
           extraControls={
             <FileSelector
               selectedFile={selectedFile}
