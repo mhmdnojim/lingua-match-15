@@ -21,6 +21,7 @@ export interface LanguageDef {
 export const LANGUAGES: LanguageDef[] = [
   { code: 'zh', name: 'Chinese (Simplified)', native: '中文', locale: 'zh-CN', fontClass: 'font-chinese', romanizationLabel: 'Pinyin', short: '中' },
   { code: 'zh-TW', name: 'Chinese (Traditional)', native: '繁體中文', locale: 'zh-TW', fontClass: 'font-chinese', romanizationLabel: 'Pinyin', short: '繁' },
+  { code: 'zh-TW-pinyin', name: 'Pinyin (Traditional)', native: '拼音', locale: 'zh-TW', romanizationOf: 'zh-TW', short: '拼' },
   { code: 'zh-pinyin', name: 'Pinyin', native: '拼音', locale: 'zh-CN', romanizationOf: 'zh', short: '拼' },
   { code: 'en', name: 'English', native: 'English', locale: 'en-US', short: 'EN' },
   { code: 'ar', name: 'Arabic', native: 'العربية', locale: 'ar-SA', rtl: true, fontClass: 'font-arabic', romanizationLabel: 'Transliteration', short: 'ع' },
@@ -69,11 +70,16 @@ export function getLanguage(code: string): LanguageDef {
   return LANGUAGE_MAP[code] || { code, name: code, native: code, locale: 'en-US', short: code.slice(0, 2).toUpperCase() };
 }
 
-/** Languages that can be picked as a column (romanization pseudo-languages included) */
-export const PICKABLE_LANGUAGES = LANGUAGES;
-
-/** Languages that can be the main (source) column — no romanization pseudo-languages */
+/** Real languages only — transliterations are never their own column, they render above the word */
 export const MAIN_LANGUAGES = LANGUAGES.filter(l => !l.romanizationOf);
+
+/** Languages that can be picked as a column */
+export const PICKABLE_LANGUAGES = MAIN_LANGUAGES;
+
+/** True when the language has a transliteration/romanization that can show above the word */
+export function hasRomanization(code: string): boolean {
+  return LANGUAGES.some(l => l.romanizationOf === code);
+}
 
 const HEADER_ALIASES: Record<string, string> = {
   chinese: 'zh',
