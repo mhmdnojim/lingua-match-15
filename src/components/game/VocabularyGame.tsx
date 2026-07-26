@@ -696,7 +696,24 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               <h1 className="text-lg font-bold text-foreground">Vocabulary Match</h1>
               <p className="text-xs text-muted-foreground">{headerSubtitle}</p>
             </div>
+            <button
+              onClick={() => setSettingsOpen(!settingsOpen)}
+              disabled={isLoading}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
+                settingsOpen
+                  ? 'bg-primary border-primary text-primary-foreground'
+                  : 'bg-secondary border-border text-muted-foreground hover:text-foreground',
+                isLoading && 'opacity-50 cursor-not-allowed',
+              )}
+              title={settingsOpen ? 'Hide options' : 'Show options'}
+            >
+              <SlidersHorizontal className="w-4 h-4 shrink-0" />
+              <span className="hidden sm:inline">Options</span>
+              <ChevronUp className={cn('w-3.5 h-3.5 transition-transform', !settingsOpen && 'rotate-180')} />
+            </button>
           </div>
+
 
           {user ? (
             <div className="flex items-center gap-2">
