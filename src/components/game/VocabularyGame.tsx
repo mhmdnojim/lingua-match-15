@@ -712,6 +712,12 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               <span className="hidden sm:inline">Options</span>
               <ChevronUp className={cn('w-3.5 h-3.5 transition-transform', !settingsOpen && 'rotate-180')} />
             </button>
+            <StatsPanel
+              score={score}
+              time={time}
+              accuracy={calculateAccuracy(correctMatches, attempts)}
+              onReset={handleReset}
+            />
           </div>
 
 
