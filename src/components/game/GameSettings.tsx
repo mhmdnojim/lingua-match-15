@@ -1,37 +1,21 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered } from 'lucide-react';
+import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered, Languages, Pencil } from 'lucide-react';
+import { ColumnConfig } from '@/utils/gameLogic';
+import { getLanguage, columnStyle } from '@/utils/languages';
 
 export type VoiceType = 'free' | 'premium';
 export type FontSize = 'small' | 'medium' | 'large';
 
-export interface ColumnVisibility {
-  chinese: boolean;
-  pinyin: boolean;
-  english: boolean;
-  arabic: boolean;
-}
-
-export interface ColumnMute {
-  chinese: boolean;
-  pinyin: boolean;
-  english: boolean;
-  arabic: boolean;
-}
-
 interface GameSettingsProps {
-  showPinyin: boolean;
-  showArabic: boolean;
-  hasArabicData: boolean;
-  fourthColumnLabel?: string;
+  columns: ColumnConfig[];
   shuffleMode: boolean;
-  columnVisibility: ColumnVisibility;
-  columnMute: ColumnMute;
-  onShowPinyinChange: (show: boolean) => void;
-  onShowArabicChange: (show: boolean) => void;
   onShuffleModeChange: (shuffle: boolean) => void;
-  onColumnVisibilityChange: (column: keyof ColumnVisibility, visible: boolean) => void;
-  onColumnMuteChange: (column: keyof ColumnMute, mute: boolean) => void;
+  onColumnVisibilityChange: (lang: string, visible: boolean) => void;
+  onColumnMuteChange: (lang: string, mute: boolean) => void;
+  onColumnRomanizationChange: (lang: string, show: boolean) => void;
+  onOpenLanguages: () => void;
+  onOpenWordEditor: () => void;
   muteSfx?: boolean;
   voiceType?: VoiceType;
   fontSize?: FontSize;
@@ -43,18 +27,14 @@ interface GameSettingsProps {
 }
 
 export const GameSettings: React.FC<GameSettingsProps> = ({
-  showPinyin,
-  showArabic,
-  hasArabicData,
-  fourthColumnLabel,
+  columns,
   shuffleMode,
-  columnVisibility,
-  columnMute,
-  onShowPinyinChange,
-  onShowArabicChange,
   onShuffleModeChange,
   onColumnVisibilityChange,
   onColumnMuteChange,
+  onColumnRomanizationChange,
+  onOpenLanguages,
+  onOpenWordEditor,
   muteSfx = false,
   voiceType = 'free',
   fontSize = 'medium',
@@ -64,18 +44,50 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   disabled = false,
   className,
 }) => {
+  const romanizableColumns = columns.filter(c => getLanguage(c.lang).romanizationLabel);
+
   return (
     <div className={cn('flex flex-wrap items-center justify-center gap-2', className)}>
-      {/* Shuffle/Order Toggle - Single button */}
+      {/* Language / column setup */}
+      <button
+        onClick={onOpenLanguages}
+        disabled={disabled}
+        className={cn(
+          'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
+          'bg-primary border-primary text-primary-foreground hover:opacity-90',
+          disabled && 'opacity-50 cursor-not-allowed',
+        )}
+        title="Choose the language of each column"
+      >
+        <Languages className="w-4 h-4" />
+        <span className="hidden sm:inline">Languages</span>
+      </button>
+
+      {/* Word editor */}
+      <button
+        onClick={onOpenWordEditor}
+        disabled={disabled}
+        className={cn(
+          'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
+          'bg-secondary border-border text-muted-foreground hover:text-foreground',
+          disabled && 'opacity-50 cursor-not-allowed',
+        )}
+        title="Edit or regenerate translations"
+      >
+        <Pencil className="w-4 h-4" />
+        <span className="hidden sm:inline">Words</span>
+      </button>
+
+      {/* Shuffle/Order Toggle */}
       <button
         onClick={() => onShuffleModeChange(!shuffleMode)}
         disabled={disabled}
         className={cn(
           'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
-          shuffleMode 
-            ? 'bg-primary border-primary text-primary-foreground' 
+          shuffleMode
+            ? 'bg-primary border-primary text-primary-foreground'
             : 'bg-secondary border-border text-muted-foreground hover:text-foreground',
-          disabled && 'opacity-50 cursor-not-allowed'
+          disabled && 'opacity-50 cursor-not-allowed',
         )}
         title={shuffleMode ? 'Shuffle mode (click to switch to sequential)' : 'Sequential mode (click to shuffle)'}
       >
@@ -83,139 +95,78 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         <span className="hidden sm:inline">{shuffleMode ? 'Shuffle' : 'Order'}</span>
       </button>
 
-      {/* Pinyin Display Toggle - Show pinyin above Chinese characters */}
-      <button
-        onClick={() => onShowPinyinChange(!showPinyin)}
-        disabled={disabled}
-        className={cn(
-          'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
-          showPinyin 
-            ? 'bg-game-pinyin border-game-pinyin text-white' 
-            : 'bg-secondary border-border text-muted-foreground hover:text-foreground',
-          disabled && 'opacity-50 cursor-not-allowed'
-        )}
-        title={showPinyin ? 'Hide pinyin on Chinese cards' : 'Show pinyin on Chinese cards'}
-      >
-        <span className="text-xs">拼音</span>
-        <span className="hidden sm:inline">Pinyin</span>
-      </button>
-
-      {/* Column Visibility Toggles */}
-      <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
-        <button
-          onClick={() => onColumnVisibilityChange('chinese', !columnVisibility.chinese)}
-          disabled={disabled}
-          className={cn(
-            'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all',
-            columnVisibility.chinese 
-              ? 'bg-game-chinese text-white' 
-              : 'text-muted-foreground hover:text-foreground',
-            disabled && 'opacity-50 cursor-not-allowed'
-          )}
-          title={columnVisibility.chinese ? 'Hide Chinese column' : 'Show Chinese column'}
-        >
-          {columnVisibility.chinese ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-          <span>中</span>
-        </button>
-        <button
-          onClick={() => onColumnVisibilityChange('pinyin', !columnVisibility.pinyin)}
-          disabled={disabled}
-          className={cn(
-            'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all',
-            columnVisibility.pinyin 
-              ? 'bg-game-pinyin text-white' 
-              : 'text-muted-foreground hover:text-foreground',
-            disabled && 'opacity-50 cursor-not-allowed'
-          )}
-          title={columnVisibility.pinyin ? 'Hide Pinyin column' : 'Show Pinyin column'}
-        >
-          {columnVisibility.pinyin ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-          <span>拼</span>
-        </button>
-        <button
-          onClick={() => onColumnVisibilityChange('english', !columnVisibility.english)}
-          disabled={disabled}
-          className={cn(
-            'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all',
-            columnVisibility.english 
-              ? 'bg-game-english text-white' 
-              : 'text-muted-foreground hover:text-foreground',
-            disabled && 'opacity-50 cursor-not-allowed'
-          )}
-          title={columnVisibility.english ? 'Hide English column' : 'Show English column'}
-        >
-          {columnVisibility.english ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-          <span>EN</span>
-        </button>
-        {hasArabicData && (
+      {/* Romanization toggles */}
+      {romanizableColumns.map(column => {
+        const language = getLanguage(column.lang);
+        return (
           <button
-            onClick={() => onColumnVisibilityChange('arabic', !columnVisibility.arabic)}
+            key={`rom-${column.lang}`}
+            onClick={() => onColumnRomanizationChange(column.lang, !column.showRomanization)}
             disabled={disabled}
             className={cn(
-              'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all',
-              columnVisibility.arabic 
-                ? 'bg-game-arabic text-white' 
-                : 'text-muted-foreground hover:text-foreground',
-              disabled && 'opacity-50 cursor-not-allowed'
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
+              column.showRomanization
+                ? 'bg-game-pinyin border-game-pinyin text-primary-foreground'
+                : 'bg-secondary border-border text-muted-foreground hover:text-foreground',
+              disabled && 'opacity-50 cursor-not-allowed',
             )}
-            title={columnVisibility.arabic ? 'Hide ' + (fourthColumnLabel || 'Arabic') : 'Show ' + (fourthColumnLabel || 'Arabic')}
+            title={`${column.showRomanization ? 'Hide' : 'Show'} ${language.romanizationLabel} on ${language.name} cards`}
           >
-            {columnVisibility.arabic ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-            <span>{fourthColumnLabel?.substring(0, 2) || 'ع'}</span>
+            <span className="text-xs">{language.short}</span>
+            <span className="hidden sm:inline">{language.romanizationLabel}</span>
           </button>
-        )}
+        );
+      })}
+
+      {/* Column visibility */}
+      <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
+        {columns.map((column, index) => {
+          const language = getLanguage(column.lang);
+          const style = columnStyle(index);
+          return (
+            <button
+              key={`vis-${column.lang}`}
+              onClick={() => onColumnVisibilityChange(column.lang, !column.visible)}
+              disabled={disabled}
+              className={cn(
+                'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all',
+                column.visible ? cn(style.solid, 'text-primary-foreground') : 'text-muted-foreground hover:text-foreground',
+                disabled && 'opacity-50 cursor-not-allowed',
+              )}
+              title={`${column.visible ? 'Hide' : 'Show'} ${language.name} column`}
+            >
+              {column.visible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+              <span>{language.short}</span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Column Mute Toggles */}
+      {/* Column mute */}
       <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
         <span className="text-xs text-muted-foreground px-1">🔊</span>
-        <button
-          onClick={() => onColumnMuteChange('chinese', !columnMute.chinese)}
-          disabled={disabled}
-          className={cn(
-            'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all',
-            !columnMute.chinese 
-              ? 'bg-game-chinese text-white' 
-              : 'text-muted-foreground hover:text-foreground line-through',
-            disabled && 'opacity-50 cursor-not-allowed'
-          )}
-          title={columnMute.chinese ? 'Unmute Chinese voice' : 'Mute Chinese voice'}
-        >
-          {columnMute.chinese ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
-          <span>中</span>
-        </button>
-        <button
-          onClick={() => onColumnMuteChange('english', !columnMute.english)}
-          disabled={disabled}
-          className={cn(
-            'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all',
-            !columnMute.english 
-              ? 'bg-game-english text-white' 
-              : 'text-muted-foreground hover:text-foreground line-through',
-            disabled && 'opacity-50 cursor-not-allowed'
-          )}
-          title={columnMute.english ? 'Unmute English voice' : 'Mute English voice'}
-        >
-          {columnMute.english ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
-          <span>EN</span>
-        </button>
-        {hasArabicData && (
-          <button
-            onClick={() => onColumnMuteChange('arabic', !columnMute.arabic)}
-            disabled={disabled}
-            className={cn(
-              'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all',
-              !columnMute.arabic 
-                ? 'bg-game-arabic text-white' 
-                : 'text-muted-foreground hover:text-foreground line-through',
-              disabled && 'opacity-50 cursor-not-allowed'
-            )}
-            title={columnMute.arabic ? 'Unmute Arabic voice' : 'Mute Arabic voice'}
-          >
-            {columnMute.arabic ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
-            <span>ع</span>
-          </button>
-        )}
+        {columns.map((column, index) => {
+          const language = getLanguage(column.lang);
+          const style = columnStyle(index);
+          return (
+            <button
+              key={`mute-${column.lang}`}
+              onClick={() => onColumnMuteChange(column.lang, !column.muted)}
+              disabled={disabled}
+              className={cn(
+                'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all',
+                !column.muted
+                  ? cn(style.solid, 'text-primary-foreground')
+                  : 'text-muted-foreground hover:text-foreground line-through',
+                disabled && 'opacity-50 cursor-not-allowed',
+              )}
+              title={`${column.muted ? 'Unmute' : 'Mute'} ${language.name} voice`}
+            >
+              {column.muted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
+              <span>{language.short}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Voice Type Toggle */}
@@ -225,9 +176,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
             onClick={() => onVoiceTypeChange('free')}
             className={cn(
               'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-all',
-              voiceType === 'free' 
-                ? 'bg-primary text-primary-foreground' 
-                : 'text-muted-foreground hover:text-foreground'
+              voiceType === 'free' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
             )}
             title="Free voice (browser)"
           >
@@ -238,11 +187,9 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
             onClick={() => onVoiceTypeChange('premium')}
             className={cn(
               'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-all',
-              voiceType === 'premium' 
-                ? 'bg-warning text-warning-foreground' 
-                : 'text-muted-foreground hover:text-foreground'
+              voiceType === 'premium' ? 'bg-warning text-warning-foreground' : 'text-muted-foreground hover:text-foreground',
             )}
-            title="Premium voice (ElevenLabs)"
+            title="Premium voice"
           >
             <Crown className="w-4 h-4" />
             <span className="hidden sm:inline">Premium</span>
@@ -253,42 +200,19 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
       {/* Font Size Toggle */}
       {onFontSizeChange && (
         <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
-          <button
-            onClick={() => onFontSizeChange('small')}
-            className={cn(
-              'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all',
-              fontSize === 'small' 
-                ? 'bg-primary text-primary-foreground' 
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-            title="Small font"
-          >
-            <Type className="w-3 h-3" />
-          </button>
-          <button
-            onClick={() => onFontSizeChange('medium')}
-            className={cn(
-              'flex items-center gap-1 px-2 py-1.5 rounded-md text-sm font-medium transition-all',
-              fontSize === 'medium' 
-                ? 'bg-primary text-primary-foreground' 
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-            title="Medium font"
-          >
-            <Type className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => onFontSizeChange('large')}
-            className={cn(
-              'flex items-center gap-1 px-2 py-1.5 rounded-md text-base font-medium transition-all',
-              fontSize === 'large' 
-                ? 'bg-primary text-primary-foreground' 
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-            title="Large font"
-          >
-            <Type className="w-5 h-5" />
-          </button>
+          {(['small', 'medium', 'large'] as FontSize[]).map((size, i) => (
+            <button
+              key={size}
+              onClick={() => onFontSizeChange(size)}
+              className={cn(
+                'flex items-center gap-1 px-2 py-1.5 rounded-md font-medium transition-all',
+                fontSize === size ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+              )}
+              title={`${size} font`}
+            >
+              <Type className={i === 0 ? 'w-3 h-3' : i === 1 ? 'w-4 h-4' : 'w-5 h-5'} />
+            </button>
+          ))}
         </div>
       )}
 
@@ -298,9 +222,9 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
           onClick={() => onMuteSfxChange(!muteSfx)}
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
-            muteSfx 
-              ? 'bg-secondary border-border text-muted-foreground' 
-              : 'bg-primary border-primary text-primary-foreground'
+            muteSfx
+              ? 'bg-secondary border-border text-muted-foreground'
+              : 'bg-primary border-primary text-primary-foreground',
           )}
           title={muteSfx ? 'Unmute effects' : 'Mute effects'}
         >
