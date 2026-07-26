@@ -45,6 +45,9 @@ export const LANGUAGES: LanguageDef[] = [
   { code: 'id', name: 'Indonesian', native: 'Bahasa Indonesia', locale: 'id-ID', short: 'ID' },
   { code: 'ms', name: 'Malay', native: 'Bahasa Melayu', locale: 'ms-MY', short: 'MS' },
   { code: 'vi', name: 'Vietnamese', native: 'Tiếng Việt', locale: 'vi-VN', short: 'VI' },
+  { code: 'bg', name: 'Bulgarian', native: 'Български', locale: 'bg-BG', romanizationLabel: 'Transliteration', short: 'BG' },
+  { code: 'kk', name: 'Kazakh', native: 'Қазақша', locale: 'kk-KZ', romanizationLabel: 'Transliteration', short: 'KK' },
+  { code: 'tk', name: 'Turkmen', native: 'Türkmençe', locale: 'tk-TM', short: 'TK' },
   { code: 'th', name: 'Thai', native: 'ไทย', locale: 'th-TH', romanizationLabel: 'Transliteration', short: 'TH' },
 ];
 
@@ -124,6 +127,18 @@ const HEADER_ALIASES: Record<string, string> = {
   malay: 'ms',
   vietnamese: 'vi',
   thai: 'th',
+  bulgarian: 'bg',
+  български: 'bg',
+  bg: 'bg',
+  kazakh: 'kk',
+  қазақша: 'kk',
+  kk: 'kk',
+  turkmen: 'tk',
+  türkmençe: 'tk',
+  tk: 'tk',
+  vietnamese_vi: 'vi',
+  'tiếng việt': 'vi',
+  vi: 'vi',
 };
 
 /** Try to map an excel header to a language code */
