@@ -29,7 +29,7 @@ import {
   VoiceType,
   FontSize,
 } from '@/utils/storage';
-import { getLanguage } from '@/utils/languages';
+import { getLanguage, romanizationCodeFor } from '@/utils/languages';
 import { exportVocabularyToExcel } from '@/utils/exportExcel';
 import { translateWords } from '@/utils/translate';
 import { fetchCloudSet, saveCloudSet, filledCount } from '@/utils/cloudVocabulary';
