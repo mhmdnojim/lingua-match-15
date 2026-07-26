@@ -1,8 +1,9 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered, Languages, Pencil, SlidersHorizontal, ChevronUp, Layers, FileStack, Wand2 } from 'lucide-react';
+import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered, Languages, Pencil, SlidersHorizontal, ChevronUp, Layers, FileStack, Wand2, Palette } from 'lucide-react';
 import { ColumnConfig } from '@/utils/gameLogic';
 import { getLanguage, columnStyle } from '@/utils/languages';
+import { THEMES } from '@/utils/themes';
 
 export type VoiceType = 'free' | 'premium';
 export type FontSize = 'small' | 'medium' | 'large';
@@ -37,7 +38,11 @@ interface GameSettingsProps {
   /** Translate every remaining word in the file right now */
   onTranslateWholeFile?: () => void;
   translating?: boolean;
+  /** Selected color theme id */
+  themeId?: string;
+  onThemeChange?: (id: string) => void;
 }
+
 
 export const GameSettings: React.FC<GameSettingsProps> = ({
   columns,
@@ -64,6 +69,9 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   onTranslateScopeChange,
   onTranslateWholeFile,
   translating = false,
+  themeId = 'forest',
+  onThemeChange,
+
 }) => {
 
   const romanizableColumns = columns.filter(c => getLanguage(c.lang).romanizationLabel);
@@ -312,7 +320,31 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         </div>
       )}
 
+      {/* Theme picker */}
+      {onThemeChange && (
+        <div className="flex items-center gap-1 rounded-lg bg-secondary p-1" title="Color theme">
+          <Palette className="ml-1 h-4 w-4 shrink-0 text-muted-foreground" />
+          {THEMES.map(theme => (
+            <button
+              key={theme.id}
+              onClick={() => onThemeChange(theme.id)}
+              title={theme.name}
+              aria-label={`${theme.name} theme`}
+              className={cn(
+                'flex h-6 w-6 overflow-hidden rounded-full border transition-all',
+                themeId === theme.id ? 'border-primary ring-2 ring-primary/60' : 'border-border hover:opacity-80',
+              )}
+            >
+              {theme.swatch.map((color, i) => (
+                <span key={i} className="h-full flex-1" style={{ backgroundColor: `hsl(${color})` }} />
+              ))}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Mute SFX Toggle */}
+
       {onMuteSfxChange && (
         <button
           onClick={() => onMuteSfxChange(!muteSfx)}

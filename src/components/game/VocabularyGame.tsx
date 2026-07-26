@@ -44,6 +44,7 @@ import StatsPanel from './StatsPanel';
 import ProgressBar from './ProgressBar';
 import FileSelector from './FileSelector';
 import GameSettings from './GameSettings';
+import { applyTheme, loadThemeId, saveThemeId } from '@/utils/themes';
 import CelebrationModal from './CelebrationModal';
 import {
   AlertDialog,
@@ -127,6 +128,16 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [pendingQueue, setPendingQueue] = useState<SheetData[]>([]);
 
   const [cloudStatus, setCloudStatus] = useState<'off' | 'saving' | 'saved' | 'error'>('off');
+
+  const [themeId, setThemeId] = useState<string>(() => loadThemeId());
+
+  // Apply the selected color theme
+  useEffect(() => {
+    applyTheme(themeId);
+    saveThemeId(themeId);
+  }, [themeId]);
+
+
 
   const navigate = useNavigate();
   const mainLang = columns[0]?.lang || 'zh';
@@ -1085,6 +1096,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onTranslateScopeChange={setTranslateScope}
           onTranslateWholeFile={handleTranslateWholeFile}
           translating={isTranslating}
+          themeId={themeId}
+          onThemeChange={setThemeId}
           extraControls={
             <FileSelector
               selectedFile={selectedFile}
