@@ -6,7 +6,7 @@ interface FileSelectorProps {
   selectedFile: string | null;
   availableFiles: string[];
   onSelectFile: (fileName: string) => void;
-  onUploadFile: (file: File) => void;
+  onUploadFiles: (files: File[]) => void;
   className?: string;
 }
 
@@ -14,16 +14,17 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
   selectedFile,
   availableFiles,
   onSelectFile,
-  onUploadFile,
+  onUploadFiles,
   className,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onUploadFile(file);
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      onUploadFiles(files);
     }
+    e.target.value = '';
   };
 
   const handleUploadClick = () => {
@@ -69,6 +70,7 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
       <input
         ref={fileInputRef}
         type="file"
+        multiple
         accept=".xlsx,.xls"
         onChange={handleFileChange}
         className="hidden"
