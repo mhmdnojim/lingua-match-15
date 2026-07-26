@@ -472,6 +472,14 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     });
   }, [mainLang]);
 
+  /** Change one column's language directly from its board title */
+  const handleColumnLangChange = (index: number, lang: string) => {
+    if (columns.some(c => c.lang === lang)) return;
+    handleColumnsChange(
+      columns.map((c, i) => (i === index ? { ...c, lang, showRomanization: i === 0 ? c.showRomanization : false } : c)),
+    );
+  };
+
   const handleColumnsChange = (next: ColumnConfig[]) => {
     setColumns(next);
     autoTranslatedRef.current = '';
@@ -904,6 +912,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               onSpeak={handleSpeak}
               onHint={handleHint}
               onRegenerateCard={handleRegenerateCard}
+              onColumnLangChange={handleColumnLangChange}
               regeneratingIds={regeneratingCards}
             />
           </>
