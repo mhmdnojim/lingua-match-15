@@ -1172,16 +1172,10 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
                     {translateProgress.done}/{translateProgress.total} words
                   </span>
                 )}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    cancelTranslationRef.current = true;
-                    autoTranslatedRef.current = 'cancelled';
-                  }}
-                >
+                <Button size="sm" variant="outline" onClick={haltTranslation}>
                   Stop
                 </Button>
+
               </span>
             </div>
 
