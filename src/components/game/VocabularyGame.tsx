@@ -44,6 +44,7 @@ import StatsPanel from './StatsPanel';
 import ProgressBar from './ProgressBar';
 import FileSelector from './FileSelector';
 import GameSettings from './GameSettings';
+import { applyTheme, loadThemeId, saveThemeId } from '@/utils/themes';
 import CelebrationModal from './CelebrationModal';
 import {
   AlertDialog,
