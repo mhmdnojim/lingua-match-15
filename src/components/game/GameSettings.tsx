@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered, Languages, Pencil, SlidersHorizontal, ChevronUp } from 'lucide-react';
+import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered, Languages, Pencil, SlidersHorizontal, ChevronUp, Layers, FileStack, Wand2 } from 'lucide-react';
 import { ColumnConfig } from '@/utils/gameLogic';
 import { getLanguage, columnStyle } from '@/utils/languages';
 
@@ -31,6 +31,12 @@ interface GameSettingsProps {
   showToggle?: boolean;
   /** Extra controls rendered at the start of the expanded panel (e.g. file picker) */
   extraControls?: React.ReactNode;
+  /** Translate only the current batch or the whole uploaded file */
+  translateScope?: 'batch' | 'all';
+  onTranslateScopeChange?: (scope: 'batch' | 'all') => void;
+  /** Translate every remaining word in the file right now */
+  onTranslateWholeFile?: () => void;
+  translating?: boolean;
 }
 
 export const GameSettings: React.FC<GameSettingsProps> = ({
@@ -54,6 +60,10 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   onSettingsOpenChange,
   showToggle = true,
   extraControls,
+  translateScope = 'batch',
+  onTranslateScopeChange,
+  onTranslateWholeFile,
+  translating = false,
 }) => {
 
   const romanizableColumns = columns.filter(c => getLanguage(c.lang).romanizationLabel);
@@ -132,6 +142,49 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         <span className="hidden sm:inline text-center w-[3.75rem]">{shuffleMode ? 'Shuffle' : 'Order'}</span>
       </button>
 
+
+      {/* Translation scope: current batch vs whole file */}
+      <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
+        <button
+          onClick={() => onTranslateScopeChange?.('batch')}
+          disabled={disabled}
+          className={cn(
+            'flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all',
+            translateScope === 'batch' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+          )}
+          title="Translate only the words in the current round"
+        >
+          <Layers className="w-3.5 h-3.5 shrink-0" />
+          <span className="hidden sm:inline">Batch</span>
+        </button>
+        <button
+          onClick={() => onTranslateScopeChange?.('all')}
+          disabled={disabled}
+          className={cn(
+            'flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all',
+            translateScope === 'all' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+          )}
+          title="Translate the whole file automatically"
+        >
+          <FileStack className="w-3.5 h-3.5 shrink-0" />
+          <span className="hidden sm:inline">Whole file</span>
+        </button>
+      </div>
+
+      {/* Translate everything that is still missing, right now */}
+      <button
+        onClick={onTranslateWholeFile}
+        disabled={disabled || translating}
+        className={cn(
+          'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
+          'bg-secondary border-border text-muted-foreground hover:text-foreground',
+          (disabled || translating) && 'opacity-50 cursor-not-allowed',
+        )}
+        title="Translate every remaining word in this file now"
+      >
+        <Wand2 className="w-4 h-4 shrink-0" />
+        <span className="hidden sm:inline">Translate rest</span>
+      </button>
 
       {/* Transliteration — one toggle per column */}
       {romanizableColumns.length > 0 && (
