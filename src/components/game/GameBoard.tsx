@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import Card, { FontSize } from './Card';
 import { GameCard, ColumnConfig } from '@/utils/gameLogic';
 import { getLanguage, columnStyle } from '@/utils/languages';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, RefreshCw } from 'lucide-react';
 
 interface GameBoardProps {
   columns: ColumnConfig[];
@@ -14,6 +14,8 @@ interface GameBoardProps {
   onCardClick: (card: GameCard) => void;
   onSpeak: (card: GameCard) => void;
   onHint: (card: GameCard) => void;
+  onRegenerateCard?: (card: GameCard) => void;
+  regeneratingIds?: string[];
 }
 
 export const GameBoard: React.FC<GameBoardProps> = ({
@@ -24,6 +26,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   onCardClick,
   onSpeak,
   onHint,
+  onRegenerateCard,
+  regeneratingIds = [],
 }) => {
   const visibleColumns = columns.filter(
     c => c.visible && ((cards[c.lang]?.length ?? 0) > 0 || loadingLangs.includes(c.lang)),
@@ -81,6 +85,19 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     title="Get hint (-5 points)"
                   >
                     <HelpCircle className="w-4 h-4" />
+                  </button>
+                )}
+                {onRegenerateCard && originalIndex !== 0 && !card.isMatched && (
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      onRegenerateCard(card);
+                    }}
+                    disabled={regeneratingIds.includes(card.id)}
+                    className="absolute -right-2 -bottom-2 p-1 bg-primary text-primary-foreground rounded-full opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shadow-md hover:scale-110 disabled:opacity-100"
+                    title="Regenerate translation"
+                  >
+                    <RefreshCw className={cn('w-4 h-4', regeneratingIds.includes(card.id) && 'animate-spin')} />
                   </button>
                 )}
               </div>
