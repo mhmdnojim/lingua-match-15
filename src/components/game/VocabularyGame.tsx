@@ -31,8 +31,10 @@ import {
 } from '@/utils/storage';
 import { getLanguage } from '@/utils/languages';
 import { translateWords } from '@/utils/translate';
+import { fetchCloudSet, saveCloudSet, filledCount } from '@/utils/cloudVocabulary';
 import { useAudio } from '@/hooks/useAudio';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 import GameBoard from './GameBoard';
 import StatsPanel from './StatsPanel';
 import ProgressBar from './ProgressBar';
@@ -44,8 +46,9 @@ import WordEditorDialog from './WordEditorDialog';
 import ImportMappingDialog from './ImportMappingDialog';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { BookOpen, LogIn, LogOut, Loader2 } from 'lucide-react';
+import { BookOpen, LogIn, LogOut, Loader2, Cloud, CloudOff, CloudUpload } from 'lucide-react';
 import { sampleVocabulary } from '@/data/sampleVocabulary';
+
 
 const AVAILABLE_FILES = ['sample-vocabulary.xlsx'];
 const BATCH_SIZE = 5;
