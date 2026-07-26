@@ -35,6 +35,7 @@ import { translateWords } from '@/utils/translate';
 import { fetchCloudSet, saveCloudSet, filledCount } from '@/utils/cloudVocabulary';
 import { useAudio } from '@/hooks/useAudio';
 import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import GameBoard from './GameBoard';
 import StatsPanel from './StatsPanel';
