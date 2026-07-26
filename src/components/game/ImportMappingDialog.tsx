@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ColumnMapping, SheetData } from '@/utils/excelParser';
-import { PICKABLE_LANGUAGES } from '@/utils/languages';
+import { PICKABLE_LANGUAGES, LANGUAGES, getLanguage } from '@/utils/languages';
 
 interface ImportMappingDialogProps {
   open: boolean;
@@ -56,6 +56,13 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
                     {lang.native} — {lang.name}
                   </option>
                 ))}
+                <optgroup label="Transliteration columns">
+                  {LANGUAGES.filter(l => l.romanizationOf).map(lang => (
+                    <option key={lang.code} value={lang.code}>
+                      {getLanguage(lang.romanizationOf!).name} — transliteration
+                    </option>
+                  ))}
+                </optgroup>
               </select>
             </div>
           ))}
