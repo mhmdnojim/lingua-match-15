@@ -16,6 +16,8 @@ export interface SheetData {
   rows: Record<string, string>[];
   /** header -> detected language code (or null when unknown) */
   detected: Record<string, string | null>;
+  /** original file name, used as the vocabulary set name */
+  fileName?: string;
 }
 
 /** header -> language code, or 'ignore' */
@@ -41,7 +43,7 @@ function readWorkbook(arrayBuffer: ArrayBuffer): SheetData {
 
 export async function parseExcelFile(file: File): Promise<SheetData> {
   try {
-    return readWorkbook(await file.arrayBuffer());
+    return { ...readWorkbook(await file.arrayBuffer()), fileName: file.name };
   } catch (error) {
     return {
       success: false,
