@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import Card, { FontSize } from './Card';
 import { GameCard, ColumnConfig } from '@/utils/gameLogic';
-import { getLanguage, columnStyle } from '@/utils/languages';
+import { getLanguage, columnStyle, MAIN_LANGUAGES, PICKABLE_LANGUAGES } from '@/utils/languages';
 import { HelpCircle, RefreshCw } from 'lucide-react';
 
 interface GameBoardProps {
@@ -15,6 +15,8 @@ interface GameBoardProps {
   onSpeak: (card: GameCard) => void;
   onHint: (card: GameCard) => void;
   onRegenerateCard?: (card: GameCard) => void;
+  /** change the language of a column straight from its title */
+  onColumnLangChange?: (index: number, lang: string) => void;
   regeneratingIds?: string[];
 }
 
@@ -27,6 +29,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   onSpeak,
   onHint,
   onRegenerateCard,
+  onColumnLangChange,
   regeneratingIds = [],
 }) => {
   const visibleColumns = columns.filter(
@@ -54,10 +57,36 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
         return (
           <div key={column.lang} className="flex flex-col gap-3">
-            <h3 className={cn('text-center text-sm font-medium mb-2 uppercase tracking-wider', style.text)}>
-              {language.native}
-              {originalIndex === 0 && <span className="ml-1 text-[10px] text-muted-foreground">(main)</span>}
-            </h3>
+            {onColumnLangChange ? (
+              <div className="mb-2 flex items-center justify-center gap-1">
+                <select
+                  value={column.lang}
+                  onChange={e => onColumnLangChange(originalIndex, e.target.value)}
+                  aria-label={`Language for column ${originalIndex + 1}`}
+                  className={cn(
+                    'max-w-full cursor-pointer appearance-none truncate rounded-md border border-transparent bg-transparent px-2 py-1 text-center text-sm font-medium uppercase tracking-wider hover:border-border focus:outline-none focus:ring-2 focus:ring-primary',
+                    style.text,
+                  )}
+                >
+                  {(originalIndex === 0 ? MAIN_LANGUAGES : PICKABLE_LANGUAGES).map(option => (
+                    <option
+                      key={option.code}
+                      value={option.code}
+                      disabled={option.code !== column.lang && columns.some(c => c.lang === option.code)}
+                      className="text-foreground"
+                    >
+                      {option.native} — {option.name}
+                    </option>
+                  ))}
+                </select>
+                {originalIndex === 0 && <span className="text-[10px] text-muted-foreground">(main)</span>}
+              </div>
+            ) : (
+              <h3 className={cn('text-center text-sm font-medium mb-2 uppercase tracking-wider', style.text)}>
+                {language.native}
+                {originalIndex === 0 && <span className="ml-1 text-[10px] text-muted-foreground">(main)</span>}
+              </h3>
+            )}
             {isPending &&
               Array.from({ length: rowCount }).map((_, i) => (
                 <div
