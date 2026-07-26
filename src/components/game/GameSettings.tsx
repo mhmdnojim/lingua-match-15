@@ -29,7 +29,8 @@ interface GameSettingsProps {
   onSettingsOpenChange?: (open: boolean) => void;
   /** Render the built-in Options toggle button (false when it lives in the header) */
   showToggle?: boolean;
-
+  /** Extra controls rendered at the start of the expanded panel (e.g. file picker) */
+  extraControls?: React.ReactNode;
 }
 
 export const GameSettings: React.FC<GameSettingsProps> = ({
