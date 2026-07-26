@@ -17,6 +17,8 @@ interface GameBoardProps {
   onSpeak: (card: GameCard) => void;
   onHint: (card: GameCard) => void;
   onRegenerateCard?: (card: GameCard) => void;
+  /** save a manual edit of one card; editing the main column retranslates the row */
+  onEditCard?: (card: GameCard, value: string) => void;
   /** change the language of a column straight from its title */
   onColumnLangChange?: (index: number, lang: string) => void;
   regeneratingIds?: string[];
