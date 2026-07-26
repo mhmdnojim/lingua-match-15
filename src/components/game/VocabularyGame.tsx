@@ -129,8 +129,26 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   /** Fill in missing translations for the given items using AI */
   const translateMissing = useCallback(
     async (items: VocabularyItem[], activeColumns: ColumnConfig[], source: string, instruction?: string, force = false) => {
-      const targets = activeColumns.filter(c => c.lang !== source);
-      if (targets.length === 0 || items.length === 0) return;
+      if (items.length === 0 || activeColumns.length === 0) return;
+
+      // How many items already have text for a language
+      const filled = (lang: string) => items.filter(i => (i.values[lang] || '').trim()).length;
+
+      // If the chosen main language has no data yet (user just switched it), translate
+      // *from* whichever language does have data, so the main column gets generated too.
+      let effectiveSource = source;
+      if (filled(source) === 0) {
+        const candidates = new Set<string>();
+        items.forEach(i => Object.keys(i.values).forEach(k => candidates.add(k)));
+        const best = Array.from(candidates)
+          .filter(l => l !== source)
+          .sort((a, b) => filled(b) - filled(a))[0];
+        if (!best || filled(best) === 0) return;
+        effectiveSource = best;
+      }
+
+      const targets = activeColumns.filter(c => c.lang !== effectiveSource);
+      if (targets.length === 0) return;
 
       setIsTranslating(true);
       try {
@@ -142,8 +160,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           });
           if (pending.length === 0) continue;
 
-          const words = pending.map(item => item.values[source] || '');
-          const results = await translateWords({ sourceLang: source, targetLang: column.lang, words, instruction });
+          const words = pending.map(item => item.values[effectiveSource] || '');
+          const results = await translateWords({ sourceLang: effectiveSource, targetLang: column.lang, words, instruction });
+
 
           setVocabulary(prev => {
             const next = prev.map(item => {
