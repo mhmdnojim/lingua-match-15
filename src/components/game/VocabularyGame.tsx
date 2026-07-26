@@ -575,6 +575,20 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     }
   };
 
+  /** Regenerate every target column for a single word */
+  const handleRegenerateWord = async (vocabId: string, instruction?: string) => {
+    const item = vocabulary.find(i => i.id === vocabId);
+    if (!item) return;
+    await translateMissing([item], columns, mainLang, instruction, true);
+  };
+
+  /** Regenerate one column for every word in the current round */
+  const handleRegenerateColumn = async (lang: string, instruction?: string) => {
+    const column = columns.find(c => c.lang === lang);
+    if (!column || currentItems.length === 0) return;
+    await translateMissing(currentItems, [columns[0], column], mainLang, instruction, true);
+  };
+
   const handleRegenerateAll = async (instruction?: string) => {
     // Regenerate across the entire dataset (all batches), not just the current batch
     await translateMissing(vocabulary, columns, mainLang, instruction, true);
@@ -737,6 +751,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onEditValue={handleEditValue}
           onRegenerate={handleRegenerateOne}
           onRegenerateAll={handleRegenerateAll}
+          onRegenerateWord={handleRegenerateWord}
+          onRegenerateColumn={handleRegenerateColumn}
         />
 
         <ImportMappingDialog
