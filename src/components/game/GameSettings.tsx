@@ -27,6 +27,9 @@ interface GameSettingsProps {
   /** Whether the extra options row is expanded */
   settingsOpen?: boolean;
   onSettingsOpenChange?: (open: boolean) => void;
+  /** Render the built-in Options toggle button (false when it lives in the header) */
+  showToggle?: boolean;
+
 }
 
 export const GameSettings: React.FC<GameSettingsProps> = ({
