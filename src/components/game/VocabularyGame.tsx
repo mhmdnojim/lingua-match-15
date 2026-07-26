@@ -4,7 +4,6 @@ import {
   VocabularyItem,
   SheetData,
   ColumnMapping,
-  autoMapping,
   buildVocabulary,
   fetchExcelFromUrl,
   parseExcelFile,
