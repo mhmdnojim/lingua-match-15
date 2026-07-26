@@ -3,6 +3,8 @@ import { VocabularyItem } from './excelParser';
 
 export type VoiceType = 'free' | 'premium';
 export type FontSize = 'small' | 'medium' | 'large';
+/** Translate only the current batch, or the whole uploaded file at once */
+export type TranslateScope = 'batch' | 'all';
 
 const STORAGE_KEYS = {
   CURRENT_BATCH: 'vocab-game-current-batch',
@@ -16,6 +18,7 @@ const STORAGE_KEYS = {
   VOCABULARY: 'vocab-game-vocabulary',
   SHUFFLE_MODE: 'vocab-game-shuffle-mode',
   UI_STATE: 'vocab-game-ui-state',
+  TRANSLATE_SCOPE: 'vocab-game-translate-scope',
 } as const;
 
 export interface GameProgress {
@@ -28,6 +31,7 @@ export interface GameProgress {
   fontSize: FontSize;
   columns: ColumnConfig[] | null;
   shuffleMode: boolean;
+  translateScope: TranslateScope;
 }
 
 /** Which panels/dialogs were open when the app was closed */
@@ -91,6 +95,9 @@ export function saveProgress(progress: Partial<GameProgress>): void {
     if (progress.fontSize !== undefined) {
       localStorage.setItem(STORAGE_KEYS.FONT_SIZE, progress.fontSize);
     }
+    if (progress.translateScope !== undefined) {
+      localStorage.setItem(STORAGE_KEYS.TRANSLATE_SCOPE, progress.translateScope);
+    }
     if (progress.shuffleMode !== undefined) {
       localStorage.setItem(STORAGE_KEYS.SHUFFLE_MODE, String(progress.shuffleMode));
     }
@@ -113,6 +120,7 @@ export function loadProgress(): GameProgress {
     fontSize: 'medium',
     columns: null,
     shuffleMode: true,
+    translateScope: 'batch',
   };
 
   try {
@@ -129,6 +137,7 @@ export function loadProgress(): GameProgress {
       fontSize: (localStorage.getItem(STORAGE_KEYS.FONT_SIZE) as FontSize) || 'medium',
       columns: columnsStr ? (JSON.parse(columnsStr) as ColumnConfig[]) : null,
       shuffleMode: (localStorage.getItem(STORAGE_KEYS.SHUFFLE_MODE) ?? 'true') === 'true',
+      translateScope: (localStorage.getItem(STORAGE_KEYS.TRANSLATE_SCOPE) as TranslateScope) || 'batch',
     };
   } catch (error) {
     console.warn('Failed to load progress from localStorage:', error);

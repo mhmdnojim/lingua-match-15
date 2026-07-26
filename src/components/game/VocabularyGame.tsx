@@ -46,6 +46,16 @@ import ProgressBar from './ProgressBar';
 import FileSelector from './FileSelector';
 import GameSettings from './GameSettings';
 import CelebrationModal from './CelebrationModal';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import LanguageColumnsDialog from './LanguageColumnsDialog';
 import WordEditorDialog from './WordEditorDialog';
 import ImportMappingDialog from './ImportMappingDialog';
@@ -84,6 +94,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [currentBatch, setCurrentBatch] = useState(savedProgress.currentBatch);
   const [completedBatches, setCompletedBatches] = useState<number[]>(savedProgress.completedBatches);
   const [shuffleMode, setShuffleMode] = useState(savedProgress.shuffleMode);
+  const [translateScope, setTranslateScope] = useState<'batch' | 'all'>(savedProgress.translateScope);
+  /** Asks after an upload whether to translate the whole file or batch by batch */
+  const [scopePrompt, setScopePrompt] = useState<{ count: number } | null>(null);
   const [muteSfx, setMuteSfx] = useState(savedProgress.muteSfx);
   const [voiceType, setVoiceType] = useState<VoiceType>(savedProgress.voiceType);
   const [fontSize, setFontSize] = useState<FontSize>(savedProgress.fontSize);
@@ -167,8 +180,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
   // Persist settings
   useEffect(() => {
-    saveProgress({ muteSfx, voiceType, fontSize, columns, shuffleMode });
-  }, [muteSfx, voiceType, fontSize, columns, shuffleMode]);
+    saveProgress({ muteSfx, voiceType, fontSize, columns, shuffleMode, translateScope });
+  }, [muteSfx, voiceType, fontSize, columns, shuffleMode, translateScope]);
 
   // Remember which dialogs were open
   useEffect(() => {
@@ -345,17 +358,31 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     const batch = batches[currentBatch];
     if (!batch || isTranslating || !cloudReady) return;
 
-    const missing = batch.some(item =>
+    // In "whole file" mode every word is translated at once, not just this round
+    const scopeItems = translateScope === 'all' ? vocabulary : batch;
+    if (scopeItems.length === 0) return;
+
+    const missing = scopeItems.some(item =>
       translationColumns.some(c => !(item.values[c.lang] || '').trim()),
     );
 
-    const key = `${currentBatch}-${translationColumns.map(c => c.lang).join(',')}-${batch.map(i => i.id).join(',')}`;
+    const key =
+      translateScope === 'all'
+        ? `all-${translationColumns.map(c => c.lang).join(',')}-${vocabulary.length}`
+        : `${currentBatch}-${translationColumns.map(c => c.lang).join(',')}-${batch.map(i => i.id).join(',')}`;
     if (!missing || autoTranslatedRef.current === key) return;
 
     autoTranslatedRef.current = key;
-    translateMissing(batch, translationColumns, mainLang);
+    translateMissing(scopeItems, translationColumns, mainLang);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [batches, currentBatch, translationColumns, mainLang, cloudReady]);
+  }, [batches, currentBatch, translationColumns, mainLang, cloudReady, translateScope, vocabulary]);
+
+  /** Translate every word still missing a translation in the whole file */
+  const handleTranslateWholeFile = useCallback(() => {
+    if (vocabulary.length === 0 || isTranslating) return;
+    autoTranslatedRef.current = '';
+    translateMissing(vocabulary, translationColumns, mainLang);
+  }, [vocabulary, translationColumns, mainLang, isTranslating, translateMissing]);
 
   // Pull the saved set from the account (or seed it) when signed in
   const cloudPulledRef = useRef<string>('');
@@ -532,6 +559,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     }
     setIsLoading(false);
     if (sheets.length === 0) return;
+
+    const totalWords = sheets.reduce((sum, sheet) => sum + sheet.rows.length, 0);
+    if (totalWords > batchSize) setScopePrompt({ count: totalWords });
 
     const [first, ...rest] = sheets;
     const auto = autoMapping(first);
@@ -1023,6 +1053,10 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           settingsOpen={settingsOpen}
           onSettingsOpenChange={setSettingsOpen}
           showToggle={false}
+          translateScope={translateScope}
+          onTranslateScopeChange={setTranslateScope}
+          onTranslateWholeFile={handleTranslateWholeFile}
+          translating={isTranslating}
           extraControls={
             <FileSelector
               selectedFile={selectedFile}
@@ -1136,6 +1170,26 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onExportExcel={handleExportExcel}
 
         />
+
+        <AlertDialog open={scopePrompt !== null} onOpenChange={open => !open && setScopePrompt(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Translate the whole file?</AlertDialogTitle>
+              <AlertDialogDescription>
+                You uploaded {scopePrompt?.count ?? 0} words. Translate everything now, or only the round you are
+                playing? You can switch this any time in Options.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => { setTranslateScope('batch'); setScopePrompt(null); }}>
+                Batch by batch
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={() => { setTranslateScope('all'); setScopePrompt(null); }}>
+                Translate whole file
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <ImportMappingDialog
           open={pendingSheet !== null}
