@@ -76,7 +76,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         const originalIndex = columns.findIndex(c => c.lang === column.lang);
         const style = columnStyle(originalIndex);
         const columnCards = cards[column.lang] || [];
-        const isPending = columnCards.length === 0 && loadingLangs.includes(column.lang);
+        const isPending = columnCards.length === 0;
 
         return (
           <div key={column.lang} className="flex flex-col gap-3">
