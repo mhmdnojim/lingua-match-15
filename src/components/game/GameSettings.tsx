@@ -91,8 +91,8 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         )}
         title={shuffleMode ? 'Shuffle mode (click to switch to sequential)' : 'Sequential mode (click to shuffle)'}
       >
-        {shuffleMode ? <Shuffle className="w-4 h-4" /> : <ListOrdered className="w-4 h-4" />}
-        <span className="hidden sm:inline">{shuffleMode ? 'Shuffle' : 'Order'}</span>
+        {shuffleMode ? <Shuffle className="w-4 h-4 shrink-0" /> : <ListOrdered className="w-4 h-4 shrink-0" />}
+        <span className="hidden sm:inline text-center w-[3.75rem]">{shuffleMode ? 'Shuffle' : 'Order'}</span>
       </button>
 
       {/* Romanization toggles */}
