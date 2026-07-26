@@ -105,9 +105,18 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [wordEditorOpen, setWordEditorOpen] = useState(savedUi.wordEditorOpen);
   const [settingsOpen, setSettingsOpen] = useState(savedUi.settingsOpen);
   const [pendingSheet, setPendingSheet] = useState<SheetData | null>(null);
+  const [cloudStatus, setCloudStatus] = useState<'off' | 'saving' | 'saved' | 'error'>('off');
 
+  const navigate = useNavigate();
   const mainLang = columns[0]?.lang || 'zh';
   const { speak, playSuccess, playError, playCelebration } = useAudio({ muteVoice: false, muteSfx, voiceType });
+
+  const cloudSource = selectedFile || 'upload';
+  const userRef = useRef<any>(null);
+  userRef.current = user;
+  const columnsRef = useRef<ColumnConfig[]>(columns);
+  columnsRef.current = columns;
+  const cloudTimer = useRef<number | null>(null);
 
   // Auth state listener
   useEffect(() => {
@@ -117,6 +126,25 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null));
     return () => subscription.unsubscribe();
   }, []);
+
+  /**
+   * Save words locally and — when signed in — to the account so the generated
+   * translations come back on any other device.
+   */
+  const persistVocabulary = useCallback(
+    (items: VocabularyItem[], main: string) => {
+      saveVocabulary({ items, mainLang: main, source: cloudSource });
+      if (!userRef.current) return;
+      if (cloudTimer.current) window.clearTimeout(cloudTimer.current);
+      setCloudStatus('saving');
+      cloudTimer.current = window.setTimeout(async () => {
+        const ok = await saveCloudSet({ source: cloudSource, mainLang: main, columns: columnsRef.current, items });
+        setCloudStatus(ok ? 'saved' : 'error');
+      }, 1200);
+    },
+    [cloudSource],
+  );
+
 
   // Timer
   useEffect(() => {
