@@ -31,8 +31,10 @@ import {
 } from '@/utils/storage';
 import { getLanguage } from '@/utils/languages';
 import { translateWords } from '@/utils/translate';
+import { fetchCloudSet, saveCloudSet, filledCount } from '@/utils/cloudVocabulary';
 import { useAudio } from '@/hooks/useAudio';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 import GameBoard from './GameBoard';
 import StatsPanel from './StatsPanel';
 import ProgressBar from './ProgressBar';
@@ -44,8 +46,9 @@ import WordEditorDialog from './WordEditorDialog';
 import ImportMappingDialog from './ImportMappingDialog';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { BookOpen, LogIn, LogOut, Loader2 } from 'lucide-react';
+import { BookOpen, LogIn, LogOut, Loader2, Cloud, CloudOff, CloudUpload } from 'lucide-react';
 import { sampleVocabulary } from '@/data/sampleVocabulary';
+
 
 const AVAILABLE_FILES = ['sample-vocabulary.xlsx'];
 const BATCH_SIZE = 5;
@@ -102,9 +105,18 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [wordEditorOpen, setWordEditorOpen] = useState(savedUi.wordEditorOpen);
   const [settingsOpen, setSettingsOpen] = useState(savedUi.settingsOpen);
   const [pendingSheet, setPendingSheet] = useState<SheetData | null>(null);
+  const [cloudStatus, setCloudStatus] = useState<'off' | 'saving' | 'saved' | 'error'>('off');
 
+  const navigate = useNavigate();
   const mainLang = columns[0]?.lang || 'zh';
   const { speak, playSuccess, playError, playCelebration } = useAudio({ muteVoice: false, muteSfx, voiceType });
+
+  const cloudSource = selectedFile || 'upload';
+  const userRef = useRef<any>(null);
+  userRef.current = user;
+  const columnsRef = useRef<ColumnConfig[]>(columns);
+  columnsRef.current = columns;
+  const cloudTimer = useRef<number | null>(null);
 
   // Auth state listener
   useEffect(() => {
@@ -114,6 +126,25 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null));
     return () => subscription.unsubscribe();
   }, []);
+
+  /**
+   * Save words locally and — when signed in — to the account so the generated
+   * translations come back on any other device.
+   */
+  const persistVocabulary = useCallback(
+    (items: VocabularyItem[], main: string) => {
+      saveVocabulary({ items, mainLang: main, source: cloudSource });
+      if (!userRef.current) return;
+      if (cloudTimer.current) window.clearTimeout(cloudTimer.current);
+      setCloudStatus('saving');
+      cloudTimer.current = window.setTimeout(async () => {
+        const ok = await saveCloudSet({ source: cloudSource, mainLang: main, columns: columnsRef.current, items });
+        setCloudStatus(ok ? 'saved' : 'error');
+      }, 1200);
+    },
+    [cloudSource],
+  );
+
 
   // Timer
   useEffect(() => {
@@ -210,7 +241,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
                 if (!value) return item;
                 return { ...item, values: { ...item.values, [column.lang]: value } };
               });
-              saveVocabulary({ items: next, mainLang: source, source: selectedFile || 'local' });
+              persistVocabulary(next, source);
               return next;
             });
 
@@ -234,7 +265,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         setTranslateProgress(null);
       }
     },
-    [selectedFile, toast],
+    [persistVocabulary, toast],
   );
 
   // Auto-translate the current batch when a configured column has no data yet
@@ -254,6 +285,48 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     translateMissing(batch, columns, mainLang);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [batches, currentBatch, columns, mainLang]);
+
+  // Pull the saved set from the account (or seed it) when signed in
+  const cloudPulledRef = useRef<string>('');
+  useEffect(() => {
+    if (!user) {
+      setCloudStatus('off');
+      cloudPulledRef.current = '';
+      return;
+    }
+    const key = `${user.id}-${cloudSource}`;
+    if (cloudPulledRef.current === key) return;
+    cloudPulledRef.current = key;
+
+    (async () => {
+      setCloudStatus('saving');
+      const remote = await fetchCloudSet(cloudSource);
+
+      if (!remote || remote.items.length === 0) {
+        if (vocabulary.length > 0) {
+          const ok = await saveCloudSet({ source: cloudSource, mainLang, columns, items: vocabulary });
+          setCloudStatus(ok ? 'saved' : 'error');
+        } else {
+          setCloudStatus('saved');
+        }
+        return;
+      }
+
+      if (filledCount(remote.items) > filledCount(vocabulary)) {
+        setVocabulary(remote.items);
+        if (remote.columns.length >= 2) setColumns(remote.columns);
+        saveVocabulary({ items: remote.items, mainLang: remote.mainLang, source: cloudSource });
+        autoTranslatedRef.current = '';
+        toast({
+          title: 'Restored from your account',
+          description: `${remote.items.length} words with their saved translations were loaded.`,
+        });
+      }
+      setCloudStatus('saved');
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, cloudSource]);
+
 
   const initializeBatch = useCallback(
     (batchIndex: number) => {
@@ -355,7 +428,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
     setColumns(nextColumns);
     setVocabulary(items);
-    saveVocabulary({ items, mainLang: newMain, source: selectedFile || 'upload' });
+    persistVocabulary(items, newMain);
     setCurrentBatch(0);
     setScore(0);
     setCompletedBatches([]);
@@ -543,7 +616,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           ? { ...item, values: { ...item.values, [lang]: value }, edited: { ...item.edited, [lang]: true } }
           : item,
       );
-      saveVocabulary({ items: next, mainLang, source: selectedFile || 'local' });
+      persistVocabulary(next, mainLang);
       return next;
     });
   };
@@ -563,7 +636,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           const next = prev.map(i =>
             i.id === vocabId ? { ...i, values: { ...i.values, [lang]: result }, edited: { ...i.edited, [lang]: false } } : i,
           );
-          saveVocabulary({ items: next, mainLang, source: selectedFile || 'local' });
+          persistVocabulary(next, mainLang);
           return next;
         });
       }
@@ -617,7 +690,28 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
           {user ? (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground hidden sm:inline">{user.email}</span>
+              <span
+                className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                title={
+                  cloudStatus === 'error'
+                    ? 'Could not sync with your account'
+                    : cloudStatus === 'saving'
+                      ? 'Syncing words and translations…'
+                      : 'Words and translations saved to your account'
+                }
+              >
+                {cloudStatus === 'saving' ? (
+                  <CloudUpload className="w-4 h-4 animate-pulse text-primary" />
+                ) : cloudStatus === 'error' ? (
+                  <CloudOff className="w-4 h-4 text-destructive" />
+                ) : (
+                  <Cloud className="w-4 h-4 text-primary" />
+                )}
+                <span className="hidden sm:inline">
+                  {cloudStatus === 'saving' ? 'Syncing…' : cloudStatus === 'error' ? 'Sync failed' : 'Synced'}
+                </span>
+              </span>
+              <span className="text-xs text-muted-foreground hidden md:inline">{user.email}</span>
               <Button variant="outline" size="sm" onClick={handleLogout} className="gap-1.5">
                 <LogOut className="w-4 h-4" />
                 <span className="hidden sm:inline">Logout</span>
@@ -627,14 +721,15 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
             <Button
               variant="outline"
               size="sm"
-              disabled
-              className="gap-1.5 opacity-50 cursor-not-allowed"
-              title="Login temporarily disabled"
+              onClick={() => navigate('/auth')}
+              className="gap-1.5"
+              title="Sign in to save your words and translations to your account"
             >
               <LogIn className="w-4 h-4" />
-              <span className="hidden sm:inline">Login</span>
+              <span className="hidden sm:inline">Sign in to sync</span>
             </Button>
           )}
+
         </header>
 
         <div className="flex flex-wrap items-center gap-2">

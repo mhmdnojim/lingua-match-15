@@ -14,7 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      vocabulary_sets: {
+        Row: {
+          columns: Json
+          created_at: string
+          id: string
+          items: Json
+          main_lang: string
+          source: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          columns?: Json
+          created_at?: string
+          id?: string
+          items?: Json
+          main_lang: string
+          source: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          columns?: Json
+          created_at?: string
+          id?: string
+          items?: Json
+          main_lang?: string
+          source?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
