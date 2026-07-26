@@ -29,7 +29,7 @@ import {
   VoiceType,
   FontSize,
 } from '@/utils/storage';
-import { getLanguage } from '@/utils/languages';
+import { getLanguage, romanizationCodeFor } from '@/utils/languages';
 import { exportVocabularyToExcel } from '@/utils/exportExcel';
 import { translateWords } from '@/utils/translate';
 import { fetchCloudSet, saveCloudSet, filledCount } from '@/utils/cloudVocabulary';
@@ -280,6 +280,22 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     [persistVocabulary, toast],
   );
 
+  /**
+   * Columns to generate: the visible language columns plus a hidden pseudo-column for
+   * every romanization (pinyin / transliteration) that is switched on above a word.
+   */
+  const translationColumns = useMemo(() => {
+    const list = [...columns];
+    columns.forEach(c => {
+      if (!c.showRomanization) return;
+      const romCode = romanizationCodeFor(c.lang);
+      if (romCode && !list.some(x => x.lang === romCode)) {
+        list.push({ lang: romCode, visible: false, muted: true, showRomanization: false });
+      }
+    });
+    return list;
+  }, [columns]);
+
   // Auto-translate the current batch when a configured column has no data yet
   const autoTranslatedRef = useRef<string>('');
   useEffect(() => {
@@ -287,16 +303,16 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     if (!batch || isTranslating) return;
 
     const missing = batch.some(item =>
-      columns.some(c => !(item.values[c.lang] || '').trim()),
+      translationColumns.some(c => !(item.values[c.lang] || '').trim()),
     );
 
-    const key = `${currentBatch}-${columns.map(c => c.lang).join(',')}-${batch.map(i => i.id).join(',')}`;
+    const key = `${currentBatch}-${translationColumns.map(c => c.lang).join(',')}-${batch.map(i => i.id).join(',')}`;
     if (!missing || autoTranslatedRef.current === key) return;
 
     autoTranslatedRef.current = key;
-    translateMissing(batch, columns, mainLang);
+    translateMissing(batch, translationColumns, mainLang);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [batches, currentBatch, columns, mainLang]);
+  }, [batches, currentBatch, translationColumns, mainLang]);
 
   // Pull the saved set from the account (or seed it) when signed in
   const cloudPulledRef = useRef<string>('');
