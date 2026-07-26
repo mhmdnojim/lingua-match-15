@@ -286,6 +286,48 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [batches, currentBatch, columns, mainLang]);
 
+  // Pull the saved set from the account (or seed it) when signed in
+  const cloudPulledRef = useRef<string>('');
+  useEffect(() => {
+    if (!user) {
+      setCloudStatus('off');
+      cloudPulledRef.current = '';
+      return;
+    }
+    const key = `${user.id}-${cloudSource}`;
+    if (cloudPulledRef.current === key) return;
+    cloudPulledRef.current = key;
+
+    (async () => {
+      setCloudStatus('saving');
+      const remote = await fetchCloudSet(cloudSource);
+
+      if (!remote || remote.items.length === 0) {
+        if (vocabulary.length > 0) {
+          const ok = await saveCloudSet({ source: cloudSource, mainLang, columns, items: vocabulary });
+          setCloudStatus(ok ? 'saved' : 'error');
+        } else {
+          setCloudStatus('saved');
+        }
+        return;
+      }
+
+      if (filledCount(remote.items) > filledCount(vocabulary)) {
+        setVocabulary(remote.items);
+        if (remote.columns.length >= 2) setColumns(remote.columns);
+        saveVocabulary({ items: remote.items, mainLang: remote.mainLang, source: cloudSource });
+        autoTranslatedRef.current = '';
+        toast({
+          title: 'Restored from your account',
+          description: `${remote.items.length} words with their saved translations were loaded.`,
+        });
+      }
+      setCloudStatus('saved');
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, cloudSource]);
+
+
   const initializeBatch = useCallback(
     (batchIndex: number) => {
       const batch = batches[batchIndex];
