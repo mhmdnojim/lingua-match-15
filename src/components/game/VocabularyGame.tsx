@@ -211,6 +211,22 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   }, [vocabulary, shuffleMode, mainLang, batchSize]);
 
   const cancelTranslationRef = useRef(false);
+  /** true once the user pressed Stop — blocks automatic translation for every file until resumed */
+  const haltedRef = useRef(false);
+  const [translationHalted, setTranslationHalted] = useState(false);
+
+  const haltTranslation = useCallback(() => {
+    cancelTranslationRef.current = true;
+    haltedRef.current = true;
+    autoTranslatedRef.current = 'cancelled';
+    setTranslationHalted(true);
+  }, []);
+
+  const resumeTranslation = useCallback(() => {
+    haltedRef.current = false;
+    autoTranslatedRef.current = '';
+    setTranslationHalted(false);
+  }, []);
   /** false while the saved set is still being pulled from the account — no AI calls until then */
   const [cloudReady, setCloudReady] = useState(true);
 
@@ -218,6 +234,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const translateMissing = useCallback(
     async (items: VocabularyItem[], activeColumns: ColumnConfig[], source: string, instruction?: string, force = false) => {
       if (items.length === 0 || activeColumns.length === 0) return;
+      // Stop applies to every file, not just the run that was interrupted
+      if (haltedRef.current && !force) return;
+
 
       // Never pay for a translation that is already stored in the account:
       // pull the saved set first and merge anything it already knows.
