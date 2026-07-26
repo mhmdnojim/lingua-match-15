@@ -183,11 +183,43 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   }, [vocabulary, shuffleMode, mainLang, batchSize]);
 
   const cancelTranslationRef = useRef(false);
+  /** false while the saved set is still being pulled from the account — no AI calls until then */
+  const [cloudReady, setCloudReady] = useState(true);
 
   /** Fill in missing translations for the given items using AI */
   const translateMissing = useCallback(
     async (items: VocabularyItem[], activeColumns: ColumnConfig[], source: string, instruction?: string, force = false) => {
       if (items.length === 0 || activeColumns.length === 0) return;
+
+      // Never pay for a translation that is already stored in the account:
+      // pull the saved set first and merge anything it already knows.
+      if (!force && userRef.current) {
+        const remote = await fetchCloudSet(cloudSource);
+        if (remote && remote.items.length > 0) {
+          const byId = new Map(remote.items.map(r => [r.id, r]));
+          let merged = false;
+          items = items.map(item => {
+            const saved = byId.get(item.id);
+            if (!saved) return item;
+            const extra: Record<string, string> = {};
+            activeColumns.forEach(c => {
+              const value = (saved.values[c.lang] || '').trim();
+              if (value && !(item.values[c.lang] || '').trim()) extra[c.lang] = value;
+            });
+            if (Object.keys(extra).length === 0) return item;
+            merged = true;
+            return { ...item, values: { ...item.values, ...extra } };
+          });
+          if (merged) {
+            const patch = new Map(items.map(i => [i.id, i]));
+            setVocabulary(prev => {
+              const next = prev.map(i => patch.get(i.id) || i);
+              saveVocabulary({ items: next, mainLang: source, source: cloudSource });
+              return next;
+            });
+          }
+        }
+      }
 
       // How many items already have text for a language
       const filled = (lang: string) => items.filter(i => (i.values[lang] || '').trim()).length;
@@ -285,7 +317,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         setTranslateProgress(null);
       }
     },
-    [persistVocabulary, toast],
+    [persistVocabulary, toast, cloudSource],
   );
 
   /**
@@ -308,7 +340,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const autoTranslatedRef = useRef<string>('');
   useEffect(() => {
     const batch = batches[currentBatch];
-    if (!batch || isTranslating) return;
+    if (!batch || isTranslating || !cloudReady) return;
 
     const missing = batch.some(item =>
       translationColumns.some(c => !(item.values[c.lang] || '').trim()),
@@ -320,7 +352,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     autoTranslatedRef.current = key;
     translateMissing(batch, translationColumns, mainLang);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [batches, currentBatch, translationColumns, mainLang]);
+  }, [batches, currentBatch, translationColumns, mainLang, cloudReady]);
 
   // Pull the saved set from the account (or seed it) when signed in
   const cloudPulledRef = useRef<string>('');
@@ -328,11 +360,13 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     if (!user) {
       setCloudStatus('off');
       cloudPulledRef.current = '';
+      setCloudReady(true);
       return;
     }
     const key = `${user.id}-${cloudSource}`;
     if (cloudPulledRef.current === key) return;
     cloudPulledRef.current = key;
+    setCloudReady(false);
 
     (async () => {
       setCloudStatus('saving');
@@ -345,6 +379,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         } else {
           setCloudStatus('saved');
         }
+        setCloudReady(true);
         return;
       }
 
@@ -359,6 +394,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         });
       }
       setCloudStatus('saved');
+      setCloudReady(true);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, cloudSource]);
