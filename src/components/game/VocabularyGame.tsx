@@ -1029,6 +1029,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               availableFiles={library}
               onSelectFile={setSelectedFile}
               onUploadFiles={handleUploadFiles}
+              onDeleteFile={handleDeleteFile}
             />
           }
         />
