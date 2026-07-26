@@ -690,7 +690,28 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
           {user ? (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground hidden sm:inline">{user.email}</span>
+              <span
+                className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                title={
+                  cloudStatus === 'error'
+                    ? 'Could not sync with your account'
+                    : cloudStatus === 'saving'
+                      ? 'Syncing words and translations…'
+                      : 'Words and translations saved to your account'
+                }
+              >
+                {cloudStatus === 'saving' ? (
+                  <CloudUpload className="w-4 h-4 animate-pulse text-primary" />
+                ) : cloudStatus === 'error' ? (
+                  <CloudOff className="w-4 h-4 text-destructive" />
+                ) : (
+                  <Cloud className="w-4 h-4 text-primary" />
+                )}
+                <span className="hidden sm:inline">
+                  {cloudStatus === 'saving' ? 'Syncing…' : cloudStatus === 'error' ? 'Sync failed' : 'Synced'}
+                </span>
+              </span>
+              <span className="text-xs text-muted-foreground hidden md:inline">{user.email}</span>
               <Button variant="outline" size="sm" onClick={handleLogout} className="gap-1.5">
                 <LogOut className="w-4 h-4" />
                 <span className="hidden sm:inline">Logout</span>
@@ -700,14 +721,15 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
             <Button
               variant="outline"
               size="sm"
-              disabled
-              className="gap-1.5 opacity-50 cursor-not-allowed"
-              title="Login temporarily disabled"
+              onClick={() => navigate('/auth')}
+              className="gap-1.5"
+              title="Sign in to save your words and translations to your account"
             >
               <LogIn className="w-4 h-4" />
-              <span className="hidden sm:inline">Login</span>
+              <span className="hidden sm:inline">Sign in to sync</span>
             </Button>
           )}
+
         </header>
 
         <div className="flex flex-wrap items-center gap-2">
