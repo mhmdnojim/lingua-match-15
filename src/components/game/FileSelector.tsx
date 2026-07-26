@@ -1,14 +1,16 @@
 import React, { useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { Upload, FileSpreadsheet, ChevronDown } from 'lucide-react';
+import { Upload, FileSpreadsheet, ChevronDown, Trash2 } from 'lucide-react';
 
 interface FileSelectorProps {
   selectedFile: string | null;
   availableFiles: string[];
   onSelectFile: (fileName: string) => void;
   onUploadFiles: (files: File[]) => void;
+  onDeleteFile?: (fileName: string) => void;
   className?: string;
 }
+
 
 export const FileSelector: React.FC<FileSelectorProps> = ({
   selectedFile,
