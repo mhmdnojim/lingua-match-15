@@ -73,8 +73,11 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   onThemeChange,
 
 }) => {
+  const [themeOpen, setThemeOpen] = React.useState(false);
+  const activeTheme = THEMES.find(t => t.id === themeId);
 
   const romanizableColumns = columns.filter(c => getLanguage(c.lang).romanizationLabel);
+
 
   return (
     <div className={cn(settingsOpen ? 'space-y-2' : '', className)}>
@@ -320,28 +323,54 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         </div>
       )}
 
-      {/* Theme picker */}
+      {/* Theme picker (collapsible) */}
       {onThemeChange && (
         <div className="flex items-center gap-1 rounded-lg bg-secondary p-1" title="Color theme">
-          <Palette className="ml-1 h-4 w-4 shrink-0 text-muted-foreground" />
-          {THEMES.map(theme => (
-            <button
-              key={theme.id}
-              onClick={() => onThemeChange(theme.id)}
-              title={theme.name}
-              aria-label={`${theme.name} theme`}
-              className={cn(
-                'flex h-6 w-6 overflow-hidden rounded-full border transition-all',
-                themeId === theme.id ? 'border-primary ring-2 ring-primary/60' : 'border-border hover:opacity-80',
-              )}
-            >
-              {theme.swatch.map((color, i) => (
+          <button
+            onClick={() => setThemeOpen(o => !o)}
+            className={cn(
+              'flex h-6 items-center gap-1 rounded-md px-1.5 transition-colors',
+              themeOpen ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+            )}
+            title={themeOpen ? 'Hide themes' : 'Show themes'}
+            aria-expanded={themeOpen}
+          >
+            <Palette className="h-4 w-4 shrink-0" />
+            <ChevronUp className={cn('h-3 w-3 shrink-0 transition-transform', themeOpen ? 'rotate-90' : '-rotate-90')} />
+          </button>
+          {!themeOpen && activeTheme && (
+            <span className="flex h-6 w-6 overflow-hidden rounded-full border border-primary">
+              {activeTheme.swatch.map((color, i) => (
                 <span key={i} className="h-full flex-1" style={{ backgroundColor: `hsl(${color})` }} />
               ))}
-            </button>
-          ))}
+            </span>
+          )}
+          <div
+            className={cn(
+              'flex items-center gap-1 overflow-hidden transition-all duration-300',
+              themeOpen ? 'max-w-[16rem] opacity-100' : 'max-w-0 opacity-0',
+            )}
+          >
+            {THEMES.map(theme => (
+              <button
+                key={theme.id}
+                onClick={() => onThemeChange(theme.id)}
+                title={theme.name}
+                aria-label={`${theme.name} theme`}
+                className={cn(
+                  'flex h-6 w-6 shrink-0 overflow-hidden rounded-full border transition-all',
+                  themeId === theme.id ? 'border-primary ring-2 ring-primary/60' : 'border-border hover:opacity-80',
+                )}
+              >
+                {theme.swatch.map((color, i) => (
+                  <span key={i} className="h-full flex-1" style={{ backgroundColor: `hsl(${color})` }} />
+                ))}
+              </button>
+            ))}
+          </div>
         </div>
       )}
+
 
       {/* Mute SFX Toggle */}
 
