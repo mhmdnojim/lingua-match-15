@@ -98,72 +98,120 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
     });
   };
 
+  const previewRows = sheet.rows.slice(0, 3);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Map the columns of your file</DialogTitle>
           <DialogDescription>
-            Pick the language of each column and how it is used: one main column, up to three secondary columns on the
-            board, and any number of extra languages that are stored for later. Missing languages are generated with AI.
+            Check the detected language of each column against the sample words below and correct anything that looks
+            wrong. Choose one main column, up to three secondary columns on the board, and any number of extra
+            languages that are only stored. Missing languages are generated with AI.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3">
-          {sheet.headers.map(header => {
-            const lang = mapping[header] || 'ignore';
-            const ignored = lang === 'ignore';
-            return (
-              <div key={header} className="rounded-lg border border-border bg-secondary/40 p-3 space-y-2">
-                <div className="flex items-center gap-3">
-                  <span className="w-1/3 truncate text-sm text-foreground" title={header}>
-                    {header}
-                  </span>
-                  <select
-                    value={lang}
-                    onChange={e => setMapping(prev => ({ ...prev, [header]: e.target.value }))}
-                    className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    <option value="ignore">Ignore this column</option>
-                    {PICKABLE_LANGUAGES.map(l => (
-                      <option key={l.code} value={l.code}>
-                        {l.native} — {l.name}
-                      </option>
-                    ))}
-                    <optgroup label="Transliteration columns">
-                      {LANGUAGES.filter(l => l.romanizationOf).map(l => (
-                        <option key={l.code} value={l.code}>
-                          {getLanguage(l.romanizationOf!).name} — transliteration
-                        </option>
-                      ))}
-                    </optgroup>
-                  </select>
-                </div>
+        <div className="overflow-x-auto rounded-lg border border-border">
+          <table className="w-full text-sm">
+            <thead className="bg-secondary/60 text-xs uppercase tracking-wider text-muted-foreground">
+              <tr>
+                <th className="px-3 py-2 text-left font-medium">Column</th>
+                <th className="px-3 py-2 text-left font-medium">Sample words</th>
+                <th className="px-3 py-2 text-left font-medium">Language</th>
+                <th className="px-3 py-2 text-left font-medium">Use as</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sheet.headers.map(header => {
+                const lang = mapping[header] || 'ignore';
+                const ignored = lang === 'ignore';
+                const detected = sheet.detected[header];
+                const mismatch = detected && detected !== lang;
+                const samples = previewRows
+                  .map(row => String(row[header] ?? '').trim())
+                  .filter(Boolean);
 
-                {!ignored && (
-                  <div className="flex flex-wrap gap-1.5 pl-[33%]">
-                    {ROLE_OPTIONS.map(option => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        title={option.hint}
-                        onClick={() => setRole(header, option.value)}
+                return (
+                  <tr key={header} className="border-t border-border align-top">
+                    <td className="px-3 py-3">
+                      <div className="max-w-[10rem] truncate font-medium text-foreground" title={header}>
+                        {header}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {detected ? `detected: ${getLanguage(detected).name}` : 'not detected'}
+                      </div>
+                    </td>
+                    <td className="px-3 py-3">
+                      <div className="max-w-[14rem] space-y-0.5 text-xs text-muted-foreground">
+                        {samples.length > 0 ? (
+                          samples.map((sample, i) => (
+                            <div key={i} className="truncate" title={sample}>
+                              {sample}
+                            </div>
+                          ))
+                        ) : (
+                          <span className="italic">empty</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-3 py-3">
+                      <select
+                        value={lang}
+                        onChange={e => setMapping(prev => ({ ...prev, [header]: e.target.value }))}
                         className={cn(
-                          'rounded-full border px-3 py-1 text-xs transition-colors',
-                          roles[header] === option.value
-                            ? 'border-primary bg-primary text-primary-foreground'
-                            : 'border-border bg-background text-muted-foreground hover:text-foreground',
+                          'w-full min-w-[11rem] rounded-md border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary',
+                          mismatch ? 'border-primary' : 'border-border',
                         )}
                       >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                        <option value="ignore">Ignore this column</option>
+                        {PICKABLE_LANGUAGES.map(l => (
+                          <option key={l.code} value={l.code}>
+                            {l.native} — {l.name}
+                          </option>
+                        ))}
+                        <optgroup label="Transliteration columns">
+                          {LANGUAGES.filter(l => l.romanizationOf).map(l => (
+                            <option key={l.code} value={l.code}>
+                              {getLanguage(l.romanizationOf!).name} — transliteration
+                            </option>
+                          ))}
+                        </optgroup>
+                      </select>
+                      {mismatch && <p className="pt-1 text-xs text-primary">changed from the detected language</p>}
+                    </td>
+                    <td className="px-3 py-3">
+                      {ignored ? (
+                        <span className="text-xs italic text-muted-foreground">not imported</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1.5">
+                          {ROLE_OPTIONS.map(option => (
+                            <button
+                              key={option.value}
+                              type="button"
+                              title={option.hint}
+                              onClick={() => setRole(header, option.value)}
+                              className={cn(
+                                'rounded-full border px-3 py-1 text-xs transition-colors',
+                                roles[header] === option.value
+                                  ? 'border-primary bg-primary text-primary-foreground'
+                                  : 'border-border bg-background text-muted-foreground hover:text-foreground',
+                              )}
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
+
+
 
         {duplicate && (
           <p className="text-sm text-destructive">Two columns are mapped to the same language — pick different ones.</p>
