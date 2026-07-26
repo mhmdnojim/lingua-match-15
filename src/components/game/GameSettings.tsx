@@ -312,7 +312,31 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         </div>
       )}
 
+      {/* Theme picker */}
+      {onThemeChange && (
+        <div className="flex items-center gap-1 rounded-lg bg-secondary p-1" title="Color theme">
+          <Palette className="ml-1 h-4 w-4 shrink-0 text-muted-foreground" />
+          {THEMES.map(theme => (
+            <button
+              key={theme.id}
+              onClick={() => onThemeChange(theme.id)}
+              title={theme.name}
+              aria-label={`${theme.name} theme`}
+              className={cn(
+                'flex h-6 w-6 overflow-hidden rounded-full border transition-all',
+                themeId === theme.id ? 'border-primary ring-2 ring-primary/60' : 'border-border hover:opacity-80',
+              )}
+            >
+              {theme.swatch.map((color, i) => (
+                <span key={i} className="h-full flex-1" style={{ backgroundColor: `hsl(${color})` }} />
+              ))}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Mute SFX Toggle */}
+
       {onMuteSfxChange && (
         <button
           onClick={() => onMuteSfxChange(!muteSfx)}
