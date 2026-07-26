@@ -24,6 +24,7 @@ import {
   saveVocabulary,
   loadVocabularyCache,
   saveVocabularySet,
+  deleteVocabularySet,
   loadVocabularySet,
   listLocalSources,
   saveUiState,
@@ -35,7 +36,7 @@ import {
 import { getLanguage, romanizationCodeFor, hasRomanization } from '@/utils/languages';
 import { exportVocabularyToExcel } from '@/utils/exportExcel';
 import { translateWords } from '@/utils/translate';
-import { fetchCloudSet, saveCloudSet, filledCount } from '@/utils/cloudVocabulary';
+import { fetchCloudSet, saveCloudSet, deleteCloudSet, filledCount } from '@/utils/cloudVocabulary';
 import { useAudio } from '@/hooks/useAudio';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
