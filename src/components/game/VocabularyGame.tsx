@@ -46,6 +46,16 @@ import ProgressBar from './ProgressBar';
 import FileSelector from './FileSelector';
 import GameSettings from './GameSettings';
 import CelebrationModal from './CelebrationModal';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import LanguageColumnsDialog from './LanguageColumnsDialog';
 import WordEditorDialog from './WordEditorDialog';
 import ImportMappingDialog from './ImportMappingDialog';
@@ -549,6 +559,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     }
     setIsLoading(false);
     if (sheets.length === 0) return;
+
+    const totalWords = sheets.reduce((sum, sheet) => sum + sheet.rows.length, 0);
+    if (totalWords > batchSize) setScopePrompt({ count: totalWords });
 
     const [first, ...rest] = sheets;
     const auto = autoMapping(first);
@@ -1157,6 +1170,26 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onExportExcel={handleExportExcel}
 
         />
+
+        <AlertDialog open={scopePrompt !== null} onOpenChange={open => !open && setScopePrompt(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Translate the whole file?</AlertDialogTitle>
+              <AlertDialogDescription>
+                You uploaded {scopePrompt?.count ?? 0} words. Translate everything now, or only the round you are
+                playing? You can switch this any time in Options.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => { setTranslateScope('batch'); setScopePrompt(null); }}>
+                Batch by batch
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={() => { setTranslateScope('all'); setScopePrompt(null); }}>
+                Translate whole file
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <ImportMappingDialog
           open={pendingSheet !== null}
