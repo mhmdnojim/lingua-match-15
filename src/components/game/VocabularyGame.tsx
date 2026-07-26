@@ -615,7 +615,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       return false;
     }
 
-    const source = sourceName || selectedFile || 'upload';
+    const source = sourceName ? uniqueSourceName(sourceName) : selectedFile || 'upload';
     saveVocabularySet({ items, mainLang: newMain, source });
     setLibrary(prev => (prev.includes(source) ? prev : [...prev, source]));
     if (userRef.current) {
