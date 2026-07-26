@@ -33,11 +33,25 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   onSpeak,
   onHint,
   onRegenerateCard,
+  onEditCard,
   onColumnLangChange,
   regeneratingIds = [],
 }) => {
   /** per-card override of the column romanization setting */
   const [romOverrides, setRomOverrides] = React.useState<Record<string, boolean>>({});
+  const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [draft, setDraft] = React.useState('');
+
+  const startEdit = (card: GameCard) => {
+    setEditingId(card.id);
+    setDraft(card.content);
+  };
+  const commitEdit = (card: GameCard) => {
+    const value = draft.trim();
+    setEditingId(null);
+    if (value && value !== card.content) onEditCard?.(card, value);
+  };
+
   const toggleRom = (id: string, current: boolean) =>
     setRomOverrides(prev => ({ ...prev, [id]: !current }));
   const visibleColumns = columns.filter(
