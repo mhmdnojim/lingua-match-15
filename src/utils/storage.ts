@@ -14,6 +14,8 @@ const STORAGE_KEYS = {
   FONT_SIZE: 'vocab-game-font-size',
   COLUMNS: 'vocab-game-columns',
   VOCABULARY: 'vocab-game-vocabulary',
+  SHUFFLE_MODE: 'vocab-game-shuffle-mode',
+  UI_STATE: 'vocab-game-ui-state',
 } as const;
 
 export interface GameProgress {
@@ -25,6 +27,38 @@ export interface GameProgress {
   voiceType: VoiceType;
   fontSize: FontSize;
   columns: ColumnConfig[] | null;
+  shuffleMode: boolean;
+}
+
+/** Which panels/dialogs were open when the app was closed */
+export interface UiState {
+  languagesOpen: boolean;
+  wordEditorOpen: boolean;
+  settingsOpen: boolean;
+}
+
+const DEFAULT_UI_STATE: UiState = {
+  languagesOpen: false,
+  wordEditorOpen: false,
+  settingsOpen: false,
+};
+
+export function saveUiState(state: Partial<UiState>): void {
+  try {
+    const current = loadUiState();
+    localStorage.setItem(STORAGE_KEYS.UI_STATE, JSON.stringify({ ...current, ...state }));
+  } catch (error) {
+    console.warn('Failed to save UI state:', error);
+  }
+}
+
+export function loadUiState(): UiState {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.UI_STATE);
+    return raw ? { ...DEFAULT_UI_STATE, ...(JSON.parse(raw) as Partial<UiState>) } : DEFAULT_UI_STATE;
+  } catch {
+    return DEFAULT_UI_STATE;
+  }
 }
 
 export const DEFAULT_COLUMNS: ColumnConfig[] = [
@@ -57,6 +91,9 @@ export function saveProgress(progress: Partial<GameProgress>): void {
     if (progress.fontSize !== undefined) {
       localStorage.setItem(STORAGE_KEYS.FONT_SIZE, progress.fontSize);
     }
+    if (progress.shuffleMode !== undefined) {
+      localStorage.setItem(STORAGE_KEYS.SHUFFLE_MODE, String(progress.shuffleMode));
+    }
     if (progress.columns !== undefined && progress.columns !== null) {
       localStorage.setItem(STORAGE_KEYS.COLUMNS, JSON.stringify(progress.columns));
     }
@@ -75,6 +112,7 @@ export function loadProgress(): GameProgress {
     voiceType: 'free',
     fontSize: 'medium',
     columns: null,
+    shuffleMode: true,
   };
 
   try {
@@ -90,6 +128,7 @@ export function loadProgress(): GameProgress {
       voiceType: (localStorage.getItem(STORAGE_KEYS.VOICE_TYPE) as VoiceType) || 'free',
       fontSize: (localStorage.getItem(STORAGE_KEYS.FONT_SIZE) as FontSize) || 'medium',
       columns: columnsStr ? (JSON.parse(columnsStr) as ColumnConfig[]) : null,
+      shuffleMode: (localStorage.getItem(STORAGE_KEYS.SHUFFLE_MODE) ?? 'true') === 'true',
     };
   } catch (error) {
     console.warn('Failed to load progress from localStorage:', error);
