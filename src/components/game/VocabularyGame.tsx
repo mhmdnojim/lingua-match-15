@@ -4,6 +4,7 @@ import {
   VocabularyItem,
   SheetData,
   ColumnMapping,
+  buildVocabulary,
   fetchExcelFromUrl,
   parseExcelFile,
   createBatches,
@@ -257,7 +258,6 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         : { lang, visible: true, muted: false, showRomanization: index === 0 };
     });
 
-    const { buildVocabulary } = require('@/utils/excelParser') as typeof import('@/utils/excelParser');
     const items = buildVocabulary(pendingSheet, mapping, newMain);
 
     if (items.length === 0) {
