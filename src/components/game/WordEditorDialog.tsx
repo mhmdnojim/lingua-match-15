@@ -59,7 +59,8 @@ export const WordEditorDialog: React.FC<WordEditorDialogProps> = ({
           <DialogTitle>Words in this round</DialogTitle>
           <DialogDescription>
             Fix a translation by typing over it, or regenerate it with AI. Optional guidance below is applied to
-            regenerations.
+            regenerations. "Regenerate all batches" rebuilds translations for your entire word list, not just this
+            round.
           </DialogDescription>
         </DialogHeader>
 
@@ -72,7 +73,7 @@ export const WordEditorDialog: React.FC<WordEditorDialogProps> = ({
           />
           <Button onClick={handleRegenerateAll} disabled={busy !== null} className="gap-1.5">
             <Sparkles className="w-4 h-4" />
-            Regenerate all
+            {busy === 'all' ? 'Regenerating all…' : 'Regenerate all batches'}
           </Button>
         </div>
 

@@ -160,21 +160,25 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           });
           if (pending.length === 0) continue;
 
-          const words = pending.map(item => item.values[effectiveSource] || '');
-          const results = await translateWords({ sourceLang: effectiveSource, targetLang: column.lang, words, instruction });
+          // Translate in chunks so large datasets (all batches) stay within request limits
+          const CHUNK = 25;
+          for (let start = 0; start < pending.length; start += CHUNK) {
+            const chunk = pending.slice(start, start + CHUNK);
+            const words = chunk.map(item => item.values[effectiveSource] || '');
+            const results = await translateWords({ sourceLang: effectiveSource, targetLang: column.lang, words, instruction });
 
-
-          setVocabulary(prev => {
-            const next = prev.map(item => {
-              const index = pending.findIndex(p => p.id === item.id);
-              if (index === -1) return item;
-              const value = results[index];
-              if (!value) return item;
-              return { ...item, values: { ...item.values, [column.lang]: value } };
+            setVocabulary(prev => {
+              const next = prev.map(item => {
+                const index = chunk.findIndex(p => p.id === item.id);
+                if (index === -1) return item;
+                const value = results[index];
+                if (!value) return item;
+                return { ...item, values: { ...item.values, [column.lang]: value } };
+              });
+              saveVocabulary({ items: next, mainLang: source, source: selectedFile || 'local' });
+              return next;
             });
-            saveVocabulary({ items: next, mainLang: source, source: selectedFile || 'local' });
-            return next;
-          });
+          }
         }
       } catch (error) {
         toast({
@@ -506,7 +510,12 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   };
 
   const handleRegenerateAll = async (instruction?: string) => {
-    await translateMissing(currentItems, columns, mainLang, instruction, true);
+    // Regenerate across the entire dataset (all batches), not just the current batch
+    await translateMissing(vocabulary, columns, mainLang, instruction, true);
+    toast({
+      title: 'Translations regenerated',
+      description: `Updated ${vocabulary.length} words across all ${batches.length} batches.`,
+    });
   };
 
   const headerSubtitle = columns.map(c => getLanguage(c.lang).native).join(' • ');
