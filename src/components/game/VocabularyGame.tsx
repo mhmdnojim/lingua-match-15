@@ -361,7 +361,10 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     saveProgress({ currentBatch: 0, score: 0, completedBatches: [], columns: nextColumns });
     setPendingSheet(null);
     autoTranslatedRef.current = '';
-    toast({ title: 'File imported', description: `${items.length} words loaded` });
+    toast({
+      title: 'File imported',
+      description: `${items.length} words loaded — main language: ${getLanguage(newMain).native}. Missing columns are generated with AI.`,
+    });
   };
 
   const handleColumnsChange = (next: ColumnConfig[]) => {
