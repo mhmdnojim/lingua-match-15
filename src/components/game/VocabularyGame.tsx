@@ -851,6 +851,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onRegenerateAll={handleRegenerateAll}
           onRegenerateWord={handleRegenerateWord}
           onRegenerateColumn={handleRegenerateColumn}
+          onExportExcel={handleExportExcel}
+
         />
 
         <ImportMappingDialog
