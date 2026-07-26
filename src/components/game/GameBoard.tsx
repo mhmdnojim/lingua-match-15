@@ -59,29 +59,35 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           <div key={column.lang} className="flex flex-col gap-3">
             {onColumnLangChange ? (
               <div className="mb-2 flex items-center justify-center gap-1">
-                <select
+                <Select
                   value={column.lang}
-                  onChange={e => onColumnLangChange(originalIndex, e.target.value)}
-                  aria-label={`Language for column ${originalIndex + 1}`}
-                  className={cn(
-                    'max-w-full cursor-pointer appearance-none truncate rounded-md border border-transparent bg-transparent px-2 py-1 text-center text-sm font-medium uppercase tracking-wider hover:border-border focus:outline-none focus:ring-2 focus:ring-primary',
-                    style.text,
-                  )}
+                  onValueChange={value => onColumnLangChange(originalIndex, value)}
                 >
-                  {(originalIndex === 0 ? MAIN_LANGUAGES : PICKABLE_LANGUAGES).map(option => (
-                    <option
-                      key={option.code}
-                      value={option.code}
-                      disabled={option.code !== column.lang && columns.some(c => c.lang === option.code)}
-                      className="text-foreground"
-                    >
-                      {option.native} — {option.name}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger
+                    aria-label={`Language for column ${originalIndex + 1}`}
+                    className={cn(
+                      'h-8 w-auto max-w-full gap-1 border-transparent bg-transparent px-2 text-sm font-medium uppercase tracking-wider hover:border-border focus:ring-2 focus:ring-primary',
+                      style.text,
+                    )}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {(originalIndex === 0 ? MAIN_LANGUAGES : PICKABLE_LANGUAGES).map(option => (
+                      <SelectItem
+                        key={option.code}
+                        value={option.code}
+                        disabled={option.code !== column.lang && columns.some(c => c.lang === option.code)}
+                      >
+                        {option.native} — {option.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {originalIndex === 0 && <span className="text-[10px] text-muted-foreground">(main)</span>}
               </div>
             ) : (
+
               <h3 className={cn('text-center text-sm font-medium mb-2 uppercase tracking-wider', style.text)}>
                 {language.native}
                 {originalIndex === 0 && <span className="ml-1 text-[10px] text-muted-foreground">(main)</span>}
