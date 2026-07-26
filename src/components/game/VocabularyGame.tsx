@@ -23,6 +23,9 @@ import {
   clearProgress,
   saveVocabulary,
   loadVocabularyCache,
+  saveVocabularySet,
+  loadVocabularySet,
+  listLocalSources,
   saveUiState,
   loadUiState,
   DEFAULT_COLUMNS,
@@ -51,7 +54,7 @@ import { BookOpen, LogIn, LogOut, Loader2, Cloud, CloudOff, CloudUpload, Sliders
 import { sampleVocabulary } from '@/data/sampleVocabulary';
 
 
-const AVAILABLE_FILES = ['sample-vocabulary.xlsx'];
+const HOSTED_FILES = ['sample-vocabulary.xlsx'];
 const BATCH_SIZE = 5;
 
 export interface VocabularyGameProps {
@@ -111,6 +114,11 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const navigate = useNavigate();
   const mainLang = columns[0]?.lang || 'zh';
   const { speak, playSuccess, playError, playCelebration } = useAudio({ muteVoice: false, muteSfx, voiceType });
+
+  /** Every file the user has imported, plus the bundled sample */
+  const [library, setLibrary] = useState<string[]>(() =>
+    Array.from(new Set([...HOSTED_FILES, ...listLocalSources()])),
+  );
 
   const cloudSource = selectedFile || 'upload';
   const userRef = useRef<any>(null);
@@ -401,26 +409,52 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       skipInitialLoadRef.current = false;
       return;
     }
+    // Previously imported file → restore its own saved words instead of re-parsing
+    const stored = loadVocabularySet(selectedFile);
+    if (stored && stored.items.length > 0) {
+      setVocabulary(stored.items);
+      saveVocabulary(stored);
+      setCurrentBatch(0);
+      setCompletedBatches([]);
+      autoTranslatedRef.current = '';
+      return;
+    }
     loadVocabulary(selectedFile);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFile]);
 
-  const handleUploadFile = async (file: File) => {
+  /** Upload one or many Excel files — each becomes its own entry in the picker */
+  const handleUploadFiles = async (files: File[]) => {
     setIsLoading(true);
-    const result = await parseExcelFile(file);
-    setIsLoading(false);
-    if (!result.success) {
-      toast({ title: 'Error', description: result.error, variant: 'destructive' });
-      return;
+    const imported: string[] = [];
+    let lastPending: SheetData | null = null;
+
+    for (const file of files) {
+      const result = await parseExcelFile(file);
+      if (!result.success) {
+        toast({ title: `Could not read ${file.name}`, description: result.error, variant: 'destructive' });
+        continue;
+      }
+      const auto = autoMapping(result);
+      if (auto) {
+        if (applyMapping(result, auto, file.name)) imported.push(file.name);
+      } else {
+        lastPending = { ...result, fileName: file.name } as SheetData;
+      }
     }
-    handleSheetReady(result);
+    setIsLoading(false);
+
+    if (lastPending) setPendingSheet(lastPending);
+    if (imported.length > 1) {
+      toast({ title: `${imported.length} files imported`, description: imported.join(', ') });
+    }
   };
 
   /** Import straight away when the first column's language is recognised */
   const handleSheetReady = (sheet: SheetData) => {
     const auto = autoMapping(sheet);
     if (auto) {
-      applyMapping(sheet, auto);
+      applyMapping(sheet, auto, sheet.fileName);
       return;
     }
     setPendingSheet(sheet);
@@ -428,10 +462,10 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
   const handleConfirmMapping = (mapping: ColumnMapping) => {
     if (!pendingSheet) return;
-    applyMapping(pendingSheet, mapping);
+    applyMapping(pendingSheet, mapping, pendingSheet.fileName);
   };
 
-  const applyMapping = (sheet: SheetData, mapping: ColumnMapping) => {
+  const applyMapping = (sheet: SheetData, mapping: ColumnMapping, sourceName?: string): boolean => {
     const mappedLangs = Object.entries(mapping)
       .filter(([, lang]) => lang && lang !== 'ignore')
       .map(([, lang]) => lang);
@@ -450,13 +484,29 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     const items = buildVocabulary(sheet, mapping, newMain);
 
     if (items.length === 0) {
-      toast({ title: 'Nothing to import', description: 'No rows had a value in the main language', variant: 'destructive' });
-      return;
+      toast({
+        title: sourceName ? `No words in ${sourceName}` : 'Nothing to import',
+        description: 'The first column must contain the words — there is nothing to add.',
+        variant: 'destructive',
+      });
+      return false;
     }
 
+    const source = sourceName || selectedFile || 'upload';
+    saveVocabularySet({ items, mainLang: newMain, source });
+    setLibrary(prev => (prev.includes(source) ? prev : [...prev, source]));
+    if (userRef.current) {
+      setCloudStatus('saving');
+      saveCloudSet({ source, mainLang: newMain, columns: nextColumns, items }).then(ok =>
+        setCloudStatus(ok ? 'saved' : 'error'),
+      );
+    }
+
+    skipInitialLoadRef.current = true;
+    setSelectedFile(source);
     setColumns(nextColumns);
     setVocabulary(items);
-    persistVocabulary(items, newMain);
+    saveVocabulary({ items, mainLang: newMain, source });
     setCurrentBatch(0);
     setScore(0);
     setCompletedBatches([]);
@@ -467,6 +517,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       title: 'File imported',
       description: `${items.length} words loaded — main language: ${getLanguage(newMain).native}. Missing columns are generated with AI.`,
     });
+    return true;
   };
 
   /** Romanization columns (pinyin, romaji...) only make sense for their own script — hide them otherwise */
@@ -852,9 +903,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           extraControls={
             <FileSelector
               selectedFile={selectedFile}
-              availableFiles={AVAILABLE_FILES}
+              availableFiles={library}
               onSelectFile={setSelectedFile}
-              onUploadFile={handleUploadFile}
+              onUploadFiles={handleUploadFiles}
             />
           }
         />
