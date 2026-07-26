@@ -2,7 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ColumnConfig } from '@/utils/gameLogic';
-import { PICKABLE_LANGUAGES, MAIN_LANGUAGES, getLanguage, columnStyle } from '@/utils/languages';
+import { PICKABLE_LANGUAGES, MAIN_LANGUAGES, getLanguage, columnStyle, hasRomanization } from '@/utils/languages';
 import { cn } from '@/lib/utils';
 import { Plus, Trash2, ArrowRight } from 'lucide-react';
 
@@ -25,14 +25,14 @@ export const LanguageColumnsDialog: React.FC<LanguageColumnsDialogProps> = ({
 
   const setLang = (index: number, lang: string) => {
     if (usedLangs.includes(lang)) return;
-    const next = columns.map((c, i) => (i === index ? { ...c, lang, showRomanization: i === 0 } : c));
+    const next = columns.map((c, i) => (i === index ? { ...c, lang, showRomanization: hasRomanization(lang) } : c));
     onChange(next);
   };
 
   const addColumn = () => {
     const candidate = PICKABLE_LANGUAGES.find(l => !usedLangs.includes(l.code));
     if (!candidate || columns.length >= MAX_COLUMNS) return;
-    onChange([...columns, { lang: candidate.code, visible: true, muted: false, showRomanization: false }]);
+    onChange([...columns, { lang: candidate.code, visible: true, muted: false, showRomanization: hasRomanization(candidate.code) }]);
   };
 
   const removeColumn = (index: number) => {
