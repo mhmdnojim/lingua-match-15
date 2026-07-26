@@ -151,13 +151,26 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       if (targets.length === 0) return;
 
       setIsTranslating(true);
-      try {
-        for (const column of targets) {
-          const pending = items.filter(item => {
+
+      // Total work = every word that needs a translation across all target columns
+      const pendingByColumn = new Map<string, VocabularyItem[]>();
+      for (const column of targets) {
+        pendingByColumn.set(
+          column.lang,
+          items.filter(item => {
             const has = (item.values[column.lang] || '').trim().length > 0;
             const isEdited = item.edited?.[column.lang];
             return force ? !isEdited || instruction !== undefined : !has;
-          });
+          }),
+        );
+      }
+      const totalWords = Array.from(pendingByColumn.values()).reduce((sum, list) => sum + list.length, 0);
+      let doneWords = 0;
+      setTranslateProgress({ lang: targets[0].lang, done: 0, total: totalWords, words: [] });
+
+      try {
+        for (const column of targets) {
+          const pending = pendingByColumn.get(column.lang) || [];
           if (pending.length === 0) continue;
 
           // Translate in chunks so large datasets (all batches) stay within request limits
@@ -165,6 +178,12 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           for (let start = 0; start < pending.length; start += CHUNK) {
             const chunk = pending.slice(start, start + CHUNK);
             const words = chunk.map(item => item.values[effectiveSource] || '');
+            setTranslateProgress({
+              lang: column.lang,
+              done: doneWords,
+              total: totalWords,
+              words: words.filter(Boolean).slice(0, 5),
+            });
             const results = await translateWords({ sourceLang: effectiveSource, targetLang: column.lang, words, instruction });
 
             setVocabulary(prev => {
@@ -178,6 +197,14 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               saveVocabulary({ items: next, mainLang: source, source: selectedFile || 'local' });
               return next;
             });
+
+            doneWords += chunk.length;
+            setTranslateProgress({
+              lang: column.lang,
+              done: doneWords,
+              total: totalWords,
+              words: words.filter(Boolean).slice(0, 5),
+            });
           }
         }
       } catch (error) {
@@ -188,6 +215,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         });
       } finally {
         setIsTranslating(false);
+        setTranslateProgress(null);
       }
     },
     [selectedFile, toast],
