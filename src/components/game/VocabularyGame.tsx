@@ -893,6 +893,35 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     }
   };
 
+  /** Inline edit from a board card. Editing the main word retranslates its row. */
+  const handleCardEdit = async (card: GameCard, value: string) => {
+    const item = vocabulary.find(i => i.id === card.vocabId);
+    if (!item) return;
+
+    if (card.lang !== mainLang) {
+      handleEditValue(card.vocabId, card.lang, value);
+      return;
+    }
+
+    const updated: VocabularyItem = {
+      ...item,
+      values: { [mainLang]: value },
+      edited: { [mainLang]: true },
+    };
+    setVocabulary(prev => {
+      const next = prev.map(i => (i.id === updated.id ? updated : i));
+      persistVocabulary(next, mainLang);
+      return next;
+    });
+
+    setRegeneratingCards(prev => [...prev, card.id]);
+    try {
+      await translateMissing([updated], columns, mainLang, undefined, true);
+    } finally {
+      setRegeneratingCards(prev => prev.filter(id => id !== card.id));
+    }
+  };
+
   const handleRegenerateOne = async (vocabId: string, lang: string, instruction?: string) => {
     const item = vocabulary.find(i => i.id === vocabId);
     if (!item) return;
