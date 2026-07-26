@@ -32,7 +32,7 @@ import {
   VoiceType,
   FontSize,
 } from '@/utils/storage';
-import { getLanguage, romanizationCodeFor } from '@/utils/languages';
+import { getLanguage, romanizationCodeFor, hasRomanization } from '@/utils/languages';
 import { exportVocabularyToExcel } from '@/utils/exportExcel';
 import { translateWords } from '@/utils/translate';
 import { fetchCloudSet, saveCloudSet, filledCount } from '@/utils/cloudVocabulary';
@@ -477,8 +477,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     const nextColumns: ColumnConfig[] = langs.map((lang, index) => {
       const existing = columns.find(c => c.lang === lang);
       return existing
-        ? { ...existing, showRomanization: index === 0 ? existing.showRomanization : false }
-        : { lang, visible: true, muted: false, showRomanization: index === 0 };
+        ? { ...existing, showRomanization: existing.showRomanization && hasRomanization(lang) }
+        : { lang, visible: true, muted: false, showRomanization: hasRomanization(lang) };
     });
 
     const items = buildVocabulary(sheet, mapping, newMain);
@@ -543,7 +543,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const handleColumnLangChange = (index: number, lang: string) => {
     if (columns.some(c => c.lang === lang)) return;
     handleColumnsChange(
-      columns.map((c, i) => (i === index ? { ...c, lang, showRomanization: i === 0 ? c.showRomanization : false } : c)),
+      columns.map((c, i) => (i === index ? { ...c, lang, showRomanization: hasRomanization(lang) } : c)),
     );
   };
 
