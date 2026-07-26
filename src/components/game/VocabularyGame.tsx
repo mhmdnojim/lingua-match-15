@@ -624,9 +624,38 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         />
 
         {isTranslating && (
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Generating translations…
+          <div className="max-w-xl mx-auto rounded-lg border border-border bg-card p-3 space-y-2">
+            <div className="flex items-center justify-between gap-2 text-sm">
+              <span className="flex items-center gap-2 text-foreground">
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                {translateProgress
+                  ? `Translating to ${getLanguage(translateProgress.lang).native}…`
+                  : 'Generating translations…'}
+              </span>
+              {translateProgress && translateProgress.total > 0 && (
+                <span className="text-muted-foreground tabular-nums">
+                  {translateProgress.done}/{translateProgress.total} words
+                </span>
+              )}
+            </div>
+
+            <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full bg-primary transition-all duration-300"
+                style={{
+                  width:
+                    translateProgress && translateProgress.total > 0
+                      ? `${Math.round((translateProgress.done / translateProgress.total) * 100)}%`
+                      : '10%',
+                }}
+              />
+            </div>
+
+            {translateProgress?.words.length ? (
+              <p className="text-xs text-muted-foreground truncate">
+                Now updating: {translateProgress.words.join(' · ')}
+              </p>
+            ) : null}
           </div>
         )}
 
