@@ -17,6 +17,10 @@ interface WordEditorDialogProps {
   onEditValue: (vocabId: string, lang: string, value: string) => void;
   onRegenerate: (vocabId: string, lang: string, instruction?: string) => Promise<void>;
   onRegenerateAll: (instruction?: string) => Promise<void>;
+  /** Regenerate every column of one word */
+  onRegenerateWord: (vocabId: string, instruction?: string) => Promise<void>;
+  /** Regenerate one column for every word in this round */
+  onRegenerateColumn: (lang: string, instruction?: string) => Promise<void>;
 }
 
 export const WordEditorDialog: React.FC<WordEditorDialogProps> = ({
@@ -28,6 +32,8 @@ export const WordEditorDialog: React.FC<WordEditorDialogProps> = ({
   onEditValue,
   onRegenerate,
   onRegenerateAll,
+  onRegenerateWord,
+  onRegenerateColumn,
 }) => {
   const [instruction, setInstruction] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
@@ -36,6 +42,24 @@ export const WordEditorDialog: React.FC<WordEditorDialogProps> = ({
     setBusy(`${vocabId}-${lang}`);
     try {
       await onRegenerate(vocabId, lang, instruction.trim() || undefined);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleRegenerateWord = async (vocabId: string) => {
+    setBusy(`word-${vocabId}`);
+    try {
+      await onRegenerateWord(vocabId, instruction.trim() || undefined);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleRegenerateColumn = async (lang: string) => {
+    setBusy(`col-${lang}`);
+    try {
+      await onRegenerateColumn(lang, instruction.trim() || undefined);
     } finally {
       setBusy(null);
     }
@@ -77,6 +101,25 @@ export const WordEditorDialog: React.FC<WordEditorDialogProps> = ({
           </Button>
         </div>
 
+        {targetColumns.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Regenerate a whole column in this round:</span>
+            {targetColumns.map(column => (
+              <Button
+                key={`col-${column.lang}`}
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                disabled={busy !== null}
+                onClick={() => handleRegenerateColumn(column.lang)}
+              >
+                <RefreshCw className={cn('w-3.5 h-3.5', busy === `col-${column.lang}` && 'animate-spin')} />
+                {getLanguage(column.lang).name}
+              </Button>
+            ))}
+          </div>
+        )}
+
         <div className="space-y-4">
           {items.map(item => (
             <div key={item.id} className="rounded-lg border border-border bg-secondary/30 p-3 space-y-2">
@@ -88,6 +131,17 @@ export const WordEditorDialog: React.FC<WordEditorDialogProps> = ({
                   {item.values[mainLang]}
                 </span>
                 <span className="text-xs text-muted-foreground uppercase">{getLanguage(mainLang).name}</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="ml-auto gap-1.5"
+                  title="Regenerate every language for this word"
+                  disabled={busy !== null}
+                  onClick={() => handleRegenerateWord(item.id)}
+                >
+                  <RefreshCw className={cn('w-3.5 h-3.5', busy === `word-${item.id}` && 'animate-spin')} />
+                  All languages
+                </Button>
               </div>
 
               <div className="grid gap-2 sm:grid-cols-2">
