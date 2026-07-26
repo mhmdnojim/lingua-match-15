@@ -84,6 +84,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
       {/* Everything else — hidden until needed */}
       {settingsOpen && (
         <div className="flex flex-wrap items-center justify-center gap-2 rounded-lg border border-border bg-card/60 p-2">
+      {extraControls}
       {/* Language / column setup */}
       <button
         onClick={onOpenLanguages}
