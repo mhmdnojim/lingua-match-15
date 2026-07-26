@@ -1,4 +1,5 @@
-import { GameMode } from './gameLogic';
+import { ColumnConfig } from './gameLogic';
+import { VocabularyItem } from './excelParser';
 
 export type VoiceType = 'free' | 'premium';
 export type FontSize = 'small' | 'medium' | 'large';
@@ -7,29 +8,31 @@ const STORAGE_KEYS = {
   CURRENT_BATCH: 'vocab-game-current-batch',
   COMPLETED_BATCHES: 'vocab-game-completed-batches',
   SCORE: 'vocab-game-score',
-  GAME_MODE: 'vocab-game-mode',
-  SHOW_PINYIN: 'vocab-game-show-pinyin',
-  SHOW_ARABIC: 'vocab-game-show-arabic',
-  MUTE_VOICE: 'vocab-game-mute-voice',
   MUTE_SFX: 'vocab-game-mute-sfx',
   SELECTED_FILE: 'vocab-game-selected-file',
   VOICE_TYPE: 'vocab-game-voice-type',
   FONT_SIZE: 'vocab-game-font-size',
+  COLUMNS: 'vocab-game-columns',
+  VOCABULARY: 'vocab-game-vocabulary',
 } as const;
 
 export interface GameProgress {
   currentBatch: number;
   completedBatches: number[];
   score: number;
-  gameMode: GameMode;
-  showPinyin: boolean;
-  showArabic: boolean;
-  muteVoice: boolean;
   muteSfx: boolean;
   selectedFile: string | null;
   voiceType: VoiceType;
   fontSize: FontSize;
+  columns: ColumnConfig[] | null;
 }
+
+export const DEFAULT_COLUMNS: ColumnConfig[] = [
+  { lang: 'zh', visible: true, muted: false, showRomanization: true },
+  { lang: 'zh-pinyin', visible: true, muted: false, showRomanization: false },
+  { lang: 'en', visible: true, muted: false, showRomanization: false },
+  { lang: 'ar', visible: true, muted: false, showRomanization: false },
+];
 
 export function saveProgress(progress: Partial<GameProgress>): void {
   try {
@@ -41,18 +44,6 @@ export function saveProgress(progress: Partial<GameProgress>): void {
     }
     if (progress.score !== undefined) {
       localStorage.setItem(STORAGE_KEYS.SCORE, String(progress.score));
-    }
-    if (progress.gameMode !== undefined) {
-      localStorage.setItem(STORAGE_KEYS.GAME_MODE, progress.gameMode);
-    }
-    if (progress.showPinyin !== undefined) {
-      localStorage.setItem(STORAGE_KEYS.SHOW_PINYIN, String(progress.showPinyin));
-    }
-    if (progress.showArabic !== undefined) {
-      localStorage.setItem(STORAGE_KEYS.SHOW_ARABIC, String(progress.showArabic));
-    }
-    if (progress.muteVoice !== undefined) {
-      localStorage.setItem(STORAGE_KEYS.MUTE_VOICE, String(progress.muteVoice));
     }
     if (progress.muteSfx !== undefined) {
       localStorage.setItem(STORAGE_KEYS.MUTE_SFX, String(progress.muteSfx));
@@ -66,51 +57,72 @@ export function saveProgress(progress: Partial<GameProgress>): void {
     if (progress.fontSize !== undefined) {
       localStorage.setItem(STORAGE_KEYS.FONT_SIZE, progress.fontSize);
     }
+    if (progress.columns !== undefined && progress.columns !== null) {
+      localStorage.setItem(STORAGE_KEYS.COLUMNS, JSON.stringify(progress.columns));
+    }
   } catch (error) {
     console.warn('Failed to save progress to localStorage:', error);
   }
 }
 
 export function loadProgress(): GameProgress {
+  const fallback: GameProgress = {
+    currentBatch: 0,
+    completedBatches: [],
+    score: 0,
+    muteSfx: false,
+    selectedFile: null,
+    voiceType: 'free',
+    fontSize: 'medium',
+    columns: null,
+  };
+
   try {
     const completedBatchesStr = localStorage.getItem(STORAGE_KEYS.COMPLETED_BATCHES);
-    
+    const columnsStr = localStorage.getItem(STORAGE_KEYS.COLUMNS);
+
     return {
       currentBatch: parseInt(localStorage.getItem(STORAGE_KEYS.CURRENT_BATCH) || '0', 10),
       completedBatches: completedBatchesStr ? JSON.parse(completedBatchesStr) : [],
       score: parseInt(localStorage.getItem(STORAGE_KEYS.SCORE) || '0', 10),
-      gameMode: (localStorage.getItem(STORAGE_KEYS.GAME_MODE) as GameMode) || '2-column',
-      showPinyin: localStorage.getItem(STORAGE_KEYS.SHOW_PINYIN) !== 'false',
-      showArabic: localStorage.getItem(STORAGE_KEYS.SHOW_ARABIC) === 'true',
-      muteVoice: localStorage.getItem(STORAGE_KEYS.MUTE_VOICE) === 'true',
       muteSfx: localStorage.getItem(STORAGE_KEYS.MUTE_SFX) === 'true',
       selectedFile: localStorage.getItem(STORAGE_KEYS.SELECTED_FILE) || null,
       voiceType: (localStorage.getItem(STORAGE_KEYS.VOICE_TYPE) as VoiceType) || 'free',
       fontSize: (localStorage.getItem(STORAGE_KEYS.FONT_SIZE) as FontSize) || 'medium',
+      columns: columnsStr ? (JSON.parse(columnsStr) as ColumnConfig[]) : null,
     };
   } catch (error) {
     console.warn('Failed to load progress from localStorage:', error);
-    return {
-      currentBatch: 0,
-      completedBatches: [],
-      score: 0,
-      gameMode: '2-column',
-      showPinyin: true,
-      showArabic: false,
-      muteVoice: false,
-      muteSfx: false,
-      selectedFile: null,
-      voiceType: 'free',
-      fontSize: 'medium',
-    };
+    return fallback;
+  }
+}
+
+export interface StoredVocabulary {
+  items: VocabularyItem[];
+  mainLang: string;
+  source: string;
+}
+
+export function saveVocabulary(data: StoredVocabulary): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.VOCABULARY, JSON.stringify(data));
+  } catch (error) {
+    console.warn('Failed to save vocabulary:', error);
+  }
+}
+
+export function loadVocabularyCache(): StoredVocabulary | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.VOCABULARY);
+    return raw ? (JSON.parse(raw) as StoredVocabulary) : null;
+  } catch {
+    return null;
   }
 }
 
 export function clearProgress(): void {
   try {
-    Object.values(STORAGE_KEYS).forEach(key => {
-      localStorage.removeItem(key);
-    });
+    Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
   } catch (error) {
     console.warn('Failed to clear progress from localStorage:', error);
   }

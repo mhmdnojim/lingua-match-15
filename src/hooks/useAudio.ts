@@ -1,4 +1,5 @@
 import { useCallback, useRef } from 'react';
+import { getLanguage } from '@/utils/languages';
 
 export type VoiceType = 'free' | 'premium';
 
@@ -11,16 +12,17 @@ interface UseAudioOptions {
 export function useAudio({ muteVoice, muteSfx, voiceType = 'free' }: UseAudioOptions) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const speakWithWebSpeech = useCallback((text: string, language: 'chinese' | 'english' | 'arabic') => {
+  /** langCode is a language code from the language catalog, e.g. 'zh', 'en', 'ar', 'fr' */
+  const speakWithWebSpeech = useCallback((text: string, langCode: string) => {
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = language === 'chinese' ? 'zh-CN' : language === 'arabic' ? 'ar-SA' : 'en-US';
+      utterance.lang = getLanguage(langCode).locale;
       utterance.rate = 0.9;
       speechSynthesis.speak(utterance);
     }
   }, []);
 
-  const speakWithPremium = useCallback(async (text: string, language: 'chinese' | 'english' | 'arabic'): Promise<boolean> => {
+  const speakWithPremium = useCallback(async (text: string, langCode: string): Promise<boolean> => {
     try {
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/text-to-speech`,
@@ -31,7 +33,7 @@ export function useAudio({ muteVoice, muteSfx, voiceType = 'free' }: UseAudioOpt
             'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
             'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ text, language }),
+          body: JSON.stringify({ text, language: langCode }),
         }
       );
 
@@ -66,18 +68,18 @@ export function useAudio({ muteVoice, muteSfx, voiceType = 'free' }: UseAudioOpt
     }
   }, []);
 
-  const speak = useCallback(async (text: string, language: 'chinese' | 'english' | 'arabic') => {
+  const speak = useCallback(async (text: string, langCode: string) => {
     if (muteVoice) return;
 
     if (voiceType === 'premium') {
-      const success = await speakWithPremium(text, language);
+      const success = await speakWithPremium(text, langCode);
       if (!success) {
         // Fallback to free voice if premium fails
         console.warn('Premium voice failed, falling back to free voice');
-        speakWithWebSpeech(text, language);
+        speakWithWebSpeech(text, langCode);
       }
     } else {
-      speakWithWebSpeech(text, language);
+      speakWithWebSpeech(text, langCode);
     }
   }, [muteVoice, voiceType, speakWithPremium, speakWithWebSpeech]);
 

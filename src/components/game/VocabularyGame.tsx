@@ -1,30 +1,55 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { VocabularyItem, fetchExcelFromUrl, parseExcelFile, createBatches } from '@/utils/excelParser';
-import { GameCard, createGameCards, checkMatch, getRequiredSelections, calculateAccuracy, shuffleArray, sortByPinyin } from '@/utils/gameLogic';
-import { saveProgress, loadProgress, clearProgress, VoiceType, FontSize } from '@/utils/storage';
+import {
+  VocabularyItem,
+  SheetData,
+  ColumnMapping,
+  buildVocabulary,
+  fetchExcelFromUrl,
+  parseExcelFile,
+  createBatches,
+} from '@/utils/excelParser';
+import {
+  GameCard,
+  ColumnConfig,
+  createColumnCards,
+  sortVocabulary,
+  calculateAccuracy,
+} from '@/utils/gameLogic';
+import {
+  saveProgress,
+  loadProgress,
+  clearProgress,
+  saveVocabulary,
+  loadVocabularyCache,
+  DEFAULT_COLUMNS,
+  VoiceType,
+  FontSize,
+} from '@/utils/storage';
+import { getLanguage } from '@/utils/languages';
+import { translateWords } from '@/utils/translate';
 import { useAudio } from '@/hooks/useAudio';
 import { supabase } from '@/integrations/supabase/client';
 import GameBoard from './GameBoard';
 import StatsPanel from './StatsPanel';
 import ProgressBar from './ProgressBar';
 import FileSelector from './FileSelector';
-import GameSettings, { ColumnVisibility, ColumnMute } from './GameSettings';
+import GameSettings from './GameSettings';
 import CelebrationModal from './CelebrationModal';
+import LanguageColumnsDialog from './LanguageColumnsDialog';
+import WordEditorDialog from './WordEditorDialog';
+import ImportMappingDialog from './ImportMappingDialog';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { BookOpen, LogIn, LogOut, User } from 'lucide-react';
-import { sampleVocabulary, sampleFourthColumnHeader } from '@/data/sampleVocabulary';
+import { BookOpen, LogIn, LogOut, Loader2 } from 'lucide-react';
+import { sampleVocabulary } from '@/data/sampleVocabulary';
 
 const AVAILABLE_FILES = ['sample-vocabulary.xlsx'];
 const BATCH_SIZE = 5;
-const DEFAULT_FILE = null; // Start with sample data, no file selected
 
 export interface VocabularyGameProps {
   dataSource?: string;
   batchSize?: number;
-  showPinyin?: boolean;
   onComplete?: () => void;
   className?: string;
 }
@@ -32,45 +57,26 @@ export interface VocabularyGameProps {
 export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   dataSource,
   batchSize = BATCH_SIZE,
-  showPinyin: initialShowPinyin,
   onComplete,
   className,
 }) => {
   const { toast } = useToast();
-  const navigate = useNavigate();
   const savedProgress = loadProgress();
+  const cached = loadVocabularyCache();
 
   const [user, setUser] = useState<any>(null);
 
-  const [vocabulary, setVocabulary] = useState<VocabularyItem[]>([]);
+  const [columns, setColumns] = useState<ColumnConfig[]>(savedProgress.columns?.length ? savedProgress.columns : DEFAULT_COLUMNS);
+  const [vocabulary, setVocabulary] = useState<VocabularyItem[]>(cached?.items?.length ? cached.items : sampleVocabulary);
   const [batches, setBatches] = useState<VocabularyItem[][]>([]);
   const [currentBatch, setCurrentBatch] = useState(savedProgress.currentBatch);
   const [completedBatches, setCompletedBatches] = useState<number[]>(savedProgress.completedBatches);
-  const [showPinyin, setShowPinyin] = useState(initialShowPinyin ?? savedProgress.showPinyin);
-  const [showArabic, setShowArabic] = useState(savedProgress.showArabic);
   const [shuffleMode, setShuffleMode] = useState(true);
-  const [shuffledVocabulary, setShuffledVocabulary] = useState<VocabularyItem[]>([]);
-  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>({
-    chinese: true,
-    pinyin: true,
-    english: true,
-    arabic: true,
-  });
-  const [columnMute, setColumnMute] = useState<ColumnMute>({
-    chinese: false,
-    pinyin: false,
-    english: false,
-    arabic: false,
-  });
   const [muteSfx, setMuteSfx] = useState(savedProgress.muteSfx);
-  const [voiceType, setVoiceType] = useState<VoiceType>((savedProgress as any).voiceType || 'free');
-  const [fontSize, setFontSize] = useState<FontSize>((savedProgress as any).fontSize || 'medium');
-  // Start with sample vocabulary (null) - only use saved file if explicitly provided via dataSource
+  const [voiceType, setVoiceType] = useState<VoiceType>(savedProgress.voiceType);
+  const [fontSize, setFontSize] = useState<FontSize>(savedProgress.fontSize);
   const [selectedFile, setSelectedFile] = useState<string | null>(dataSource || null);
-  const [chineseCards, setChineseCards] = useState<GameCard[]>([]);
-  const [pinyinCards, setPinyinCards] = useState<GameCard[]>([]);
-  const [englishCards, setEnglishCards] = useState<GameCard[]>([]);
-  const [arabicCards, setArabicCards] = useState<GameCard[]>([]);
+  const [cards, setCards] = useState<Record<string, GameCard[]>>({});
   const [selectedCards, setSelectedCards] = useState<GameCard[]>([]);
   const [score, setScore] = useState(savedProgress.score);
   const [time, setTime] = useState(0);
@@ -80,21 +86,21 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [showCelebration, setShowCelebration] = useState(false);
   const [batchScore, setBatchScore] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
-  const [fourthColumnHeader, setFourthColumnHeader] = useState<string | undefined>();
+  const [languagesOpen, setLanguagesOpen] = useState(false);
+  const [wordEditorOpen, setWordEditorOpen] = useState(false);
+  const [pendingSheet, setPendingSheet] = useState<SheetData | null>(null);
 
-  const { speak, playSuccess, playError, playCelebration, stopAudio } = useAudio({ muteVoice: false, muteSfx, voiceType });
+  const mainLang = columns[0]?.lang || 'zh';
+  const { speak, playSuccess, playError, playCelebration } = useAudio({ muteVoice: false, muteSfx, voiceType });
 
   // Auth state listener
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
+    supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null));
     return () => subscription.unsubscribe();
   }, []);
 
@@ -105,186 +111,276 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     return () => clearInterval(interval);
   }, [gameStarted, showCelebration]);
 
-  // Load vocabulary
-  const loadVocabulary = useCallback(async (fileName: string) => {
-    setIsLoading(true);
-    try {
-      const result = await fetchExcelFromUrl(`/datasets/${fileName}`);
-      if (result.success) {
-        setVocabulary(result.data);
-        setFourthColumnHeader(result.fourthColumnHeader);
-        // Sort by pinyin when not shuffling, otherwise keep original order (will be shuffled per batch)
-        const orderedData = shuffleMode ? result.data : sortByPinyin(result.data);
-        const newBatches = createBatches(orderedData, batchSize);
-        setBatches(newBatches);
-        toast({ title: 'Vocabulary loaded', description: `${result.data.length} words loaded` });
-      } else {
-        toast({ title: 'Error', description: result.error, variant: 'destructive' });
-      }
-    } catch (error) {
-      toast({ title: 'Error', description: 'Failed to load vocabulary', variant: 'destructive' });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [batchSize, toast, shuffleMode]);
+  // Persist settings
+  useEffect(() => {
+    saveProgress({ muteSfx, voiceType, fontSize, columns });
+  }, [muteSfx, voiceType, fontSize, columns]);
 
-// Load sample vocabulary on startup, or file when selected - only when file changes
+  // Rebuild batches whenever vocabulary / ordering / main language changes
+  useEffect(() => {
+    if (vocabulary.length === 0) {
+      setBatches([]);
+      return;
+    }
+    const ordered = shuffleMode ? vocabulary : sortVocabulary(vocabulary, mainLang);
+    setBatches(createBatches(ordered, batchSize));
+  }, [vocabulary, shuffleMode, mainLang, batchSize]);
+
+  /** Fill in missing translations for the given items using AI */
+  const translateMissing = useCallback(
+    async (items: VocabularyItem[], activeColumns: ColumnConfig[], source: string, instruction?: string, force = false) => {
+      const targets = activeColumns.filter(c => c.lang !== source);
+      if (targets.length === 0 || items.length === 0) return;
+
+      setIsTranslating(true);
+      try {
+        for (const column of targets) {
+          const pending = items.filter(item => {
+            const has = (item.values[column.lang] || '').trim().length > 0;
+            const isEdited = item.edited?.[column.lang];
+            return force ? !isEdited || instruction !== undefined : !has;
+          });
+          if (pending.length === 0) continue;
+
+          const words = pending.map(item => item.values[source] || '');
+          const results = await translateWords({ sourceLang: source, targetLang: column.lang, words, instruction });
+
+          setVocabulary(prev => {
+            const next = prev.map(item => {
+              const index = pending.findIndex(p => p.id === item.id);
+              if (index === -1) return item;
+              const value = results[index];
+              if (!value) return item;
+              return { ...item, values: { ...item.values, [column.lang]: value } };
+            });
+            saveVocabulary({ items: next, mainLang: source, source: selectedFile || 'local' });
+            return next;
+          });
+        }
+      } catch (error) {
+        toast({
+          title: 'Translation failed',
+          description: error instanceof Error ? error.message : 'Could not generate translations',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsTranslating(false);
+      }
+    },
+    [selectedFile, toast],
+  );
+
+  // Auto-translate the current batch when a configured column has no data yet
+  const autoTranslatedRef = useRef<string>('');
+  useEffect(() => {
+    const batch = batches[currentBatch];
+    if (!batch || isTranslating) return;
+
+    const missing = batch.some(item =>
+      columns.some(c => c.lang !== mainLang && !(item.values[c.lang] || '').trim()),
+    );
+    const key = `${currentBatch}-${columns.map(c => c.lang).join(',')}-${batch.map(i => i.id).join(',')}`;
+    if (!missing || autoTranslatedRef.current === key) return;
+
+    autoTranslatedRef.current = key;
+    translateMissing(batch, columns, mainLang);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [batches, currentBatch, columns, mainLang]);
+
+  const initializeBatch = useCallback(
+    (batchIndex: number) => {
+      const batch = batches[batchIndex];
+      if (!batch) return;
+      setCards(createColumnCards(batch, columns, shuffleMode));
+      setSelectedCards([]);
+      setMatchedPairs(0);
+      setTime(0);
+      setAttempts(0);
+      setCorrectMatches(0);
+      setBatchScore(0);
+      setGameStarted(true);
+    },
+    [batches, columns, shuffleMode],
+  );
+
+  useEffect(() => {
+    if (batches.length > 0) initializeBatch(currentBatch);
+  }, [batches, currentBatch, initializeBatch]);
+
+  // Load a hosted file
+  const loadVocabulary = useCallback(
+    async (fileName: string) => {
+      setIsLoading(true);
+      const result = await fetchExcelFromUrl(`/datasets/${fileName}`);
+      setIsLoading(false);
+      if (!result.success) {
+        toast({ title: 'Error', description: result.error, variant: 'destructive' });
+        return;
+      }
+      setPendingSheet(result);
+    },
+    [toast],
+  );
+
   useEffect(() => {
     if (selectedFile) {
       loadVocabulary(selectedFile);
       saveProgress({ selectedFile });
-    } else {
-      // Load sample vocabulary
-      setVocabulary(sampleVocabulary);
-      setFourthColumnHeader(sampleFourthColumnHeader);
-      setShowArabic(true);
-      const orderedData = shuffleMode ? sampleVocabulary : sortByPinyin(sampleVocabulary);
-      setBatches(createBatches(orderedData, batchSize));
-      setGameStarted(true);
     }
-    // Note: shuffleMode is intentionally excluded - handleShuffleModeChange handles shuffle changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFile, batchSize]);
+  }, [selectedFile]);
 
-  // Check if vocabulary has Arabic data
-  const hasArabicData = vocabulary.some(item => item.arabic && item.arabic.trim() !== '');
-
-  // Initialize batch cards - only when batch changes or shuffle mode changes
-  const initializeBatch = useCallback((batchIndex: number) => {
-    if (!batches[batchIndex]) return;
-    // Always create cards with pinyin data for both modes
-    const cards = createGameCards(batches[batchIndex], '3-column', true, showArabic, shuffleMode);
-    setChineseCards(cards.chinese);
-    setPinyinCards(cards.pinyin);
-    setEnglishCards(cards.english);
-    setArabicCards(cards.arabic);
-    setSelectedCards([]);
-    setMatchedPairs(0);
-    setTime(0);
-    setAttempts(0);
-    setCorrectMatches(0);
-    setBatchScore(0);
-    setGameStarted(true);
-  }, [batches, showArabic, shuffleMode]);
-
-  // Handle shuffle mode change - recreate batches with new ordering
-  const handleShuffleModeChange = useCallback((shuffle: boolean) => {
-    setShuffleMode(shuffle);
-    
-    // Recreate batches: sort by pinyin when not shuffling
-    if (vocabulary.length > 0) {
-      const orderedData = shuffle ? vocabulary : sortByPinyin(vocabulary);
-      const newBatches = createBatches(orderedData, batchSize);
-      setBatches(newBatches);
-      
-      // Reinitialize current batch with new cards
-      if (newBatches[currentBatch]) {
-        const cards = createGameCards(newBatches[currentBatch], '3-column', true, showArabic, shuffle);
-        setChineseCards(cards.chinese);
-        setPinyinCards(cards.pinyin);
-        setEnglishCards(cards.english);
-        setArabicCards(cards.arabic);
-        setSelectedCards([]);
-      }
-    }
-  }, [vocabulary, batchSize, currentBatch, showArabic]);
-
-  // Handle column visibility change
-  const handleColumnVisibilityChange = useCallback((column: keyof ColumnVisibility, visible: boolean) => {
-    setColumnVisibility(prev => ({ ...prev, [column]: visible }));
-  }, []);
-
-  // Handle column mute change
-  const handleColumnMuteChange = useCallback((column: keyof ColumnMute, mute: boolean) => {
-    setColumnMute(prev => ({ ...prev, [column]: mute }));
-  }, []);
-
-  // Speak with column mute awareness
-  const speakWithMute = useCallback((text: string, language: 'chinese' | 'english' | 'arabic', cardType: string) => {
-    if (cardType === 'chinese' && columnMute.chinese) return;
-    if (cardType === 'english' && columnMute.english) return;
-    if (cardType === 'arabic' && columnMute.arabic) return;
-    speak(text, language as 'chinese' | 'english');
-  }, [speak, columnMute]);
-
-  // Handle hint request - reveal matching cards for the selected card
-  const handleHint = useCallback((card: GameCard) => {
-    const vocabId = card.vocabId;
-    
-    // Find all matching cards across all columns
-    const highlightMatching = (cards: GameCard[]) => 
-      cards.map(c => c.vocabId === vocabId && !c.isMatched ? { ...c, isSelected: true } : c);
-    
-    setChineseCards(highlightMatching);
-    setPinyinCards(highlightMatching);
-    setEnglishCards(highlightMatching);
-    setArabicCards(highlightMatching);
-    
-    // Auto-select all matching cards
-    const allCards = [...chineseCards, ...pinyinCards, ...englishCards, ...arabicCards];
-    const matchingCards = allCards.filter(c => c.vocabId === vocabId && !c.isMatched);
-    setSelectedCards(matchingCards);
-    
-    toast({ 
-      title: 'Hint used', 
-      description: 'Matching cards highlighted! -5 points',
-      variant: 'default'
-    });
-    setScore(s => Math.max(0, s - 5));
-    setBatchScore(s => Math.max(0, s - 5));
-  }, [chineseCards, pinyinCards, englishCards, arabicCards, toast]);
-
-  useEffect(() => {
-    if (batches.length > 0) {
-      initializeBatch(currentBatch);
-    }
-    // Note: gameMode is intentionally excluded to prevent reshuffling when switching modes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [batches, currentBatch, initializeBatch]);
-
-  // Handle card click
-  const handleCardClick = useCallback((card: GameCard) => {
-    if (card.isMatched || card.isError) return;
-    const alreadySelected = selectedCards.find(c => c.id === card.id);
-    if (alreadySelected) {
-      setSelectedCards(selectedCards.filter(c => c.id !== card.id));
-      updateCardSelection(card.id, false);
+  const handleUploadFile = async (file: File) => {
+    setIsLoading(true);
+    const result = await parseExcelFile(file);
+    setIsLoading(false);
+    if (!result.success) {
+      toast({ title: 'Error', description: result.error, variant: 'destructive' });
       return;
     }
-    const sameTypeSelected = selectedCards.find(c => c.type === card.type);
-    if (sameTypeSelected) {
-      updateCardSelection(sameTypeSelected.id, false);
-      setSelectedCards(prev => [...prev.filter(c => c.type !== card.type), card]);
-    } else {
-      setSelectedCards(prev => [...prev, card]);
-    }
-    updateCardSelection(card.id, true);
-  }, [selectedCards]);
-
-  const updateCardSelection = (cardId: string, isSelected: boolean) => {
-    const update = (cards: GameCard[]) => cards.map(c => c.id === cardId ? { ...c, isSelected } : c);
-    setChineseCards(update);
-    setPinyinCards(update);
-    setEnglishCards(update);
-    setArabicCards(update);
+    setPendingSheet(result);
   };
 
-  // Check for match - count visible columns for required selections
+  const handleConfirmMapping = (mapping: ColumnMapping) => {
+    if (!pendingSheet) return;
+    const mappedLangs = Object.entries(mapping)
+      .filter(([, lang]) => lang && lang !== 'ignore')
+      .map(([, lang]) => lang);
+    const newMain = mappedLangs[0];
+
+    // Keep configured columns, put the file's main language first, then existing extras
+    const extras = columns.map(c => c.lang).filter(lang => lang !== newMain);
+    const langs = [newMain, ...Array.from(new Set([...mappedLangs.slice(1), ...extras]))].slice(0, 4);
+    const nextColumns: ColumnConfig[] = langs.map((lang, index) => {
+      const existing = columns.find(c => c.lang === lang);
+      return existing
+        ? { ...existing, showRomanization: index === 0 ? existing.showRomanization : false }
+        : { lang, visible: true, muted: false, showRomanization: index === 0 };
+    });
+
+    const items = buildVocabulary(pendingSheet, mapping, newMain);
+
+    if (items.length === 0) {
+      toast({ title: 'Nothing to import', description: 'No rows had a value in the main language', variant: 'destructive' });
+      return;
+    }
+
+    setColumns(nextColumns);
+    setVocabulary(items);
+    saveVocabulary({ items, mainLang: newMain, source: selectedFile || 'upload' });
+    setCurrentBatch(0);
+    setScore(0);
+    setCompletedBatches([]);
+    saveProgress({ currentBatch: 0, score: 0, completedBatches: [], columns: nextColumns });
+    setPendingSheet(null);
+    autoTranslatedRef.current = '';
+    toast({ title: 'File imported', description: `${items.length} words loaded` });
+  };
+
+  const handleColumnsChange = (next: ColumnConfig[]) => {
+    setColumns(next);
+    autoTranslatedRef.current = '';
+  };
+
+  const handleColumnVisibilityChange = useCallback((lang: string, visible: boolean) => {
+    setColumns(prev => prev.map(c => (c.lang === lang ? { ...c, visible } : c)));
+  }, []);
+
+  const handleColumnMuteChange = useCallback((lang: string, muted: boolean) => {
+    setColumns(prev => prev.map(c => (c.lang === lang ? { ...c, muted } : c)));
+  }, []);
+
+  const handleColumnRomanizationChange = useCallback((lang: string, showRomanization: boolean) => {
+    setColumns(prev => prev.map(c => (c.lang === lang ? { ...c, showRomanization } : c)));
+  }, []);
+
+  const handleSpeak = useCallback(
+    (card: GameCard) => {
+      const column = columns.find(c => c.lang === card.lang);
+      if (column?.muted) return;
+      speak(card.content, card.lang);
+    },
+    [columns, speak],
+  );
+
+  const handleHint = useCallback(
+    (card: GameCard) => {
+      const vocabId = card.vocabId;
+      const highlighted: GameCard[] = [];
+      setCards(prev => {
+        const next: Record<string, GameCard[]> = {};
+        Object.entries(prev).forEach(([lang, list]) => {
+          next[lang] = list.map(c => {
+            if (c.vocabId === vocabId && !c.isMatched) {
+              const updated = { ...c, isSelected: true };
+              highlighted.push(updated);
+              return updated;
+            }
+            return c;
+          });
+        });
+        return next;
+      });
+      setSelectedCards(highlighted);
+      toast({ title: 'Hint used', description: 'Matching cards highlighted! -5 points' });
+      setScore(s => Math.max(0, s - 5));
+      setBatchScore(s => Math.max(0, s - 5));
+    },
+    [toast],
+  );
+
+  const updateCardSelection = (cardId: string, isSelected: boolean) => {
+    setCards(prev => {
+      const next: Record<string, GameCard[]> = {};
+      Object.entries(prev).forEach(([lang, list]) => {
+        next[lang] = list.map(c => (c.id === cardId ? { ...c, isSelected } : c));
+      });
+      return next;
+    });
+  };
+
+  const handleCardClick = useCallback(
+    (card: GameCard) => {
+      if (card.isMatched || card.isError) return;
+      if (selectedCards.find(c => c.id === card.id)) {
+        setSelectedCards(selectedCards.filter(c => c.id !== card.id));
+        updateCardSelection(card.id, false);
+        return;
+      }
+      const sameColumn = selectedCards.find(c => c.lang === card.lang);
+      if (sameColumn) {
+        updateCardSelection(sameColumn.id, false);
+        setSelectedCards(prev => [...prev.filter(c => c.lang !== card.lang), card]);
+      } else {
+        setSelectedCards(prev => [...prev, card]);
+      }
+      updateCardSelection(card.id, true);
+    },
+    [selectedCards],
+  );
+
+  const requiredSelections = useMemo(
+    () => columns.filter(c => c.visible && (cards[c.lang]?.length ?? 0) > 0).length,
+    [columns, cards],
+  );
+
+  // Match checking
   useEffect(() => {
-    // Calculate required selections based on visible columns
-    let requiredCount = 0;
-    if (columnVisibility.chinese) requiredCount++;
-    if (columnVisibility.pinyin && pinyinCards.length > 0) requiredCount++;
-    if (columnVisibility.english) requiredCount++;
-    if (columnVisibility.arabic && showArabic && arabicCards.length > 0) requiredCount++;
-    
-    if (selectedCards.length !== requiredCount || requiredCount < 2) return;
+    if (requiredSelections < 2 || selectedCards.length !== requiredSelections) return;
 
     setAttempts(a => a + 1);
-    
-    // Check if all selected cards have the same vocabId
     const vocabIds = selectedCards.map(c => c.vocabId);
     const isMatch = vocabIds.every(id => id === vocabIds[0]);
+
+    const mapAll = (updater: (card: GameCard) => GameCard) => {
+      setCards(prev => {
+        const next: Record<string, GameCard[]> = {};
+        Object.entries(prev).forEach(([lang, list]) => {
+          next[lang] = list.map(updater);
+        });
+        return next;
+      });
+    };
 
     if (isMatch) {
       playSuccess();
@@ -292,14 +388,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       setScore(s => s + 10);
       setBatchScore(s => s + 10);
       setMatchedPairs(m => m + 1);
-
-      const matchCards = (cards: GameCard[]) => cards.map(c => 
-        selectedCards.some(s => s.id === c.id) ? { ...c, isMatched: true, isSelected: false } : c
-      );
-      setChineseCards(matchCards);
-      setPinyinCards(matchCards);
-      setEnglishCards(matchCards);
-      setArabicCards(matchCards);
+      mapAll(c => (selectedCards.some(s => s.id === c.id) ? { ...c, isMatched: true, isSelected: false } : c));
       setSelectedCards([]);
 
       if (matchedPairs + 1 === batches[currentBatch]?.length) {
@@ -315,24 +404,14 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       }
     } else {
       playError();
-      const errorCards = (cards: GameCard[]) => cards.map(c => 
-        selectedCards.some(s => s.id === c.id) ? { ...c, isError: true } : c
-      );
-      setChineseCards(errorCards);
-      setPinyinCards(errorCards);
-      setEnglishCards(errorCards);
-      setArabicCards(errorCards);
-
+      mapAll(c => (selectedCards.some(s => s.id === c.id) ? { ...c, isError: true } : c));
       setTimeout(() => {
-        const clearError = (cards: GameCard[]) => cards.map(c => ({ ...c, isError: false, isSelected: false }));
-        setChineseCards(clearError);
-        setPinyinCards(clearError);
-        setEnglishCards(clearError);
-        setArabicCards(clearError);
+        mapAll(c => ({ ...c, isError: false, isSelected: false }));
         setSelectedCards([]);
       }, 500);
     }
-  }, [selectedCards, columnVisibility, showArabic, pinyinCards.length, arabicCards.length, playSuccess, playError, playCelebration, matchedPairs, batches, currentBatch, completedBatches, score]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCards, requiredSelections]);
 
   const handleSelectBatch = (index: number) => {
     setCurrentBatch(index);
@@ -349,29 +428,6 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     }
   };
 
-const handleUploadFile = async (file: File) => {
-    setIsLoading(true);
-    const result = await parseExcelFile(file);
-    if (result.success) {
-      setVocabulary(result.data);
-      setFourthColumnHeader(result.fourthColumnHeader);
-      // Check if uploaded data has Arabic/4th column data
-      const hasArabic = result.data.some(item => item.arabic && item.arabic.trim() !== '');
-      if (hasArabic) {
-        setShowArabic(true);
-      }
-      const orderedData = shuffleMode ? result.data : sortByPinyin(result.data);
-      setBatches(createBatches(orderedData, batchSize));
-      setCurrentBatch(0);
-      setScore(0);
-      setCompletedBatches([]);
-      toast({ title: 'File uploaded', description: `${result.data.length} words loaded` });
-    } else {
-      toast({ title: 'Error', description: result.error, variant: 'destructive' });
-    }
-    setIsLoading(false);
-  };
-
   const handleReset = () => {
     clearProgress();
     setScore(0);
@@ -386,39 +442,73 @@ const handleUploadFile = async (file: File) => {
     toast({ title: 'Logged out', description: 'You have been signed out' });
   };
 
-  useEffect(() => {
-    saveProgress({ showPinyin, showArabic, muteSfx, voiceType, fontSize } as any);
-  }, [showPinyin, showArabic, muteSfx, voiceType, fontSize]);
+  // Word editor handlers
+  const currentItems = batches[currentBatch] || [];
+
+  const handleEditValue = (vocabId: string, lang: string, value: string) => {
+    setVocabulary(prev => {
+      const next = prev.map(item =>
+        item.id === vocabId
+          ? { ...item, values: { ...item.values, [lang]: value }, edited: { ...item.edited, [lang]: true } }
+          : item,
+      );
+      saveVocabulary({ items: next, mainLang, source: selectedFile || 'local' });
+      return next;
+    });
+  };
+
+  const handleRegenerateOne = async (vocabId: string, lang: string, instruction?: string) => {
+    const item = vocabulary.find(i => i.id === vocabId);
+    if (!item) return;
+    try {
+      const [result] = await translateWords({
+        sourceLang: mainLang,
+        targetLang: lang,
+        words: [item.values[mainLang] || ''],
+        instruction,
+      });
+      if (result) {
+        setVocabulary(prev => {
+          const next = prev.map(i =>
+            i.id === vocabId ? { ...i, values: { ...i.values, [lang]: result }, edited: { ...i.edited, [lang]: false } } : i,
+          );
+          saveVocabulary({ items: next, mainLang, source: selectedFile || 'local' });
+          return next;
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Regeneration failed',
+        description: error instanceof Error ? error.message : 'Please try again',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleRegenerateAll = async (instruction?: string) => {
+    await translateMissing(currentItems, columns, mainLang, instruction, true);
+  };
+
+  const headerSubtitle = columns.map(c => getLanguage(c.lang).native).join(' • ');
 
   return (
     <div className={cn('min-h-screen bg-background p-4 md:p-6', className)}>
       <div className="max-w-6xl mx-auto space-y-3">
-        {/* Header with logo, title and auth */}
         <header className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary rounded-lg">
               <BookOpen className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-foreground">
-                Vocabulary Match
-              </h1>
-              <p className="text-xs text-muted-foreground">Chinese • Pinyin • English</p>
+              <h1 className="text-lg font-bold text-foreground">Vocabulary Match</h1>
+              <p className="text-xs text-muted-foreground">{headerSubtitle}</p>
             </div>
           </div>
 
-          {/* Auth button */}
           {user ? (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground hidden sm:inline">
-                {user.email}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleLogout}
-                className="gap-1.5"
-              >
+              <span className="text-xs text-muted-foreground hidden sm:inline">{user.email}</span>
+              <Button variant="outline" size="sm" onClick={handleLogout} className="gap-1.5">
                 <LogOut className="w-4 h-4" />
                 <span className="hidden sm:inline">Logout</span>
               </Button>
@@ -437,7 +527,6 @@ const handleUploadFile = async (file: File) => {
           )}
         </header>
 
-        {/* Top bar: File selector + Stats on same line - compact */}
         <div className="flex flex-wrap items-center gap-2">
           <FileSelector
             selectedFile={selectedFile}
@@ -445,29 +534,23 @@ const handleUploadFile = async (file: File) => {
             onSelectFile={setSelectedFile}
             onUploadFile={handleUploadFile}
           />
-          
-          <StatsPanel 
-            score={score} 
-            time={time} 
+          <StatsPanel
+            score={score}
+            time={time}
             accuracy={calculateAccuracy(correctMatches, attempts)}
             onReset={handleReset}
           />
         </div>
 
-        {/* Game settings */}
         <GameSettings
-          showPinyin={showPinyin}
-          showArabic={showArabic}
-          hasArabicData={hasArabicData}
-          fourthColumnLabel={fourthColumnHeader}
+          columns={columns}
           shuffleMode={shuffleMode}
-          columnVisibility={columnVisibility}
-          columnMute={columnMute}
-          onShowPinyinChange={setShowPinyin}
-          onShowArabicChange={setShowArabic}
-          onShuffleModeChange={handleShuffleModeChange}
+          onShuffleModeChange={setShuffleMode}
           onColumnVisibilityChange={handleColumnVisibilityChange}
           onColumnMuteChange={handleColumnMuteChange}
+          onColumnRomanizationChange={handleColumnRomanizationChange}
+          onOpenLanguages={() => setLanguagesOpen(true)}
+          onOpenWordEditor={() => setWordEditorOpen(true)}
           muteSfx={muteSfx}
           voiceType={voiceType}
           fontSize={fontSize}
@@ -477,9 +560,15 @@ const handleUploadFile = async (file: File) => {
           disabled={isLoading}
         />
 
+        {isTranslating && (
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Generating translations…
+          </div>
+        )}
+
         {batches.length > 0 && (
           <>
-            {/* Progress bar with navigation */}
             <ProgressBar
               currentBatch={currentBatch}
               totalBatches={batches.length}
@@ -491,17 +580,11 @@ const handleUploadFile = async (file: File) => {
             />
 
             <GameBoard
-              chineseCards={chineseCards}
-              pinyinCards={pinyinCards}
-              englishCards={englishCards}
-              arabicCards={arabicCards}
-              showPinyin={showPinyin}
-              showArabic={showArabic}
-              columnVisibility={columnVisibility}
-              columnMute={columnMute}
+              columns={columns}
+              cards={cards}
               fontSize={fontSize}
               onCardClick={handleCardClick}
-              onSpeak={speakWithMute}
+              onSpeak={handleSpeak}
               onHint={handleHint}
             />
           </>
@@ -513,6 +596,31 @@ const handleUploadFile = async (file: File) => {
           </div>
         )}
 
+        <LanguageColumnsDialog
+          open={languagesOpen}
+          columns={columns}
+          onOpenChange={setLanguagesOpen}
+          onChange={handleColumnsChange}
+        />
+
+        <WordEditorDialog
+          open={wordEditorOpen}
+          onOpenChange={setWordEditorOpen}
+          items={currentItems}
+          columns={columns}
+          mainLang={mainLang}
+          onEditValue={handleEditValue}
+          onRegenerate={handleRegenerateOne}
+          onRegenerateAll={handleRegenerateAll}
+        />
+
+        <ImportMappingDialog
+          open={pendingSheet !== null}
+          sheet={pendingSheet}
+          onOpenChange={open => !open && setPendingSheet(null)}
+          onConfirm={handleConfirmMapping}
+        />
+
         <CelebrationModal
           isOpen={showCelebration}
           batchNumber={currentBatch + 1}
@@ -521,7 +629,10 @@ const handleUploadFile = async (file: File) => {
           accuracy={calculateAccuracy(correctMatches, attempts)}
           isLastBatch={currentBatch === batches.length - 1}
           onNextBatch={handleNextBatch}
-          onReplayBatch={() => { setShowCelebration(false); initializeBatch(currentBatch); }}
+          onReplayBatch={() => {
+            setShowCelebration(false);
+            initializeBatch(currentBatch);
+          }}
           onClose={() => setShowCelebration(false)}
         />
       </div>

@@ -1,143 +1,88 @@
 import * as XLSX from 'xlsx';
+import { detectLanguageFromHeader } from './languages';
 
 export interface VocabularyItem {
   id: string;
-  chinese: string;
-  pinyin: string;
-  english: string;
-  arabic?: string;
+  /** language code -> word/translation */
+  values: Record<string, string>;
+  /** language codes that were manually edited by the user */
+  edited?: Record<string, boolean>;
 }
 
-export interface ParseResult {
+export interface SheetData {
   success: boolean;
-  data: VocabularyItem[];
-  fourthColumnHeader?: string;
   error?: string;
+  headers: string[];
+  rows: Record<string, string>[];
+  /** header -> detected language code (or null when unknown) */
+  detected: Record<string, string | null>;
 }
 
-export async function parseExcelFile(file: File): Promise<ParseResult> {
+/** header -> language code, or 'ignore' */
+export type ColumnMapping = Record<string, string>;
+
+function readWorkbook(arrayBuffer: ArrayBuffer): SheetData {
+  const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+  const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json<Record<string, string>>(worksheet, { defval: '' });
+
+  if (rows.length === 0) {
+    return { success: false, error: 'The file is empty', headers: [], rows: [], detected: {} };
+  }
+
+  const headers = Object.keys(rows[0]).filter(h => h && !h.startsWith('__EMPTY'));
+  const detected: Record<string, string | null> = {};
+  headers.forEach(h => {
+    detected[h] = detectLanguageFromHeader(h);
+  });
+
+  return { success: true, headers, rows, detected };
+}
+
+export async function parseExcelFile(file: File): Promise<SheetData> {
   try {
-    const arrayBuffer = await file.arrayBuffer();
-    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-    
-    const firstSheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[firstSheetName];
-    
-    const jsonData = XLSX.utils.sheet_to_json<Record<string, string>>(worksheet);
-    
-    if (jsonData.length === 0) {
-      return { success: false, data: [], error: 'Excel file is empty' };
-    }
-
-    const headers = Object.keys(jsonData[0]).map(h => h.toLowerCase().trim());
-    
-    const chineseKey = findColumnKey(headers, ['chinese', '中文', 'hanzi', '汉字']);
-    const pinyinKey = findColumnKey(headers, ['pinyin', '拼音', 'pronunciation']);
-    const englishKey = findColumnKey(headers, ['english', '英文', 'meaning', 'definition']);
-    const arabicKey = findColumnKey(headers, ['arabic', 'عربي', 'العربية']);
-
-    if (!chineseKey || !englishKey) {
-      return { 
-        success: false, 
-        data: [], 
-        error: 'Missing required columns: Chinese and English are required' 
-      };
-    }
-
-    const originalHeaders = Object.keys(jsonData[0]);
-    const chineseHeader = originalHeaders.find(h => h.toLowerCase().trim() === chineseKey);
-    const pinyinHeader = pinyinKey ? originalHeaders.find(h => h.toLowerCase().trim() === pinyinKey) : null;
-    const englishHeader = originalHeaders.find(h => h.toLowerCase().trim() === englishKey);
-    const arabicHeader = arabicKey ? originalHeaders.find(h => h.toLowerCase().trim() === arabicKey) : null;
-
-    // Get the original header name for the 4th column (Arabic column)
-    const fourthColumnHeader = arabicHeader ? arabicHeader : undefined;
-
-    const data: VocabularyItem[] = jsonData.map((row, index) => ({
-      id: `vocab-${index}-${Date.now()}`,
-      chinese: String(row[chineseHeader!] || '').trim(),
-      pinyin: pinyinHeader ? String(row[pinyinHeader] || '').trim() : '',
-      english: String(row[englishHeader!] || '').trim(),
-      arabic: arabicHeader ? String(row[arabicHeader] || '').trim() : undefined,
-    })).filter(item => item.chinese && item.english);
-
-    return { success: true, data, fourthColumnHeader };
+    return readWorkbook(await file.arrayBuffer());
   } catch (error) {
-    return { 
-      success: false, 
-      data: [], 
-      error: `Failed to parse Excel file: ${error instanceof Error ? error.message : 'Unknown error'}` 
+    return {
+      success: false,
+      error: `Failed to parse file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      headers: [],
+      rows: [],
+      detected: {},
     };
   }
 }
 
-export async function fetchExcelFromUrl(url: string): Promise<ParseResult> {
+export async function fetchExcelFromUrl(url: string): Promise<SheetData> {
   try {
     const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch file: ${response.statusText}`);
-    }
-    
-    const arrayBuffer = await response.arrayBuffer();
-    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-    
-    const firstSheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[firstSheetName];
-    
-    const jsonData = XLSX.utils.sheet_to_json<Record<string, string>>(worksheet);
-    
-    if (jsonData.length === 0) {
-      return { success: false, data: [], error: 'Excel file is empty' };
-    }
-
-    const headers = Object.keys(jsonData[0]).map(h => h.toLowerCase().trim());
-    
-    const chineseKey = findColumnKey(headers, ['chinese', '中文', 'hanzi', '汉字']);
-    const pinyinKey = findColumnKey(headers, ['pinyin', '拼音', 'pronunciation']);
-    const englishKey = findColumnKey(headers, ['english', '英文', 'meaning', 'definition']);
-    const arabicKey = findColumnKey(headers, ['arabic', 'عربي', 'العربية']);
-
-    if (!chineseKey || !englishKey) {
-      return { 
-        success: false, 
-        data: [], 
-        error: 'Missing required columns: Chinese and English are required' 
-      };
-    }
-
-    const originalHeaders = Object.keys(jsonData[0]);
-    const chineseHeader = originalHeaders.find(h => h.toLowerCase().trim() === chineseKey);
-    const pinyinHeader = pinyinKey ? originalHeaders.find(h => h.toLowerCase().trim() === pinyinKey) : null;
-    const englishHeader = originalHeaders.find(h => h.toLowerCase().trim() === englishKey);
-    const arabicHeader = arabicKey ? originalHeaders.find(h => h.toLowerCase().trim() === arabicKey) : null;
-
-    // Get the original header name for the 4th column (Arabic column)
-    const fourthColumnHeader = arabicHeader ? arabicHeader : undefined;
-
-    const data: VocabularyItem[] = jsonData.map((row, index) => ({
-      id: `vocab-${index}-${Date.now()}`,
-      chinese: String(row[chineseHeader!] || '').trim(),
-      pinyin: pinyinHeader ? String(row[pinyinHeader] || '').trim() : '',
-      english: String(row[englishHeader!] || '').trim(),
-      arabic: arabicHeader ? String(row[arabicHeader] || '').trim() : undefined,
-    })).filter(item => item.chinese && item.english);
-
-    return { success: true, data, fourthColumnHeader };
+    if (!response.ok) throw new Error(response.statusText);
+    return readWorkbook(await response.arrayBuffer());
   } catch (error) {
-    return { 
-      success: false, 
-      data: [], 
-      error: `Failed to load Excel file: ${error instanceof Error ? error.message : 'Unknown error'}` 
+    return {
+      success: false,
+      error: `Failed to load file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      headers: [],
+      rows: [],
+      detected: {},
     };
   }
 }
 
-function findColumnKey(headers: string[], possibleNames: string[]): string | null {
-  for (const name of possibleNames) {
-    const found = headers.find(h => h === name.toLowerCase());
-    if (found) return found;
-  }
-  return null;
+/** Turn raw sheet rows into vocabulary items using a header -> language mapping */
+export function buildVocabulary(sheet: SheetData, mapping: ColumnMapping, mainLang: string): VocabularyItem[] {
+  const entries = Object.entries(mapping).filter(([, lang]) => lang && lang !== 'ignore');
+
+  return sheet.rows
+    .map((row, index) => {
+      const values: Record<string, string> = {};
+      entries.forEach(([header, lang]) => {
+        const value = String(row[header] ?? '').trim();
+        if (value) values[lang] = value;
+      });
+      return { id: `vocab-${index}`, values, edited: {} };
+    })
+    .filter(item => (item.values[mainLang] || '').length > 0);
 }
 
 export function createBatches(items: VocabularyItem[], batchSize: number = 5): VocabularyItem[][] {

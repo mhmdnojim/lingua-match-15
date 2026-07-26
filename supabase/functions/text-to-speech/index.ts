@@ -35,14 +35,15 @@ serve(async (req) => {
       );
     }
 
-    // Voice selection: Lily (Chinese), George (English), Sarah (Arabic)
-    let voiceId: string;
-    if (language === 'chinese') {
-      voiceId = 'pFZP5JQG7iQjIQuC4Bku'; // Lily - Chinese
-    } else if (language === 'arabic') {
-      voiceId = 'EXAVITQu4vr4xnSDxMaL'; // Sarah - multilingual, good for Arabic
-    } else {
-      voiceId = 'JBFqnCBsd6RMkjVDRZzb'; // George - English
+    // Voice selection by language code / legacy name: Lily (CJK), Sarah (RTL), George (default)
+    const code = String(language || 'en').toLowerCase();
+    const cjk = ['zh', 'ja', 'ko', 'chinese', 'japanese', 'korean'];
+    const rtl = ['ar', 'he', 'fa', 'ur', 'arabic', 'hebrew', 'persian', 'urdu'];
+    let voiceId = 'JBFqnCBsd6RMkjVDRZzb'; // George - default multilingual
+    if (cjk.some(prefix => code.startsWith(prefix))) {
+      voiceId = 'pFZP5JQG7iQjIQuC4Bku'; // Lily
+    } else if (rtl.some(prefix => code.startsWith(prefix))) {
+      voiceId = 'EXAVITQu4vr4xnSDxMaL'; // Sarah
     }
 
     console.log(`TTS request: "${text}" in ${language} with voice ${voiceId}`);
