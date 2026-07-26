@@ -607,13 +607,13 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     setPendingSheet(sheet);
   };
 
-  const handleConfirmMapping = (mapping: ColumnMapping) => {
+  const handleConfirmMapping = (mapping: ColumnMapping, roles: MappingRoles) => {
     if (!pendingSheet) return;
-    applyMapping(pendingSheet, mapping, pendingSheet.fileName);
+    applyMapping(pendingSheet, mapping, pendingSheet.fileName, roles);
     const langs = langOrder(pendingSheet, mapping);
     setPendingSheet(null);
     setPendingQueue(queue => {
-      if (queue.length > 0) applyOrderToRest(queue, langs);
+      if (queue.length > 0) applyOrderToRest(queue, langs, roles);
       return [];
     });
   };
