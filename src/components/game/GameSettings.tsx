@@ -38,7 +38,11 @@ interface GameSettingsProps {
   /** Translate every remaining word in the file right now */
   onTranslateWholeFile?: () => void;
   translating?: boolean;
+  /** Selected color theme id */
+  themeId?: string;
+  onThemeChange?: (id: string) => void;
 }
+
 
 export const GameSettings: React.FC<GameSettingsProps> = ({
   columns,
