@@ -196,8 +196,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     if (!batch || isTranslating) return;
 
     const missing = batch.some(item =>
-      columns.some(c => c.lang !== mainLang && !(item.values[c.lang] || '').trim()),
+      columns.some(c => !(item.values[c.lang] || '').trim()),
     );
+
     const key = `${currentBatch}-${columns.map(c => c.lang).join(',')}-${batch.map(i => i.id).join(',')}`;
     if (!missing || autoTranslatedRef.current === key) return;
 
