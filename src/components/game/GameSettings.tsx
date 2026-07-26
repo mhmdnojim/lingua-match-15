@@ -133,26 +133,33 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
       </button>
 
 
-      {romanizableColumns.length > 0 && (() => {
-        const allOn = romanizableColumns.every(c => c.showRomanization);
-        return (
-          <button
-            onClick={() => romanizableColumns.forEach(c => onColumnRomanizationChange(c.lang, !allOn))}
-            disabled={disabled}
-            className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
-              allOn
-                ? 'bg-game-pinyin border-game-pinyin text-primary-foreground'
-                : 'bg-secondary border-border text-muted-foreground hover:text-foreground',
-              disabled && 'opacity-50 cursor-not-allowed',
-            )}
-            title={`${allOn ? 'Hide' : 'Show'} transliteration above every word`}
-          >
-            <Languages className="w-4 h-4 shrink-0" />
-            <span className="hidden sm:inline">Transliteration</span>
-          </button>
-        );
-      })()}
+      {/* Transliteration — one toggle per column */}
+      {romanizableColumns.length > 0 && (
+        <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
+          {romanizableColumns.map(column => {
+            const language = getLanguage(column.lang);
+            return (
+              <button
+                key={`rom-${column.lang}`}
+                onClick={() => onColumnRomanizationChange(column.lang, !column.showRomanization)}
+                disabled={disabled}
+                className={cn(
+                  'flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all',
+                  column.showRomanization
+                    ? 'bg-game-pinyin text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground',
+                  disabled && 'opacity-50 cursor-not-allowed',
+                )}
+                title={`${column.showRomanization ? 'Hide' : 'Show'} transliteration on ${language.name} cards`}
+              >
+                <Languages className="w-4 h-4 shrink-0" />
+                <span>{language.short}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
 
       {/* Column visibility */}
       <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
