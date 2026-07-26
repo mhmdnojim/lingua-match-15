@@ -109,6 +109,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [wordEditorOpen, setWordEditorOpen] = useState(savedUi.wordEditorOpen);
   const [settingsOpen, setSettingsOpen] = useState(savedUi.settingsOpen);
   const [pendingSheet, setPendingSheet] = useState<SheetData | null>(null);
+  const [pendingQueue, setPendingQueue] = useState<SheetData[]>([]);
+
   const [cloudStatus, setCloudStatus] = useState<'off' | 'saving' | 'saved' | 'error'>('off');
 
   const navigate = useNavigate();
