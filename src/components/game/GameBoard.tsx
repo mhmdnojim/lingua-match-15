@@ -124,17 +124,48 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               ))}
             {columnCards.map(card => {
               const showRom = romOverrides[card.id] ?? column.showRomanization;
+              const isEditing = editingId === card.id;
               return (
               <div key={card.id} className="relative group">
-                <Card
-                  card={card}
-                  columnIndex={originalIndex}
-                  showRomanization={showRom}
-                  fontSize={fontSize}
-                  onClick={onCardClick}
-                  onSpeak={column.muted ? undefined : onSpeak}
-                />
-                {!card.isMatched && (
+                {isEditing ? (
+                  <div className="flex min-h-[76px] items-center gap-2 rounded-xl border border-primary bg-card p-3 shadow-md">
+                    <input
+                      autoFocus
+                      value={draft}
+                      onChange={e => setDraft(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') commitEdit(card);
+                        if (e.key === 'Escape') setEditingId(null);
+                      }}
+                      className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none"
+                      aria-label="Edit word"
+                    />
+                    <button
+                      onClick={() => commitEdit(card)}
+                      className="rounded-full bg-primary p-1 text-primary-foreground hover:scale-110 transition-transform"
+                      title="Save"
+                    >
+                      <Check className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setEditingId(null)}
+                      className="rounded-full bg-muted p-1 text-muted-foreground hover:scale-110 transition-transform"
+                      title="Cancel"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <Card
+                    card={card}
+                    columnIndex={originalIndex}
+                    showRomanization={showRom}
+                    fontSize={fontSize}
+                    onClick={onCardClick}
+                    onSpeak={column.muted ? undefined : onSpeak}
+                  />
+                )}
+                {!card.isMatched && !isEditing && (
                   <button
                     onClick={e => {
                       e.stopPropagation();
@@ -144,6 +175,22 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     title="Get hint (-5 points)"
                   >
                     <HelpCircle className="w-4 h-4" />
+                  </button>
+                )}
+                {onEditCard && !card.isMatched && !isEditing && (
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      startEdit(card);
+                    }}
+                    className="absolute -left-2 -top-2 p-1 bg-secondary text-secondary-foreground rounded-full opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shadow-md hover:scale-110"
+                    title={
+                      originalIndex === 0
+                        ? 'Edit word (retranslates the other columns)'
+                        : 'Edit translation'
+                    }
+                  >
+                    <Pencil className="w-4 h-4" />
                   </button>
                 )}
                 {onRegenerateCard && originalIndex !== 0 && !card.isMatched && (
