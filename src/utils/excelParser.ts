@@ -69,6 +69,34 @@ export async function fetchExcelFromUrl(url: string): Promise<SheetData> {
   }
 }
 
+/**
+ * Build a mapping automatically: the first column is always the main language,
+ * every other column that can be recognised is mapped to its language.
+ * Returns null when the first column's language can't be detected.
+ */
+export function autoMapping(sheet: SheetData): ColumnMapping | null {
+  if (!sheet.success || sheet.headers.length === 0) return null;
+
+  const [first, ...rest] = sheet.headers;
+  const mainLang = sheet.detected[first];
+  if (!mainLang) return null;
+
+  const used = new Set<string>([mainLang]);
+  const mapping: ColumnMapping = { [first]: mainLang };
+
+  rest.forEach(header => {
+    const lang = sheet.detected[header];
+    if (lang && !used.has(lang)) {
+      used.add(lang);
+      mapping[header] = lang;
+    } else {
+      mapping[header] = 'ignore';
+    }
+  });
+
+  return mapping;
+}
+
 /** Turn raw sheet rows into vocabulary items using a header -> language mapping */
 export function buildVocabulary(sheet: SheetData, mapping: ColumnMapping, mainLang: string): VocabularyItem[] {
   const entries = Object.entries(mapping).filter(([, lang]) => lang && lang !== 'ignore');
