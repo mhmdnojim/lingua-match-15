@@ -61,7 +61,7 @@ import WordEditorDialog from './WordEditorDialog';
 import ImportMappingDialog from './ImportMappingDialog';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { BookOpen, LogIn, LogOut, Loader2, Cloud, CloudOff, CloudUpload, SlidersHorizontal, ChevronUp } from 'lucide-react';
+import { BookOpen, LogIn, LogOut, Loader2, Cloud, CloudOff, CloudUpload, SlidersHorizontal, ChevronUp, ChevronDown } from 'lucide-react';
 import { sampleVocabulary } from '@/data/sampleVocabulary';
 
 
@@ -122,6 +122,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [languagesOpen, setLanguagesOpen] = useState(savedUi.languagesOpen);
   const [wordEditorOpen, setWordEditorOpen] = useState(savedUi.wordEditorOpen);
   const [settingsOpen, setSettingsOpen] = useState(savedUi.settingsOpen);
+  /** Top chrome (title, options, stats, progress) — collapsed for distraction-free play */
+  const [headerOpen, setHeaderOpen] = useState(savedUi.headerOpen);
   const [pendingSheet, setPendingSheet] = useState<SheetData | null>(null);
   const [pendingQueue, setPendingQueue] = useState<SheetData[]>([]);
 
@@ -185,8 +187,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
   // Remember which dialogs were open
   useEffect(() => {
-    saveUiState({ languagesOpen, wordEditorOpen, settingsOpen });
-  }, [languagesOpen, wordEditorOpen, settingsOpen]);
+    saveUiState({ languagesOpen, wordEditorOpen, settingsOpen, headerOpen });
+  }, [languagesOpen, wordEditorOpen, settingsOpen, headerOpen]);
 
   // Rebuild batches whenever vocabulary / ordering / main language changes
   useEffect(() => {
@@ -956,6 +958,15 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   return (
     <div className={cn('min-h-screen bg-background p-4 md:p-6', className)}>
       <div className="max-w-6xl mx-auto space-y-3">
+        {/* Collapsible top chrome — folds away so only the cards remain */}
+        <div
+          className={cn(
+            'grid transition-[grid-template-rows,opacity,margin] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]',
+            headerOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 -mb-3 pointer-events-none',
+          )}
+        >
+          <div className="overflow-hidden">
+            <div className="space-y-3">
         <header className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary rounded-lg">
@@ -1067,6 +1078,34 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
             />
           }
         />
+            </div>
+          </div>
+        </div>
+
+        {/* Gentle fold handle */}
+        <div className="flex justify-center">
+          <button
+            onClick={() => setHeaderOpen(open => !open)}
+            aria-expanded={headerOpen}
+            aria-label={headerOpen ? 'Hide the menu and focus on the cards' : 'Show the menu'}
+            title={headerOpen ? 'Fold the menu away' : 'Unfold the menu'}
+            className={cn(
+              'group flex items-center gap-2 rounded-full border border-border/60 bg-card/60 px-3 py-1',
+              'text-[11px] font-medium text-muted-foreground backdrop-blur-sm shadow-sm',
+              'transition-all duration-300 hover:text-foreground hover:border-primary/50 hover:shadow-md',
+            )}
+          >
+            <span className="h-1 w-6 rounded-full bg-border transition-colors duration-300 group-hover:bg-primary/60" />
+            <ChevronDown
+              className={cn(
+                'w-3.5 h-3.5 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]',
+                headerOpen && 'rotate-180',
+              )}
+            />
+            <span className={cn('transition-all duration-300', headerOpen && 'sr-only')}>Menu</span>
+            <span className="h-1 w-6 rounded-full bg-border transition-colors duration-300 group-hover:bg-primary/60" />
+          </button>
+        </div>
 
         {isTranslating && (
           <div className="max-w-xl mx-auto rounded-lg border border-border bg-card p-3 space-y-2">
@@ -1118,15 +1157,24 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
         {batches.length > 0 && (
           <>
-            <ProgressBar
-              currentBatch={currentBatch}
-              totalBatches={batches.length}
-              completedBatches={completedBatches}
-              onSelectBatch={handleSelectBatch}
-              matched={matchedPairs}
-              total={batches[currentBatch]?.length || 0}
-              className="max-w-xl mx-auto"
-            />
+            <div
+              className={cn(
+                'grid transition-[grid-template-rows,opacity] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]',
+                headerOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none',
+              )}
+            >
+              <div className="overflow-hidden">
+                <ProgressBar
+                  currentBatch={currentBatch}
+                  totalBatches={batches.length}
+                  completedBatches={completedBatches}
+                  onSelectBatch={handleSelectBatch}
+                  matched={matchedPairs}
+                  total={batches[currentBatch]?.length || 0}
+                  className="max-w-xl mx-auto"
+                />
+              </div>
+            </div>
 
             <GameBoard
               columns={columns}

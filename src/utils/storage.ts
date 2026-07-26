@@ -39,12 +39,15 @@ export interface UiState {
   languagesOpen: boolean;
   wordEditorOpen: boolean;
   settingsOpen: boolean;
+  /** Whether the top chrome (title, options, stats, progress) is expanded */
+  headerOpen: boolean;
 }
 
 const DEFAULT_UI_STATE: UiState = {
   languagesOpen: false,
   wordEditorOpen: false,
   settingsOpen: false,
+  headerOpen: true,
 };
 
 export function saveUiState(state: Partial<UiState>): void {
