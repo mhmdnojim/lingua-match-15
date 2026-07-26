@@ -211,6 +211,22 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   }, [vocabulary, shuffleMode, mainLang, batchSize]);
 
   const cancelTranslationRef = useRef(false);
+  /** true once the user pressed Stop — blocks automatic translation for every file until resumed */
+  const haltedRef = useRef(false);
+  const [translationHalted, setTranslationHalted] = useState(false);
+
+  const haltTranslation = useCallback(() => {
+    cancelTranslationRef.current = true;
+    haltedRef.current = true;
+    autoTranslatedRef.current = 'cancelled';
+    setTranslationHalted(true);
+  }, []);
+
+  const resumeTranslation = useCallback(() => {
+    haltedRef.current = false;
+    autoTranslatedRef.current = '';
+    setTranslationHalted(false);
+  }, []);
   /** false while the saved set is still being pulled from the account — no AI calls until then */
   const [cloudReady, setCloudReady] = useState(true);
 
@@ -218,6 +234,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const translateMissing = useCallback(
     async (items: VocabularyItem[], activeColumns: ColumnConfig[], source: string, instruction?: string, force = false) => {
       if (items.length === 0 || activeColumns.length === 0) return;
+      // Stop applies to every file, not just the run that was interrupted
+      if (haltedRef.current && !force) return;
+
 
       // Never pay for a translation that is already stored in the account:
       // pull the saved set first and merge anything it already knows.
@@ -368,7 +387,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const autoTranslatedRef = useRef<string>('');
   useEffect(() => {
     const batch = batches[currentBatch];
-    if (!batch || isTranslating || !cloudReady) return;
+    if (!batch || isTranslating || !cloudReady || translationHalted) return;
 
     // In "whole file" mode every word is translated at once, not just this round
     const scopeItems = translateScope === 'all' ? vocabulary : batch;
@@ -387,14 +406,15 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     autoTranslatedRef.current = key;
     translateMissing(scopeItems, translationColumns, mainLang);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [batches, currentBatch, translationColumns, mainLang, cloudReady, translateScope, vocabulary]);
+  }, [batches, currentBatch, translationColumns, mainLang, cloudReady, translateScope, vocabulary, translationHalted]);
 
   /** Translate every word still missing a translation in the whole file */
   const handleTranslateWholeFile = useCallback(() => {
     if (vocabulary.length === 0 || isTranslating) return;
-    autoTranslatedRef.current = '';
+    resumeTranslation();
     translateMissing(vocabulary, translationColumns, mainLang);
-  }, [vocabulary, translationColumns, mainLang, isTranslating, translateMissing]);
+  }, [vocabulary, translationColumns, mainLang, isTranslating, translateMissing, resumeTranslation]);
+
 
   // Pull the saved set from the account (or seed it) when signed in
   const cloudPulledRef = useRef<string>('');
@@ -558,7 +578,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   };
 
   const handleUploadFiles = async (files: File[]) => {
+    resumeTranslation();
     setIsLoading(true);
+
     const sheets: SheetData[] = [];
 
     for (const file of files) {
@@ -1152,16 +1174,10 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
                     {translateProgress.done}/{translateProgress.total} words
                   </span>
                 )}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    cancelTranslationRef.current = true;
-                    autoTranslatedRef.current = 'cancelled';
-                  }}
-                >
+                <Button size="sm" variant="outline" onClick={haltTranslation}>
                   Stop
                 </Button>
+
               </span>
             </div>
 
@@ -1184,6 +1200,16 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
             ) : null}
           </div>
         )}
+
+        {!isTranslating && translationHalted && (
+          <div className="max-w-xl mx-auto flex items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm">
+            <span className="text-muted-foreground">Auto-translation stopped for all files.</span>
+            <Button size="sm" variant="outline" onClick={resumeTranslation}>
+              Resume
+            </Button>
+          </div>
+        )}
+
 
         {batches.length > 0 && (
           <>
