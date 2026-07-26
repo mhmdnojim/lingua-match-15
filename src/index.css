@@ -68,56 +68,57 @@
 
 
   .dark {
-    --background: 222 47% 8%;
-    --foreground: 210 40% 98%;
+    --background: 150 30% 7%;
+    --foreground: 100 20% 96%;
 
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
+    --card: 150 26% 11%;
+    --card-foreground: 100 20% 96%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 150 26% 11%;
+    --popover-foreground: 100 20% 96%;
 
-    --primary: 270 70% 55%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 135 30% 45%;
+    --primary-foreground: 150 40% 8%;
 
-    --secondary: 220 30% 18%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 150 20% 17%;
+    --secondary-foreground: 100 20% 96%;
 
-    --muted: 220 30% 18%;
-    --muted-foreground: 215 20% 55%;
+    --muted: 150 18% 17%;
+    --muted-foreground: 120 12% 62%;
 
-    --accent: 145 65% 50%;
-    --accent-foreground: 222 47% 5%;
+    --accent: 105 32% 60%;
+    --accent-foreground: 150 40% 8%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 8 62% 48%;
+    --destructive-foreground: 100 20% 96%;
 
-    --success: 145 65% 50%;
-    --success-foreground: 210 40% 98%;
+    --success: 140 40% 45%;
+    --success-foreground: 100 20% 96%;
 
-    --warning: 35 95% 55%;
-    --warning-foreground: 222 47% 5%;
+    --warning: 42 60% 55%;
+    --warning-foreground: 150 40% 8%;
 
-    --border: 220 25% 22%;
-    --input: 220 30% 18%;
-    --ring: 270 70% 55%;
+    --border: 150 16% 22%;
+    --input: 150 18% 17%;
+    --ring: 135 30% 45%;
 
-    --game-chinese: 270 85% 60%;
-    --game-english: 150 80% 50%;
-    --game-pinyin: 30 100% 58%;
-    --game-selected: 270 85% 70%;
-    --game-matched: 150 80% 55%;
-    --game-error: 0 90% 60%;
-    --game-glow: 30 100% 60%;
+    --game-chinese: 96 38% 48%;
+    --game-english: 168 40% 42%;
+    --game-pinyin: 42 55% 55%;
+    --game-arabic: 22 42% 50%;
+    --game-selected: 105 40% 62%;
+    --game-matched: 140 45% 50%;
+    --game-error: 8 62% 52%;
+    --game-glow: 90 45% 60%;
 
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 270 70% 55%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 220 30% 18%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 220 25% 22%;
-    --sidebar-ring: 270 70% 55%;
+    --sidebar-background: 150 26% 11%;
+    --sidebar-foreground: 100 20% 96%;
+    --sidebar-primary: 135 30% 45%;
+    --sidebar-primary-foreground: 150 40% 8%;
+    --sidebar-accent: 150 20% 17%;
+    --sidebar-accent-foreground: 100 20% 96%;
+    --sidebar-border: 150 16% 22%;
+    --sidebar-ring: 135 30% 45%;
   }
 }
 
