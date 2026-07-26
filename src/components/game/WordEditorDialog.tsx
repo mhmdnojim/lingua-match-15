@@ -6,7 +6,7 @@ import { VocabularyItem } from '@/utils/excelParser';
 import { ColumnConfig } from '@/utils/gameLogic';
 import { getLanguage } from '@/utils/languages';
 import { cn } from '@/lib/utils';
-import { RefreshCw, Sparkles } from 'lucide-react';
+import { Download, RefreshCw, Sparkles } from 'lucide-react';
 
 interface WordEditorDialogProps {
   open: boolean;
@@ -21,7 +21,10 @@ interface WordEditorDialogProps {
   onRegenerateWord: (vocabId: string, instruction?: string) => Promise<void>;
   /** Regenerate one column for every word in this round */
   onRegenerateColumn: (lang: string, instruction?: string) => Promise<void>;
+  /** Download the whole word list (all batches) as .xlsx */
+  onExportExcel: () => void;
 }
+
 
 export const WordEditorDialog: React.FC<WordEditorDialogProps> = ({
   open,
@@ -34,6 +37,8 @@ export const WordEditorDialog: React.FC<WordEditorDialogProps> = ({
   onRegenerateAll,
   onRegenerateWord,
   onRegenerateColumn,
+  onExportExcel,
+
 }) => {
   const [instruction, setInstruction] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
