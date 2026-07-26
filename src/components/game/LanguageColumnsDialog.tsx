@@ -55,7 +55,8 @@ export const LanguageColumnsDialog: React.FC<LanguageColumnsDialogProps> = ({
           {columns.map((column, index) => {
             const language = getLanguage(column.lang);
             const style = columnStyle(index);
-            const options = index === 0 ? MAIN_LANGUAGES : PICKABLE_LANGUAGES;
+            const base = index === 0 ? MAIN_LANGUAGES : PICKABLE_LANGUAGES;
+            const options = base.some(l => l.code === column.lang) ? base : [language, ...base];
 
             return (
               <div key={`${column.lang}-${index}`} className="flex items-center gap-3 rounded-lg border border-border bg-secondary/40 p-3">
