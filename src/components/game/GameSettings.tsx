@@ -69,6 +69,9 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   onTranslateScopeChange,
   onTranslateWholeFile,
   translating = false,
+  themeId = 'forest',
+  onThemeChange,
+
 }) => {
 
   const romanizableColumns = columns.filter(c => getLanguage(c.lang).romanizationLabel);
