@@ -794,8 +794,6 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           }
         />
 
-        />
-
         {isTranslating && (
           <div className="max-w-xl mx-auto rounded-lg border border-border bg-card p-3 space-y-2">
             <div className="flex items-center justify-between gap-2 text-sm">
