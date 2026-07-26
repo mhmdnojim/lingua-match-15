@@ -6,7 +6,7 @@ import { VocabularyItem } from '@/utils/excelParser';
 import { ColumnConfig } from '@/utils/gameLogic';
 import { getLanguage } from '@/utils/languages';
 import { cn } from '@/lib/utils';
-import { RefreshCw, Sparkles } from 'lucide-react';
+import { Download, RefreshCw, Sparkles } from 'lucide-react';
 
 interface WordEditorDialogProps {
   open: boolean;
@@ -21,7 +21,10 @@ interface WordEditorDialogProps {
   onRegenerateWord: (vocabId: string, instruction?: string) => Promise<void>;
   /** Regenerate one column for every word in this round */
   onRegenerateColumn: (lang: string, instruction?: string) => Promise<void>;
+  /** Download the whole word list (all batches) as .xlsx */
+  onExportExcel: () => void;
 }
+
 
 export const WordEditorDialog: React.FC<WordEditorDialogProps> = ({
   open,
@@ -34,6 +37,8 @@ export const WordEditorDialog: React.FC<WordEditorDialogProps> = ({
   onRegenerateAll,
   onRegenerateWord,
   onRegenerateColumn,
+  onExportExcel,
+
 }) => {
   const [instruction, setInstruction] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
@@ -99,7 +104,12 @@ export const WordEditorDialog: React.FC<WordEditorDialogProps> = ({
             <Sparkles className="w-4 h-4" />
             {busy === 'all' ? 'Regenerating all…' : 'Regenerate all batches'}
           </Button>
+          <Button variant="outline" onClick={onExportExcel} disabled={busy !== null} className="gap-1.5">
+            <Download className="w-4 h-4" />
+            Export Excel
+          </Button>
         </div>
+
 
         {targetColumns.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 text-sm">

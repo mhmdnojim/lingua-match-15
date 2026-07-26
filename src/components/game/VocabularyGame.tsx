@@ -30,6 +30,7 @@ import {
   FontSize,
 } from '@/utils/storage';
 import { getLanguage } from '@/utils/languages';
+import { exportVocabularyToExcel } from '@/utils/exportExcel';
 import { translateWords } from '@/utils/translate';
 import { fetchCloudSet, saveCloudSet, filledCount } from '@/utils/cloudVocabulary';
 import { useAudio } from '@/hooks/useAudio';
@@ -672,6 +673,15 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     });
   };
 
+  const handleExportExcel = () => {
+    exportVocabularyToExcel(vocabulary, columns, mainLang, selectedFile || 'vocabulary');
+    toast({
+      title: 'Excel exported',
+      description: `${vocabulary.length} words with all ${columns.length} language columns.`,
+    });
+  };
+
+
   const headerSubtitle = columns.map(c => getLanguage(c.lang).native).join(' • ');
 
   return (
@@ -851,6 +861,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onRegenerateAll={handleRegenerateAll}
           onRegenerateWord={handleRegenerateWord}
           onRegenerateColumn={handleRegenerateColumn}
+          onExportExcel={handleExportExcel}
+
         />
 
         <ImportMappingDialog
