@@ -3,80 +3,185 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from '@/components/ui/button';
 import { ColumnMapping, SheetData } from '@/utils/excelParser';
 import { PICKABLE_LANGUAGES, LANGUAGES, getLanguage } from '@/utils/languages';
+import { cn } from '@/lib/utils';
+
+export type ColumnRole = 'main' | 'column' | 'extra';
+
+export interface MappingRoles {
+  /** language of the main (source) column */
+  mainLang: string;
+  /** languages shown as playable columns, main first */
+  columnLangs: string[];
+}
 
 interface ImportMappingDialogProps {
   open: boolean;
   sheet: SheetData | null;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (mapping: ColumnMapping) => void;
+  onConfirm: (mapping: ColumnMapping, roles: MappingRoles) => void;
 }
+
+const ROLE_OPTIONS: { value: ColumnRole; label: string; hint: string }[] = [
+  { value: 'main', label: 'Main', hint: 'Source language — everything is translated from it' },
+  { value: 'column', label: 'Secondary', hint: 'Shown as a playable column' },
+  { value: 'extra', label: 'Stored only', hint: 'Saved with the words, not shown on the board' },
+];
 
 export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, sheet, onOpenChange, onConfirm }) => {
   const [mapping, setMapping] = useState<ColumnMapping>({});
+  const [roles, setRoles] = useState<Record<string, ColumnRole>>({});
 
   useEffect(() => {
     if (!sheet) return;
-    const initial: ColumnMapping = {};
-    sheet.headers.forEach(header => {
-      initial[header] = sheet.detected[header] || 'ignore';
+    const initialMapping: ColumnMapping = {};
+    const initialRoles: Record<string, ColumnRole> = {};
+    let mainTaken = false;
+    sheet.headers.forEach((header, index) => {
+      const lang = sheet.detected[header] || 'ignore';
+      initialMapping[header] = lang;
+      if (lang === 'ignore') {
+        initialRoles[header] = 'extra';
+        return;
+      }
+      if (!mainTaken) {
+        initialRoles[header] = 'main';
+        mainTaken = true;
+      } else {
+        initialRoles[header] = index < 4 ? 'column' : 'extra';
+      }
     });
-    setMapping(initial);
+    setMapping(initialMapping);
+    setRoles(initialRoles);
   }, [sheet]);
 
   if (!sheet) return null;
 
-  const assigned = Object.values(mapping).filter(v => v !== 'ignore');
+  const assignedHeaders = sheet.headers.filter(h => (mapping[h] || 'ignore') !== 'ignore');
+  const assigned = assignedHeaders.map(h => mapping[h]);
   const duplicate = assigned.length !== new Set(assigned).size;
+  const mainHeader = assignedHeaders.find(h => roles[h] === 'main');
+  const columnCount = assignedHeaders.filter(h => roles[h] === 'column').length + (mainHeader ? 1 : 0);
+  const tooManyColumns = columnCount > 4;
+
+  const setRole = (header: string, role: ColumnRole) => {
+    setRoles(prev => {
+      if (role === 'main') {
+        const next: Record<string, ColumnRole> = { ...prev };
+        Object.keys(next).forEach(key => {
+          if (next[key] === 'main') next[key] = 'column';
+        });
+        next[header] = 'main';
+        return next;
+      }
+      return { ...prev, [header]: role };
+    });
+  };
+
+  const handleConfirm = () => {
+    if (!mainHeader) return;
+    const mainLang = mapping[mainHeader];
+    const secondary = assignedHeaders.filter(h => h !== mainHeader && roles[h] === 'column');
+    const extras = assignedHeaders.filter(h => h !== mainHeader && roles[h] !== 'column');
+
+    // main first, then playable columns, then stored-only languages
+    const ordered: ColumnMapping = { [mainHeader]: mainLang };
+    [...secondary, ...extras].forEach(h => {
+      ordered[h] = mapping[h];
+    });
+    sheet.headers.forEach(h => {
+      if (!(h in ordered)) ordered[h] = 'ignore';
+    });
+
+    onConfirm(ordered, {
+      mainLang,
+      columnLangs: [mainLang, ...secondary.map(h => mapping[h])].slice(0, 4),
+    });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Which language is each column?</DialogTitle>
+          <DialogTitle>Map the columns of your file</DialogTitle>
           <DialogDescription>
-            The first assigned column becomes the main language. Any configured column missing from the file is
-            generated with AI.
+            Pick the language of each column and how it is used: one main column, up to three secondary columns on the
+            board, and any number of extra languages that are stored for later. Missing languages are generated with AI.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
-          {sheet.headers.map(header => (
-            <div key={header} className="flex items-center gap-3">
-              <span className="w-1/3 truncate text-sm text-foreground" title={header}>
-                {header}
-              </span>
-              <select
-                value={mapping[header] || 'ignore'}
-                onChange={e => setMapping(prev => ({ ...prev, [header]: e.target.value }))}
-                className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="ignore">Ignore this column</option>
-                {PICKABLE_LANGUAGES.map(lang => (
-                  <option key={lang.code} value={lang.code}>
-                    {lang.native} — {lang.name}
-                  </option>
-                ))}
-                <optgroup label="Transliteration columns">
-                  {LANGUAGES.filter(l => l.romanizationOf).map(lang => (
-                    <option key={lang.code} value={lang.code}>
-                      {getLanguage(lang.romanizationOf!).name} — transliteration
-                    </option>
-                  ))}
-                </optgroup>
-              </select>
-            </div>
-          ))}
+          {sheet.headers.map(header => {
+            const lang = mapping[header] || 'ignore';
+            const ignored = lang === 'ignore';
+            return (
+              <div key={header} className="rounded-lg border border-border bg-secondary/40 p-3 space-y-2">
+                <div className="flex items-center gap-3">
+                  <span className="w-1/3 truncate text-sm text-foreground" title={header}>
+                    {header}
+                  </span>
+                  <select
+                    value={lang}
+                    onChange={e => setMapping(prev => ({ ...prev, [header]: e.target.value }))}
+                    className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="ignore">Ignore this column</option>
+                    {PICKABLE_LANGUAGES.map(l => (
+                      <option key={l.code} value={l.code}>
+                        {l.native} — {l.name}
+                      </option>
+                    ))}
+                    <optgroup label="Transliteration columns">
+                      {LANGUAGES.filter(l => l.romanizationOf).map(l => (
+                        <option key={l.code} value={l.code}>
+                          {getLanguage(l.romanizationOf!).name} — transliteration
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                </div>
+
+                {!ignored && (
+                  <div className="flex flex-wrap gap-1.5 pl-[33%]">
+                    {ROLE_OPTIONS.map(option => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        title={option.hint}
+                        onClick={() => setRole(header, option.value)}
+                        className={cn(
+                          'rounded-full border px-3 py-1 text-xs transition-colors',
+                          roles[header] === option.value
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : 'border-border bg-background text-muted-foreground hover:text-foreground',
+                        )}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {duplicate && (
           <p className="text-sm text-destructive">Two columns are mapped to the same language — pick different ones.</p>
+        )}
+        {!mainHeader && assignedHeaders.length > 0 && (
+          <p className="text-sm text-destructive">Choose one column as the main language.</p>
+        )}
+        {tooManyColumns && (
+          <p className="text-sm text-destructive">
+            Only 4 columns fit on the board — set the extra ones to “Stored only”.
+          </p>
         )}
 
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button disabled={assigned.length === 0 || duplicate} onClick={() => onConfirm(mapping)}>
+          <Button disabled={!mainHeader || duplicate || tooManyColumns} onClick={handleConfirm}>
             Import
           </Button>
         </div>

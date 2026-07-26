@@ -4,7 +4,6 @@ import {
   VocabularyItem,
   SheetData,
   ColumnMapping,
-  autoMapping,
   buildVocabulary,
   fetchExcelFromUrl,
   parseExcelFile,
@@ -58,7 +57,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import LanguageColumnsDialog from './LanguageColumnsDialog';
 import WordEditorDialog from './WordEditorDialog';
-import ImportMappingDialog from './ImportMappingDialog';
+import ImportMappingDialog, { MappingRoles } from './ImportMappingDialog';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { BookOpen, LogIn, LogOut, Loader2, Cloud, CloudOff, CloudUpload, SlidersHorizontal, ChevronUp, ChevronDown } from 'lucide-react';
@@ -536,11 +535,11 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     sheet.headers.map(h => mapping[h] || 'ignore');
 
   /** Import the remaining files with the language order chosen for the first file */
-  const applyOrderToRest = (sheets: SheetData[], langs: string[]) => {
+  const applyOrderToRest = (sheets: SheetData[], langs: string[], roles?: MappingRoles) => {
     const imported: string[] = [];
     sheets.forEach(sheet => {
       const mapping = mappingByPosition(sheet, langs);
-      if (applyMapping(sheet, mapping, sheet.fileName)) imported.push(sheet.fileName || 'upload');
+      if (applyMapping(sheet, mapping, sheet.fileName, roles)) imported.push(sheet.fileName || 'upload');
     });
     if (imported.length > 0) {
       toast({ title: `${imported.length} more file(s) imported`, description: imported.join(', ') });
@@ -566,24 +565,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     if (totalWords > batchSize) setScopePrompt({ count: totalWords });
 
     const [first, ...rest] = sheets;
-    const auto = autoMapping(first);
 
-    if (auto) {
-      const langs = langOrder(first, auto);
-      const imported: string[] = [];
-      if (applyMapping(first, auto, first.fileName)) imported.push(first.fileName || 'upload');
-      rest.forEach(sheet => {
-        if (applyMapping(sheet, mappingByPosition(sheet, langs), sheet.fileName)) {
-          imported.push(sheet.fileName || 'upload');
-        }
-      });
-      if (imported.length > 1) {
-        toast({ title: `${imported.length} files imported`, description: imported.join(', ') });
-      }
-      return;
-    }
-
-    // Ask once for the first file, then reuse that language order for the rest
+    // Always let the user confirm column languages and roles for the first file,
+    // then reuse that language order for the rest
     setPendingQueue(rest);
     setPendingSheet(first);
   };
@@ -597,38 +581,42 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     });
   };
 
-  /** Import straight away when the first column's language is recognised */
+  /** Single file: always open the picker, pre-filled with the detected languages */
   const handleSheetReady = (sheet: SheetData) => {
-    const auto = autoMapping(sheet);
-    if (auto) {
-      applyMapping(sheet, auto, sheet.fileName);
-      return;
-    }
     setPendingSheet(sheet);
   };
 
-  const handleConfirmMapping = (mapping: ColumnMapping) => {
+  const handleConfirmMapping = (mapping: ColumnMapping, roles: MappingRoles) => {
     if (!pendingSheet) return;
-    applyMapping(pendingSheet, mapping, pendingSheet.fileName);
+    applyMapping(pendingSheet, mapping, pendingSheet.fileName, roles);
     const langs = langOrder(pendingSheet, mapping);
     setPendingSheet(null);
     setPendingQueue(queue => {
-      if (queue.length > 0) applyOrderToRest(queue, langs);
+      if (queue.length > 0) applyOrderToRest(queue, langs, roles);
       return [];
     });
   };
 
 
 
-  const applyMapping = (sheet: SheetData, mapping: ColumnMapping, sourceName?: string): boolean => {
+  const applyMapping = (
+    sheet: SheetData,
+    mapping: ColumnMapping,
+    sourceName?: string,
+    roles?: MappingRoles,
+  ): boolean => {
     const mappedLangs = Object.entries(mapping)
       .filter(([, lang]) => lang && lang !== 'ignore')
       .map(([, lang]) => lang);
-    const newMain = mappedLangs[0];
+    const newMain = roles?.mainLang || mappedLangs[0];
 
     // Keep configured columns, put the file's main language first, then existing extras
+    const chosen = roles?.columnLangs?.length ? roles.columnLangs : mappedLangs;
     const extras = columns.map(c => c.lang).filter(lang => lang !== newMain);
-    const langs = [newMain, ...Array.from(new Set([...mappedLangs.slice(1), ...extras]))].slice(0, 4);
+    const langs = [
+      newMain,
+      ...Array.from(new Set([...chosen.filter(l => l !== newMain), ...extras])),
+    ].slice(0, 4);
     const nextColumns: ColumnConfig[] = langs.map((lang, index) => {
       const existing = columns.find(c => c.lang === lang);
       return existing
