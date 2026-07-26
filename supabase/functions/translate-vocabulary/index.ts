@@ -7,6 +7,20 @@ const schema = z.object({
   translations: z.array(z.string()),
 });
 
+function parseFallback(text?: string): string[] | null {
+  if (!text) return null;
+  const match = text.match(/[[{][\s\S]*[\]}]/);
+  if (!match) return null;
+  try {
+    const parsed = JSON.parse(match[0]);
+    if (Array.isArray(parsed)) return parsed.map(String);
+    if (parsed && Array.isArray(parsed.translations)) return parsed.translations.map(String);
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -69,13 +83,22 @@ Deno.serve(async (req) => {
       .filter(Boolean)
       .join('\n');
 
-    const { output } = await generateText({
-      model: provider('google/gemini-3.5-flash'),
-      output: Output.object({ schema }),
-      prompt,
-    });
+    let raw: string[] = [];
+    try {
+      const { output } = await generateText({
+        model: provider('google/gemini-3.5-flash'),
+        output: Output.object({ schema }),
+        prompt,
+      });
+      raw = output.translations ?? [];
+    } catch (error) {
+      if (!NoObjectGeneratedError.isInstance(error)) throw error;
+      // Some models answer with a bare array or a differently shaped object — recover from the raw text
+      raw = parseFallback(error.text) ?? [];
+      if (raw.length === 0) throw error;
+    }
 
-    const translations = list.map((_, i) => String(output.translations?.[i] ?? '').trim());
+    const translations = list.map((_, i) => String(raw[i] ?? '').trim());
 
     return new Response(JSON.stringify({ translations }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
