@@ -672,6 +672,15 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     });
   };
 
+  const handleExportExcel = () => {
+    exportVocabularyToExcel(vocabulary, columns, mainLang, selectedFile || 'vocabulary');
+    toast({
+      title: 'Excel exported',
+      description: `${vocabulary.length} words with all ${columns.length} language columns.`,
+    });
+  };
+
+
   const headerSubtitle = columns.map(c => getLanguage(c.lang).native).join(' • ');
 
   return (
