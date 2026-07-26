@@ -22,6 +22,8 @@ import {
   clearProgress,
   saveVocabulary,
   loadVocabularyCache,
+  saveUiState,
+  loadUiState,
   DEFAULT_COLUMNS,
   VoiceType,
   FontSize,
@@ -63,6 +65,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const { toast } = useToast();
   const savedProgress = loadProgress();
   const cached = loadVocabularyCache();
+  const savedUi = loadUiState();
 
   const [user, setUser] = useState<any>(null);
 
@@ -71,11 +74,11 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [batches, setBatches] = useState<VocabularyItem[][]>([]);
   const [currentBatch, setCurrentBatch] = useState(savedProgress.currentBatch);
   const [completedBatches, setCompletedBatches] = useState<number[]>(savedProgress.completedBatches);
-  const [shuffleMode, setShuffleMode] = useState(true);
+  const [shuffleMode, setShuffleMode] = useState(savedProgress.shuffleMode);
   const [muteSfx, setMuteSfx] = useState(savedProgress.muteSfx);
   const [voiceType, setVoiceType] = useState<VoiceType>(savedProgress.voiceType);
   const [fontSize, setFontSize] = useState<FontSize>(savedProgress.fontSize);
-  const [selectedFile, setSelectedFile] = useState<string | null>(dataSource || null);
+  const [selectedFile, setSelectedFile] = useState<string | null>(dataSource || savedProgress.selectedFile);
   const [cards, setCards] = useState<Record<string, GameCard[]>>({});
   const [selectedCards, setSelectedCards] = useState<GameCard[]>([]);
   const [score, setScore] = useState(savedProgress.score);
@@ -94,8 +97,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     words: string[];
   } | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
-  const [languagesOpen, setLanguagesOpen] = useState(false);
-  const [wordEditorOpen, setWordEditorOpen] = useState(false);
+  const [languagesOpen, setLanguagesOpen] = useState(savedUi.languagesOpen);
+  const [wordEditorOpen, setWordEditorOpen] = useState(savedUi.wordEditorOpen);
   const [pendingSheet, setPendingSheet] = useState<SheetData | null>(null);
 
   const mainLang = columns[0]?.lang || 'zh';
@@ -119,8 +122,13 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
   // Persist settings
   useEffect(() => {
-    saveProgress({ muteSfx, voiceType, fontSize, columns });
-  }, [muteSfx, voiceType, fontSize, columns]);
+    saveProgress({ muteSfx, voiceType, fontSize, columns, shuffleMode });
+  }, [muteSfx, voiceType, fontSize, columns, shuffleMode]);
+
+  // Remember which dialogs were open
+  useEffect(() => {
+    saveUiState({ languagesOpen, wordEditorOpen });
+  }, [languagesOpen, wordEditorOpen]);
 
   // Rebuild batches whenever vocabulary / ordering / main language changes
   useEffect(() => {
@@ -280,11 +288,17 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     [toast],
   );
 
+  const skipInitialLoadRef = useRef(Boolean(cached?.items?.length));
   useEffect(() => {
-    if (selectedFile) {
-      loadVocabulary(selectedFile);
-      saveProgress({ selectedFile });
+    if (!selectedFile) return;
+    saveProgress({ selectedFile });
+    // On a fresh app open, keep the words that were already saved instead of
+    // re-running the import flow for the remembered file.
+    if (skipInitialLoadRef.current) {
+      skipInitialLoadRef.current = false;
+      return;
     }
+    loadVocabulary(selectedFile);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFile]);
 
