@@ -729,8 +729,11 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   };
 
   const handleColumnVisibilityChange = useCallback((lang: string, visible: boolean) => {
+    // Showing a column again must let it re-fetch any words it is still missing
+    if (visible) autoTranslatedRef.current = '';
     setColumns(prev => prev.map(c => (c.lang === lang ? { ...c, visible } : c)));
   }, []);
+
 
   const handleColumnMuteChange = useCallback((lang: string, muted: boolean) => {
     setColumns(prev => prev.map(c => (c.lang === lang ? { ...c, muted } : c)));
