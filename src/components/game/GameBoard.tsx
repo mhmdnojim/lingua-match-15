@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import Card, { FontSize } from './Card';
 import { GameCard, ColumnConfig } from '@/utils/gameLogic';
 import { getLanguage, columnStyle, MAIN_LANGUAGES, PICKABLE_LANGUAGES } from '@/utils/languages';
-import { HelpCircle, RefreshCw, Languages } from 'lucide-react';
+import { HelpCircle, RefreshCw, Languages, Pencil, Check, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
@@ -17,6 +17,8 @@ interface GameBoardProps {
   onSpeak: (card: GameCard) => void;
   onHint: (card: GameCard) => void;
   onRegenerateCard?: (card: GameCard) => void;
+  /** save a manual edit of one card; editing the main column retranslates the row */
+  onEditCard?: (card: GameCard, value: string) => void;
   /** change the language of a column straight from its title */
   onColumnLangChange?: (index: number, lang: string) => void;
   regeneratingIds?: string[];
@@ -31,11 +33,25 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   onSpeak,
   onHint,
   onRegenerateCard,
+  onEditCard,
   onColumnLangChange,
   regeneratingIds = [],
 }) => {
   /** per-card override of the column romanization setting */
   const [romOverrides, setRomOverrides] = React.useState<Record<string, boolean>>({});
+  const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [draft, setDraft] = React.useState('');
+
+  const startEdit = (card: GameCard) => {
+    setEditingId(card.id);
+    setDraft(card.content);
+  };
+  const commitEdit = (card: GameCard) => {
+    const value = draft.trim();
+    setEditingId(null);
+    if (value && value !== card.content) onEditCard?.(card, value);
+  };
+
   const toggleRom = (id: string, current: boolean) =>
     setRomOverrides(prev => ({ ...prev, [id]: !current }));
   const visibleColumns = columns.filter(
@@ -108,17 +124,48 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               ))}
             {columnCards.map(card => {
               const showRom = romOverrides[card.id] ?? column.showRomanization;
+              const isEditing = editingId === card.id;
               return (
               <div key={card.id} className="relative group">
-                <Card
-                  card={card}
-                  columnIndex={originalIndex}
-                  showRomanization={showRom}
-                  fontSize={fontSize}
-                  onClick={onCardClick}
-                  onSpeak={column.muted ? undefined : onSpeak}
-                />
-                {!card.isMatched && (
+                {isEditing ? (
+                  <div className="flex min-h-[76px] items-center gap-2 rounded-xl border border-primary bg-card p-3 shadow-md">
+                    <input
+                      autoFocus
+                      value={draft}
+                      onChange={e => setDraft(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') commitEdit(card);
+                        if (e.key === 'Escape') setEditingId(null);
+                      }}
+                      className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none"
+                      aria-label="Edit word"
+                    />
+                    <button
+                      onClick={() => commitEdit(card)}
+                      className="rounded-full bg-primary p-1 text-primary-foreground hover:scale-110 transition-transform"
+                      title="Save"
+                    >
+                      <Check className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setEditingId(null)}
+                      className="rounded-full bg-muted p-1 text-muted-foreground hover:scale-110 transition-transform"
+                      title="Cancel"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <Card
+                    card={card}
+                    columnIndex={originalIndex}
+                    showRomanization={showRom}
+                    fontSize={fontSize}
+                    onClick={onCardClick}
+                    onSpeak={column.muted ? undefined : onSpeak}
+                  />
+                )}
+                {!card.isMatched && !isEditing && (
                   <button
                     onClick={e => {
                       e.stopPropagation();
@@ -128,6 +175,22 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     title="Get hint (-5 points)"
                   >
                     <HelpCircle className="w-4 h-4" />
+                  </button>
+                )}
+                {onEditCard && !card.isMatched && !isEditing && (
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      startEdit(card);
+                    }}
+                    className="absolute -left-2 -top-2 p-1 bg-secondary text-secondary-foreground rounded-full opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shadow-md hover:scale-110"
+                    title={
+                      originalIndex === 0
+                        ? 'Edit word (retranslates the other columns)'
+                        : 'Edit translation'
+                    }
+                  >
+                    <Pencil className="w-4 h-4" />
                   </button>
                 )}
                 {onRegenerateCard && originalIndex !== 0 && !card.isMatched && (
