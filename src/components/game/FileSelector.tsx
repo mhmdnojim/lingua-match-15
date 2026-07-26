@@ -17,6 +17,8 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
   availableFiles,
   onSelectFile,
   onUploadFiles,
+  onDeleteFile,
+
   className,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
