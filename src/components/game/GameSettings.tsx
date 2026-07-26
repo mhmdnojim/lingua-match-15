@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered, Languages, Pencil } from 'lucide-react';
+import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered, Languages, Pencil, SlidersHorizontal, ChevronUp } from 'lucide-react';
 import { ColumnConfig } from '@/utils/gameLogic';
 import { getLanguage, columnStyle } from '@/utils/languages';
 
@@ -24,6 +24,9 @@ interface GameSettingsProps {
   onFontSizeChange?: (size: FontSize) => void;
   disabled?: boolean;
   className?: string;
+  /** Whether the extra options row is expanded */
+  settingsOpen?: boolean;
+  onSettingsOpenChange?: (open: boolean) => void;
 }
 
 export const GameSettings: React.FC<GameSettingsProps> = ({
@@ -43,11 +46,15 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   onFontSizeChange,
   disabled = false,
   className,
+  settingsOpen = false,
+  onSettingsOpenChange,
 }) => {
   const romanizableColumns = columns.filter(c => getLanguage(c.lang).romanizationLabel);
 
   return (
-    <div className={cn('flex flex-wrap items-center justify-center gap-2', className)}>
+    <div className={cn('space-y-2', className)}>
+      {/* Single always-visible row */}
+      <div className="flex flex-wrap items-center justify-center gap-2">
       {/* Language / column setup */}
       <button
         onClick={onOpenLanguages}
@@ -95,6 +102,28 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         <span className="hidden sm:inline text-center w-[3.75rem]">{shuffleMode ? 'Shuffle' : 'Order'}</span>
       </button>
 
+      {/* Show / hide the rest of the options */}
+        <button
+          onClick={() => onSettingsOpenChange?.(!settingsOpen)}
+          disabled={disabled}
+          className={cn(
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
+            settingsOpen
+              ? 'bg-primary border-primary text-primary-foreground'
+              : 'bg-secondary border-border text-muted-foreground hover:text-foreground',
+            disabled && 'opacity-50 cursor-not-allowed',
+          )}
+          title={settingsOpen ? 'Hide options' : 'Show options'}
+        >
+          {settingsOpen ? <SlidersHorizontal className="w-4 h-4 shrink-0" /> : <SlidersHorizontal className="w-4 h-4 shrink-0" />}
+          <span className="hidden sm:inline">Options</span>
+          <ChevronUp className={cn('w-3.5 h-3.5 transition-transform', !settingsOpen && 'rotate-180')} />
+        </button>
+      </div>
+
+      {/* Everything else — hidden until needed */}
+      {settingsOpen && (
+        <div className="flex flex-wrap items-center justify-center gap-2 rounded-lg border border-border bg-card/60 p-2">
       {/* Romanization toggles */}
       {romanizableColumns.map(column => {
         const language = getLanguage(column.lang);
@@ -230,6 +259,8 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         >
           {muteSfx ? <Music2 className="w-4 h-4" /> : <Music className="w-4 h-4" />}
         </button>
+      )}
+        </div>
       )}
     </div>
   );

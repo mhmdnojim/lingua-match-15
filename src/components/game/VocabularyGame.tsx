@@ -100,6 +100,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [gameStarted, setGameStarted] = useState(false);
   const [languagesOpen, setLanguagesOpen] = useState(savedUi.languagesOpen);
   const [wordEditorOpen, setWordEditorOpen] = useState(savedUi.wordEditorOpen);
+  const [settingsOpen, setSettingsOpen] = useState(savedUi.settingsOpen);
   const [pendingSheet, setPendingSheet] = useState<SheetData | null>(null);
 
   const mainLang = columns[0]?.lang || 'zh';
@@ -128,8 +129,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
   // Remember which dialogs were open
   useEffect(() => {
-    saveUiState({ languagesOpen, wordEditorOpen });
-  }, [languagesOpen, wordEditorOpen]);
+    saveUiState({ languagesOpen, wordEditorOpen, settingsOpen });
+  }, [languagesOpen, wordEditorOpen, settingsOpen]);
 
   // Rebuild batches whenever vocabulary / ordering / main language changes
   useEffect(() => {
@@ -667,6 +668,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onVoiceTypeChange={setVoiceType}
           onFontSizeChange={setFontSize}
           disabled={isLoading}
+          settingsOpen={settingsOpen}
+          onSettingsOpenChange={setSettingsOpen}
         />
 
         {isTranslating && (
