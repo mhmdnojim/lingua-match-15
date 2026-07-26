@@ -4,6 +4,7 @@ import {
   VocabularyItem,
   SheetData,
   ColumnMapping,
+  autoMapping,
   buildVocabulary,
   fetchExcelFromUrl,
   parseExcelFile,
@@ -283,7 +284,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         toast({ title: 'Error', description: result.error, variant: 'destructive' });
         return;
       }
-      setPendingSheet(result);
+      handleSheetReady(result);
     },
     [toast],
   );
@@ -310,11 +311,25 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       toast({ title: 'Error', description: result.error, variant: 'destructive' });
       return;
     }
-    setPendingSheet(result);
+    handleSheetReady(result);
+  };
+
+  /** Import straight away when the first column's language is recognised */
+  const handleSheetReady = (sheet: SheetData) => {
+    const auto = autoMapping(sheet);
+    if (auto) {
+      applyMapping(sheet, auto);
+      return;
+    }
+    setPendingSheet(sheet);
   };
 
   const handleConfirmMapping = (mapping: ColumnMapping) => {
     if (!pendingSheet) return;
+    applyMapping(pendingSheet, mapping);
+  };
+
+  const applyMapping = (sheet: SheetData, mapping: ColumnMapping) => {
     const mappedLangs = Object.entries(mapping)
       .filter(([, lang]) => lang && lang !== 'ignore')
       .map(([, lang]) => lang);
@@ -330,7 +345,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         : { lang, visible: true, muted: false, showRomanization: index === 0 };
     });
 
-    const items = buildVocabulary(pendingSheet, mapping, newMain);
+    const items = buildVocabulary(sheet, mapping, newMain);
 
     if (items.length === 0) {
       toast({ title: 'Nothing to import', description: 'No rows had a value in the main language', variant: 'destructive' });
