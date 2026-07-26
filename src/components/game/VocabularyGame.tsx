@@ -536,11 +536,11 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     sheet.headers.map(h => mapping[h] || 'ignore');
 
   /** Import the remaining files with the language order chosen for the first file */
-  const applyOrderToRest = (sheets: SheetData[], langs: string[]) => {
+  const applyOrderToRest = (sheets: SheetData[], langs: string[], roles?: MappingRoles) => {
     const imported: string[] = [];
     sheets.forEach(sheet => {
       const mapping = mappingByPosition(sheet, langs);
-      if (applyMapping(sheet, mapping, sheet.fileName)) imported.push(sheet.fileName || 'upload');
+      if (applyMapping(sheet, mapping, sheet.fileName, roles)) imported.push(sheet.fileName || 'upload');
     });
     if (imported.length > 0) {
       toast({ title: `${imported.length} more file(s) imported`, description: imported.join(', ') });
