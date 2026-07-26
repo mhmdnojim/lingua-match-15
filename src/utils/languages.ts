@@ -160,13 +160,38 @@ const HEADER_ALIASES: Record<string, string> = {
 
 /** Try to map an excel header to a language code */
 export function detectLanguageFromHeader(header: string): string | null {
-  const key = header.toLowerCase().trim();
-  if (HEADER_ALIASES[key]) return HEADER_ALIASES[key];
-  const byName = LANGUAGES.find(
-    l => l.name.toLowerCase() === key || l.native.toLowerCase() === key || l.code.toLowerCase() === key,
+  const raw = header.toLowerCase().trim();
+
+  const lookup = (key: string): string | null => {
+    if (!key) return null;
+    if (HEADER_ALIASES[key]) return HEADER_ALIASES[key];
+    const byName = LANGUAGES.find(
+      l => l.name.toLowerCase() === key || l.native.toLowerCase() === key || l.code.toLowerCase() === key,
+    );
+    return byName ? byName.code : null;
+  };
+
+  // exact match first
+  const direct = lookup(raw);
+  if (direct) return direct;
+
+  // "Arabic (ar)", "Word - Arabic", "arabic_translation", "col3: Arabic"
+  const parts = raw
+    .split(/[()\[\]{}\-_/|,:;+.]+|\s{2,}/)
+    .map(p => p.trim())
+    .filter(Boolean);
+  for (const part of parts) {
+    const hit = lookup(part) || lookup(part.replace(/\b(word|words|translation|text|column|col|lang|language)\b/g, '').trim());
+    if (hit) return hit;
+  }
+
+  // last resort: a language name appearing anywhere in the header
+  const contained = LANGUAGES.filter(l => !l.romanizationOf).find(
+    l => raw.includes(l.name.toLowerCase()) || raw.includes(l.native.toLowerCase()),
   );
-  return byName ? byName.code : null;
+  return contained ? contained.code : null;
 }
+
 
 /** Visual style per column position (cycled) */
 export const COLUMN_STYLES = [
