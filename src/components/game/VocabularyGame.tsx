@@ -1214,6 +1214,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               onSpeak={handleSpeak}
               onHint={handleHint}
               onRegenerateCard={handleRegenerateCard}
+              onEditCard={handleCardEdit}
               onColumnLangChange={handleColumnLangChange}
               regeneratingIds={regeneratingCards}
             />
