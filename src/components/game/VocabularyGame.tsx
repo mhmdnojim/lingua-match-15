@@ -442,6 +442,25 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     });
   };
 
+  /** Romanization columns (pinyin, romaji...) only make sense for their own script — hide them otherwise */
+  const romanizationMainRef = useRef<string>('');
+  useEffect(() => {
+    if (!mainLang || romanizationMainRef.current === mainLang) return;
+    romanizationMainRef.current = mainLang;
+    setColumns(prev => {
+      let changed = false;
+      const next = prev.map(c => {
+        const rootLang = getLanguage(c.lang).romanizationOf;
+        if (!rootLang) return c;
+        const shouldShow = rootLang === mainLang;
+        if (c.visible === shouldShow) return c;
+        changed = true;
+        return { ...c, visible: shouldShow };
+      });
+      return changed ? next : prev;
+    });
+  }, [mainLang]);
+
   const handleColumnsChange = (next: ColumnConfig[]) => {
     setColumns(next);
     autoTranslatedRef.current = '';
