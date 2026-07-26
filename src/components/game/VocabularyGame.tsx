@@ -510,7 +510,12 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   };
 
   const handleRegenerateAll = async (instruction?: string) => {
-    await translateMissing(currentItems, columns, mainLang, instruction, true);
+    // Regenerate across the entire dataset (all batches), not just the current batch
+    await translateMissing(vocabulary, columns, mainLang, instruction, true);
+    toast({
+      title: 'Translations regenerated',
+      description: `Updated ${vocabulary.length} words across all ${batches.length} batches.`,
+    });
   };
 
   const headerSubtitle = columns.map(c => getLanguage(c.lang).native).join(' • ');
