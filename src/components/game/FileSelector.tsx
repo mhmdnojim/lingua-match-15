@@ -71,6 +71,25 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
         <span>Upload</span>
       </button>
 
+      {onDeleteFile && selectedFile && (
+        <button
+          onClick={() => {
+            if (window.confirm(`Delete "${selectedFile}" from your vocabulary list?`)) {
+              onDeleteFile(selectedFile);
+            }
+          }}
+          title={`Delete ${selectedFile}`}
+          aria-label={`Delete ${selectedFile}`}
+          className={cn(
+            'flex items-center justify-center p-2 rounded-lg',
+            'border border-destructive text-destructive',
+            'hover:bg-destructive/10 transition-colors duration-200',
+          )}
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      )}
+
       <input
         ref={fileInputRef}
         type="file"
