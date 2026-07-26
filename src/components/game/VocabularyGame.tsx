@@ -387,7 +387,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const autoTranslatedRef = useRef<string>('');
   useEffect(() => {
     const batch = batches[currentBatch];
-    if (!batch || isTranslating || !cloudReady) return;
+    if (!batch || isTranslating || !cloudReady || translationHalted) return;
 
     // In "whole file" mode every word is translated at once, not just this round
     const scopeItems = translateScope === 'all' ? vocabulary : batch;
