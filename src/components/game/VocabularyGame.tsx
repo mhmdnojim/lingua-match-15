@@ -463,7 +463,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const handleUploadFiles = async (files: File[]) => {
     setIsLoading(true);
     const imported: string[] = [];
-    let lastPending: SheetData | null = null;
+    const pending: SheetData[] = [];
 
     for (const file of files) {
       const result = await parseExcelFile(file);
@@ -475,15 +475,28 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       if (auto) {
         if (applyMapping(result, auto, file.name)) imported.push(file.name);
       } else {
-        lastPending = { ...result, fileName: file.name } as SheetData;
+        pending.push({ ...result, fileName: file.name } as SheetData);
       }
     }
     setIsLoading(false);
 
-    if (lastPending) setPendingSheet(lastPending);
     if (imported.length > 1) {
       toast({ title: `${imported.length} files imported`, description: imported.join(', ') });
     }
+    // Ask for a mapping one file at a time so no upload is dropped
+    if (pending.length > 0) {
+      setPendingQueue(pending.slice(1));
+      setPendingSheet(pending[0]);
+    }
+  };
+
+  /** Move on to the next file that still needs a manual column mapping */
+  const advanceQueue = () => {
+    setPendingQueue(queue => {
+      const [next, ...rest] = queue;
+      setPendingSheet(next ?? null);
+      return rest;
+    });
   };
 
   /** Import straight away when the first column's language is recognised */
@@ -499,7 +512,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const handleConfirmMapping = (mapping: ColumnMapping) => {
     if (!pendingSheet) return;
     applyMapping(pendingSheet, mapping, pendingSheet.fileName);
+    advanceQueue();
   };
+
 
   const applyMapping = (sheet: SheetData, mapping: ColumnMapping, sourceName?: string): boolean => {
     const mappedLangs = Object.entries(mapping)
