@@ -133,27 +133,26 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
       </button>
 
 
-      {romanizableColumns.map(column => {
-        const language = getLanguage(column.lang);
+      {romanizableColumns.length > 0 && (() => {
+        const allOn = romanizableColumns.every(c => c.showRomanization);
         return (
           <button
-            key={`rom-${column.lang}`}
-            onClick={() => onColumnRomanizationChange(column.lang, !column.showRomanization)}
+            onClick={() => romanizableColumns.forEach(c => onColumnRomanizationChange(c.lang, !allOn))}
             disabled={disabled}
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
-              column.showRomanization
+              allOn
                 ? 'bg-game-pinyin border-game-pinyin text-primary-foreground'
                 : 'bg-secondary border-border text-muted-foreground hover:text-foreground',
               disabled && 'opacity-50 cursor-not-allowed',
             )}
-            title={`${column.showRomanization ? 'Hide' : 'Show'} ${language.romanizationLabel} on ${language.name} cards`}
+            title={`${allOn ? 'Hide' : 'Show'} transliteration above every word`}
           >
-            <span className="text-xs">{language.short}</span>
-            <span className="hidden sm:inline">{language.romanizationLabel}</span>
+            <Languages className="w-4 h-4 shrink-0" />
+            <span className="hidden sm:inline">Transliteration</span>
           </button>
         );
-      })}
+      })()}
 
       {/* Column visibility */}
       <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
