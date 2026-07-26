@@ -51,7 +51,9 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   className,
   settingsOpen = false,
   onSettingsOpenChange,
+  showToggle = true,
 }) => {
+
   const romanizableColumns = columns.filter(c => getLanguage(c.lang).romanizationLabel);
 
   return (
