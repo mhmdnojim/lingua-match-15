@@ -620,15 +620,24 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
 
 
-  const applyMapping = (sheet: SheetData, mapping: ColumnMapping, sourceName?: string): boolean => {
+  const applyMapping = (
+    sheet: SheetData,
+    mapping: ColumnMapping,
+    sourceName?: string,
+    roles?: MappingRoles,
+  ): boolean => {
     const mappedLangs = Object.entries(mapping)
       .filter(([, lang]) => lang && lang !== 'ignore')
       .map(([, lang]) => lang);
-    const newMain = mappedLangs[0];
+    const newMain = roles?.mainLang || mappedLangs[0];
 
     // Keep configured columns, put the file's main language first, then existing extras
+    const chosen = roles?.columnLangs?.length ? roles.columnLangs : mappedLangs;
     const extras = columns.map(c => c.lang).filter(lang => lang !== newMain);
-    const langs = [newMain, ...Array.from(new Set([...mappedLangs.slice(1), ...extras]))].slice(0, 4);
+    const langs = [
+      newMain,
+      ...Array.from(new Set([...chosen.filter(l => l !== newMain), ...extras])),
+    ].slice(0, 4);
     const nextColumns: ColumnConfig[] = langs.map((lang, index) => {
       const existing = columns.find(c => c.lang === lang);
       return existing
