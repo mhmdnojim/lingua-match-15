@@ -241,7 +241,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
                 if (!value) return item;
                 return { ...item, values: { ...item.values, [column.lang]: value } };
               });
-              saveVocabulary({ items: next, mainLang: source, source: selectedFile || 'local' });
+              persistVocabulary(next, source);
               return next;
             });
 
@@ -265,7 +265,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         setTranslateProgress(null);
       }
     },
-    [selectedFile, toast],
+    [persistVocabulary, toast],
   );
 
   // Auto-translate the current batch when a configured column has no data yet
@@ -386,7 +386,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
     setColumns(nextColumns);
     setVocabulary(items);
-    saveVocabulary({ items, mainLang: newMain, source: selectedFile || 'upload' });
+    persistVocabulary(items, newMain);
     setCurrentBatch(0);
     setScore(0);
     setCompletedBatches([]);
@@ -574,7 +574,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           ? { ...item, values: { ...item.values, [lang]: value }, edited: { ...item.edited, [lang]: true } }
           : item,
       );
-      saveVocabulary({ items: next, mainLang, source: selectedFile || 'local' });
+      persistVocabulary(next, mainLang);
       return next;
     });
   };
@@ -594,7 +594,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           const next = prev.map(i =>
             i.id === vocabId ? { ...i, values: { ...i.values, [lang]: result }, edited: { ...i.edited, [lang]: false } } : i,
           );
-          saveVocabulary({ items: next, mainLang, source: selectedFile || 'local' });
+          persistVocabulary(next, mainLang);
           return next;
         });
       }
