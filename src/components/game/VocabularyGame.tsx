@@ -622,6 +622,17 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     });
   };
 
+  const [regeneratingCards, setRegeneratingCards] = useState<string[]>([]);
+
+  const handleRegenerateCard = async (card: GameCard) => {
+    setRegeneratingCards(prev => [...prev, card.id]);
+    try {
+      await handleRegenerateOne(card.vocabId, card.lang);
+    } finally {
+      setRegeneratingCards(prev => prev.filter(id => id !== card.id));
+    }
+  };
+
   const handleRegenerateOne = async (vocabId: string, lang: string, instruction?: string) => {
     const item = vocabulary.find(i => i.id === vocabId);
     if (!item) return;
@@ -850,6 +861,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               onCardClick={handleCardClick}
               onSpeak={handleSpeak}
               onHint={handleHint}
+              onRegenerateCard={handleRegenerateCard}
+              regeneratingIds={regeneratingCards}
             />
           </>
         )}
