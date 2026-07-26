@@ -712,6 +712,12 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               <span className="hidden sm:inline">Options</span>
               <ChevronUp className={cn('w-3.5 h-3.5 transition-transform', !settingsOpen && 'rotate-180')} />
             </button>
+            <StatsPanel
+              score={score}
+              time={time}
+              accuracy={calculateAccuracy(correctMatches, attempts)}
+              onReset={handleReset}
+            />
           </div>
 
 
@@ -759,21 +765,6 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
         </header>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <FileSelector
-            selectedFile={selectedFile}
-            availableFiles={AVAILABLE_FILES}
-            onSelectFile={setSelectedFile}
-            onUploadFile={handleUploadFile}
-          />
-          <StatsPanel
-            score={score}
-            time={time}
-            accuracy={calculateAccuracy(correctMatches, attempts)}
-            onReset={handleReset}
-          />
-        </div>
-
         <GameSettings
           columns={columns}
           shuffleMode={shuffleMode}
@@ -793,7 +784,14 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           settingsOpen={settingsOpen}
           onSettingsOpenChange={setSettingsOpen}
           showToggle={false}
-
+          extraControls={
+            <FileSelector
+              selectedFile={selectedFile}
+              availableFiles={AVAILABLE_FILES}
+              onSelectFile={setSelectedFile}
+              onUploadFile={handleUploadFile}
+            />
+          }
         />
 
         {isTranslating && (
