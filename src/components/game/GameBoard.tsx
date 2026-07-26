@@ -54,11 +54,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
   const toggleRom = (id: string, current: boolean) =>
     setRomOverrides(prev => ({ ...prev, [id]: !current }));
-  const visibleColumns = columns.filter(
-    c => c.visible && ((cards[c.lang]?.length ?? 0) > 0 || loadingLangs.includes(c.lang)),
-  );
+  // A column the user turned on always stays on the board — even while its words
+  // are still empty (it shows placeholders instead of vanishing).
+  const visibleColumns = columns.filter(c => c.visible);
   const count = visibleColumns.length;
   const rowCount = Math.max(1, ...columns.map(c => cards[c.lang]?.length ?? 0));
+
 
   return (
     <div
@@ -75,7 +76,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         const originalIndex = columns.findIndex(c => c.lang === column.lang);
         const style = columnStyle(originalIndex);
         const columnCards = cards[column.lang] || [];
-        const isPending = columnCards.length === 0 && loadingLangs.includes(column.lang);
+        const isPending = columnCards.length === 0;
 
         return (
           <div key={column.lang} className="flex flex-col gap-3">
