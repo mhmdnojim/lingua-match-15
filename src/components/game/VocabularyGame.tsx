@@ -87,6 +87,12 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [batchScore, setBatchScore] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [translateProgress, setTranslateProgress] = useState<{
+    lang: string;
+    done: number;
+    total: number;
+    words: string[];
+  } | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
   const [languagesOpen, setLanguagesOpen] = useState(false);
   const [wordEditorOpen, setWordEditorOpen] = useState(false);
@@ -151,13 +157,26 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       if (targets.length === 0) return;
 
       setIsTranslating(true);
-      try {
-        for (const column of targets) {
-          const pending = items.filter(item => {
+
+      // Total work = every word that needs a translation across all target columns
+      const pendingByColumn = new Map<string, VocabularyItem[]>();
+      for (const column of targets) {
+        pendingByColumn.set(
+          column.lang,
+          items.filter(item => {
             const has = (item.values[column.lang] || '').trim().length > 0;
             const isEdited = item.edited?.[column.lang];
             return force ? !isEdited || instruction !== undefined : !has;
-          });
+          }),
+        );
+      }
+      const totalWords = Array.from(pendingByColumn.values()).reduce((sum, list) => sum + list.length, 0);
+      let doneWords = 0;
+      setTranslateProgress({ lang: targets[0].lang, done: 0, total: totalWords, words: [] });
+
+      try {
+        for (const column of targets) {
+          const pending = pendingByColumn.get(column.lang) || [];
           if (pending.length === 0) continue;
 
           // Translate in chunks so large datasets (all batches) stay within request limits
@@ -165,6 +184,12 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           for (let start = 0; start < pending.length; start += CHUNK) {
             const chunk = pending.slice(start, start + CHUNK);
             const words = chunk.map(item => item.values[effectiveSource] || '');
+            setTranslateProgress({
+              lang: column.lang,
+              done: doneWords,
+              total: totalWords,
+              words: words.filter(Boolean).slice(0, 5),
+            });
             const results = await translateWords({ sourceLang: effectiveSource, targetLang: column.lang, words, instruction });
 
             setVocabulary(prev => {
@@ -178,6 +203,14 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               saveVocabulary({ items: next, mainLang: source, source: selectedFile || 'local' });
               return next;
             });
+
+            doneWords += chunk.length;
+            setTranslateProgress({
+              lang: column.lang,
+              done: doneWords,
+              total: totalWords,
+              words: words.filter(Boolean).slice(0, 5),
+            });
           }
         }
       } catch (error) {
@@ -188,6 +221,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         });
       } finally {
         setIsTranslating(false);
+        setTranslateProgress(null);
       }
     },
     [selectedFile, toast],
@@ -590,9 +624,38 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         />
 
         {isTranslating && (
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Generating translations…
+          <div className="max-w-xl mx-auto rounded-lg border border-border bg-card p-3 space-y-2">
+            <div className="flex items-center justify-between gap-2 text-sm">
+              <span className="flex items-center gap-2 text-foreground">
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                {translateProgress
+                  ? `Translating to ${getLanguage(translateProgress.lang).native}…`
+                  : 'Generating translations…'}
+              </span>
+              {translateProgress && translateProgress.total > 0 && (
+                <span className="text-muted-foreground tabular-nums">
+                  {translateProgress.done}/{translateProgress.total} words
+                </span>
+              )}
+            </div>
+
+            <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full bg-primary transition-all duration-300"
+                style={{
+                  width:
+                    translateProgress && translateProgress.total > 0
+                      ? `${Math.round((translateProgress.done / translateProgress.total) * 100)}%`
+                      : '10%',
+                }}
+              />
+            </div>
+
+            {translateProgress?.words.length ? (
+              <p className="text-xs text-muted-foreground truncate">
+                Now updating: {translateProgress.words.join(' · ')}
+              </p>
+            ) : null}
           </div>
         )}
 
