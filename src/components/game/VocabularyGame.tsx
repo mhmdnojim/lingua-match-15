@@ -128,6 +128,16 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
   const [cloudStatus, setCloudStatus] = useState<'off' | 'saving' | 'saved' | 'error'>('off');
 
+  const [themeId, setThemeId] = useState<string>(() => loadThemeId());
+
+  // Apply the selected color theme
+  useEffect(() => {
+    applyTheme(themeId);
+    saveThemeId(themeId);
+  }, [themeId]);
+
+
+
   const navigate = useNavigate();
   const mainLang = columns[0]?.lang || 'zh';
   const { speak, playSuccess, playError, playCelebration } = useAudio({ muteVoice: false, muteSfx, voiceType });
