@@ -99,7 +99,12 @@ export const WordEditorDialog: React.FC<WordEditorDialogProps> = ({
             <Sparkles className="w-4 h-4" />
             {busy === 'all' ? 'Regenerating all…' : 'Regenerate all batches'}
           </Button>
+          <Button variant="outline" onClick={onExportExcel} disabled={busy !== null} className="gap-1.5">
+            <Download className="w-4 h-4" />
+            Export Excel
+          </Button>
         </div>
+
 
         {targetColumns.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 text-sm">
