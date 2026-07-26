@@ -8,6 +8,8 @@ import { HelpCircle } from 'lucide-react';
 interface GameBoardProps {
   columns: ColumnConfig[];
   cards: Record<string, GameCard[]>;
+  /** languages whose translations are currently being generated */
+  loadingLangs?: string[];
   fontSize?: FontSize;
   onCardClick: (card: GameCard) => void;
   onSpeak: (card: GameCard) => void;
@@ -17,13 +19,17 @@ interface GameBoardProps {
 export const GameBoard: React.FC<GameBoardProps> = ({
   columns,
   cards,
+  loadingLangs = [],
   fontSize = 'medium',
   onCardClick,
   onSpeak,
   onHint,
 }) => {
-  const visibleColumns = columns.filter(c => c.visible && (cards[c.lang]?.length ?? 0) > 0);
+  const visibleColumns = columns.filter(
+    c => c.visible && ((cards[c.lang]?.length ?? 0) > 0 || loadingLangs.includes(c.lang)),
+  );
   const count = visibleColumns.length;
+  const rowCount = Math.max(1, ...columns.map(c => cards[c.lang]?.length ?? 0));
 
   return (
     <div
@@ -39,6 +45,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         const language = getLanguage(column.lang);
         const originalIndex = columns.findIndex(c => c.lang === column.lang);
         const style = columnStyle(originalIndex);
+        const columnCards = cards[column.lang] || [];
+        const isPending = columnCards.length === 0 && loadingLangs.includes(column.lang);
 
         return (
           <div key={column.lang} className="flex flex-col gap-3">
@@ -46,7 +54,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               {language.native}
               {originalIndex === 0 && <span className="ml-1 text-[10px] text-muted-foreground">(main)</span>}
             </h3>
-            {(cards[column.lang] || []).map(card => (
+            {isPending &&
+              Array.from({ length: rowCount }).map((_, i) => (
+                <div
+                  key={`pending-${column.lang}-${i}`}
+                  className="h-[76px] rounded-xl border border-border bg-muted/30 animate-pulse"
+                />
+              ))}
+            {columnCards.map(card => (
               <div key={card.id} className="relative group">
                 <Card
                   card={card}
