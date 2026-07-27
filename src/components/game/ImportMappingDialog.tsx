@@ -12,7 +12,10 @@ export interface MappingRoles {
   mainLang: string;
   /** languages shown as playable columns, main first */
   columnLangs: string[];
+  /** languages that are not in the file and must be translated with AI */
+  generateLangs: string[];
 }
+
 
 interface ImportMappingDialogProps {
   open: boolean;
@@ -30,8 +33,13 @@ const ROLE_OPTIONS: { value: ColumnRole; label: string; hint: string }[] = [
 export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, sheet, onOpenChange, onConfirm }) => {
   const [mapping, setMapping] = useState<ColumnMapping>({});
   const [roles, setRoles] = useState<Record<string, ColumnRole>>({});
+  /** languages the file does not have — generated with AI. code -> board or stored */
+  const [generated, setGenerated] = useState<{ lang: string; role: 'column' | 'extra' }[]>([]);
 
   useEffect(() => {
+    setGenerated([]);
+
+
     if (!sheet) return;
     const initialMapping: ColumnMapping = {};
     const initialRoles: Record<string, ColumnRole> = {};
@@ -60,8 +68,14 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
   const assigned = assignedHeaders.map(h => mapping[h]);
   const duplicate = assigned.length !== new Set(assigned).size;
   const mainHeader = assignedHeaders.find(h => roles[h] === 'main');
-  const columnCount = assignedHeaders.filter(h => roles[h] === 'column').length + (mainHeader ? 1 : 0);
+  const generatedColumns = generated.filter(g => g.role === 'column');
+  const columnCount =
+    assignedHeaders.filter(h => roles[h] === 'column').length + (mainHeader ? 1 : 0) + generatedColumns.length;
   const tooManyColumns = columnCount > 4;
+  const usedLangs = new Set([...assigned, ...generated.map(g => g.lang)]);
+  const addableLanguages = PICKABLE_LANGUAGES.filter(l => !usedLangs.has(l.code));
+
+
 
   const setRole = (header: string, role: ColumnRole) => {
     setRoles(prev => {
@@ -94,8 +108,14 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
 
     onConfirm(ordered, {
       mainLang,
-      columnLangs: [mainLang, ...secondary.map(h => mapping[h])].slice(0, 4),
+      columnLangs: [
+        mainLang,
+        ...secondary.map(h => mapping[h]),
+        ...generatedColumns.map(g => g.lang),
+      ].slice(0, 4),
+      generateLangs: generated.map(g => g.lang),
     });
+
   };
 
   const previewRows = sheet.rows.slice(0, 3);
@@ -211,6 +231,66 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
           </table>
         </div>
 
+        <div className="rounded-lg border border-border p-3">
+          <h4 className="text-sm font-medium text-foreground">Languages your file does not have</h4>
+          <p className="pb-2 text-xs text-muted-foreground">
+            Add any language you also want — each one is translated with AI from the main column, right after the
+            import.
+          </p>
+
+          {generated.length > 0 && (
+            <div className="space-y-2 pb-2">
+              {generated.map(entry => (
+                <div key={entry.lang} className="flex flex-wrap items-center gap-2">
+                  <span className="min-w-[10rem] text-sm text-foreground">
+                    {getLanguage(entry.lang).native} — {getLanguage(entry.lang).name}
+                  </span>
+                  {(['column', 'extra'] as const).map(role => (
+                    <button
+                      key={role}
+                      type="button"
+                      onClick={() =>
+                        setGenerated(prev => prev.map(g => (g.lang === entry.lang ? { ...g, role } : g)))
+                      }
+                      className={cn(
+                        'rounded-full border px-3 py-1 text-xs transition-colors',
+                        entry.role === role
+                          ? 'border-primary bg-primary text-primary-foreground'
+                          : 'border-border bg-background text-muted-foreground hover:text-foreground',
+                      )}
+                    >
+                      {role === 'column' ? 'Secondary' : 'Stored only'}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setGenerated(prev => prev.filter(g => g.lang !== entry.lang))}
+                    className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground hover:text-destructive"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <select
+            value=""
+            onChange={e => {
+              const lang = e.target.value;
+              if (!lang) return;
+              setGenerated(prev => [...prev, { lang, role: 'column' }]);
+            }}
+            className="w-full min-w-[11rem] rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary sm:w-72"
+          >
+            <option value="">+ Add a language to translate…</option>
+            {addableLanguages.map(l => (
+              <option key={l.code} value={l.code}>
+                {l.native} — {l.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
 
         {duplicate && (

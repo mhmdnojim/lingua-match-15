@@ -706,8 +706,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     saveProgress({ currentBatch: 0, score: 0, completedBatches: [], columns: nextColumns });
     setPendingSheet(null);
     autoTranslatedRef.current = '';
-    // Imported files are never translated on their own — only when a missing language is chosen
-    setAutoTranslateOn(false);
+    // Only translate when the user asked for languages the file does not have
+    setAutoTranslateOn((roles?.generateLangs?.length ?? 0) > 0);
+
     toast({
       title: 'File imported',
       description: `${items.length} words loaded — main language: ${getLanguage(newMain).native}. Pick a language column to generate what the file is missing.`,
