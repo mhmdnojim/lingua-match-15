@@ -94,8 +94,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                       style.text,
                     )}
                   >
-                    <span className="truncate">{language.name}</span>
-                    <SelectValue className="sr-only" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="max-h-72">
                     {(() => {
