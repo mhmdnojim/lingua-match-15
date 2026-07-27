@@ -14,6 +14,7 @@ import {
   ColumnConfig,
   createColumnCards,
   sortVocabulary,
+  shuffleVocabulary,
   calculateAccuracy,
 } from '@/utils/gameLogic';
 import {
