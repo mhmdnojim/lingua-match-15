@@ -10,8 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 interface GameBoardProps {
   columns: ColumnConfig[];
   cards: Record<string, GameCard[]>;
+  /** languages already available in the file / saved data (listed first in pickers) */
+  readyLangs?: string[];
   /** languages whose translations are currently being generated */
   loadingLangs?: string[];
+
   fontSize?: FontSize;
   onCardClick: (card: GameCard) => void;
   onSpeak: (card: GameCard) => void;
