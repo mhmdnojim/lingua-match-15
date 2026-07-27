@@ -92,6 +92,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [columns, setColumns] = useState<ColumnConfig[]>(savedProgress.columns?.length ? savedProgress.columns : DEFAULT_COLUMNS);
   const [vocabulary, setVocabulary] = useState<VocabularyItem[]>(cached?.items?.length ? cached.items : sampleVocabulary);
   const [batches, setBatches] = useState<VocabularyItem[][]>([]);
+
   const [currentBatch, setCurrentBatch] = useState(savedProgress.currentBatch);
   const [completedBatches, setCompletedBatches] = useState<number[]>(savedProgress.completedBatches);
   const [shuffleMode, setShuffleMode] = useState(savedProgress.shuffleMode);
@@ -875,7 +876,19 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     [selectedCards],
   );
 
+  /** Languages that already have data (from the file or saved translations) — no AI needed. */
+  const readyLangs = useMemo(() => {
+    const counts = new Map<string, number>();
+    vocabulary.forEach(item => {
+      Object.entries(item.values || {}).forEach(([lang, value]) => {
+        if (value && String(value).trim()) counts.set(lang, (counts.get(lang) ?? 0) + 1);
+      });
+    });
+    return Array.from(counts.keys());
+  }, [vocabulary]);
+
   const visibleColumns = useMemo(() => columns.filter(c => c.visible), [columns]);
+
 
   /** Every visible column must be picked — even one that is still being generated. */
   const requiredSelections = visibleColumns.length;
@@ -1324,7 +1337,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
             <GameBoard
               columns={columns}
               cards={cards}
+              readyLangs={readyLangs}
               loadingLangs={isTranslating ? columns.map(c => c.lang) : []}
+
               fontSize={fontSize}
               onCardClick={handleCardClick}
               onSpeak={handleSpeak}
