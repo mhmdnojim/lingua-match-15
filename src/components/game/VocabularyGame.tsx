@@ -142,7 +142,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
   const navigate = useNavigate();
   const mainLang = columns[0]?.lang || 'zh';
-  const { speak, playSuccess, playError, playCelebration } = useAudio({ muteVoice: false, muteSfx, voiceType });
+  const { speak, playSuccess, playError, playCelebration, playTranslateStart } = useAudio({ muteVoice: false, muteSfx, voiceType });
 
   /** Every file the user has imported, plus the bundled sample */
   const [library, setLibrary] = useState<string[]>(() =>
