@@ -400,7 +400,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
             <Palette className="h-4 w-4 shrink-0" />
             <ChevronUp className={cn('h-3 w-3 shrink-0 transition-transform', themeOpen ? 'rotate-90' : '-rotate-90')} />
           </button>
-          {!themeOpen && activeTheme && (
+          {activeTheme && (
             <span className="flex h-6 w-6 overflow-hidden rounded-full border border-primary">
               {activeTheme.swatch.map((color, i) => (
                 <span key={i} className="h-full flex-1" style={{ backgroundColor: `hsl(${color})` }} />
