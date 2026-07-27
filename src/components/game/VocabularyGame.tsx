@@ -594,8 +594,6 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     setIsLoading(false);
     if (sheets.length === 0) return;
 
-    const totalWords = sheets.reduce((sum, sheet) => sum + sheet.rows.length, 0);
-    if (totalWords > batchSize) setScopePrompt({ count: totalWords });
 
     const [first, ...rest] = sheets;
 
