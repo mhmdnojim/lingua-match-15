@@ -37,6 +37,8 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
   const [generated, setGenerated] = useState<{ lang: string; role: 'column' | 'extra' }[]>([]);
 
   useEffect(() => {
+    setGenerated([]);
+
 
     if (!sheet) return;
     const initialMapping: ColumnMapping = {};
