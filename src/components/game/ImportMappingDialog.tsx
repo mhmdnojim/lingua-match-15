@@ -108,8 +108,14 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
 
     onConfirm(ordered, {
       mainLang,
-      columnLangs: [mainLang, ...secondary.map(h => mapping[h])].slice(0, 4),
+      columnLangs: [
+        mainLang,
+        ...secondary.map(h => mapping[h]),
+        ...generatedColumns.map(g => g.lang),
+      ].slice(0, 4),
+      generateLangs: generated.map(g => g.lang),
     });
+
   };
 
   const previewRows = sheet.rows.slice(0, 3);
