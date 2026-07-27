@@ -1,15 +1,23 @@
 import { useCallback, useRef } from 'react';
 import { getLanguage } from '@/utils/languages';
+import { supabase } from '@/integrations/supabase/client';
 
 export type VoiceType = 'free' | 'premium';
+
+export type PremiumBlockReason = 'auth' | 'limit' | 'error';
 
 interface UseAudioOptions {
   muteVoice: boolean;
   muteSfx: boolean;
   voiceType?: VoiceType;
+  /** Called when a premium request is refused (not signed in, or monthly limit reached) */
+  onPremiumBlocked?: (reason: PremiumBlockReason, info: { used?: number; limit?: number; message?: string }) => void;
+  /** Called after every successful premium request with the updated counter */
+  onPremiumUsage?: (used: number, limit: number) => void;
 }
 
-export function useAudio({ muteVoice, muteSfx, voiceType = 'free' }: UseAudioOptions) {
+export function useAudio({ muteVoice, muteSfx, voiceType = 'free', onPremiumBlocked, onPremiumUsage }: UseAudioOptions) {
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
   /** increments on every speak request so stale async audio never plays over a newer one */
   const speakTokenRef = useRef(0);
