@@ -15,11 +15,34 @@ interface CardProps {
   onSpeak?: (card: GameCard) => void;
 }
 
-const FONT_SIZES: Record<FontSize, { script: string; latin: string; rom: string }> = {
-  small: { script: 'text-2xl md:text-3xl', latin: 'text-base md:text-lg', rom: 'text-xs' },
-  medium: { script: 'text-3xl md:text-4xl', latin: 'text-lg md:text-xl', rom: 'text-sm' },
-  large: { script: 'text-5xl md:text-6xl', latin: 'text-xl md:text-2xl', rom: 'text-base' },
+const FONT_SIZES: Record<FontSize, { script: string[]; latin: string[]; rom: string }> = {
+  small: {
+    script: ['text-2xl md:text-3xl', 'text-xl md:text-2xl', 'text-lg', 'text-base', 'text-sm'],
+    latin: ['text-base md:text-lg', 'text-sm md:text-base', 'text-sm', 'text-xs', 'text-[11px]'],
+    rom: 'text-xs',
+  },
+  medium: {
+    script: ['text-3xl md:text-4xl', 'text-2xl md:text-3xl', 'text-xl', 'text-lg', 'text-base'],
+    latin: ['text-lg md:text-xl', 'text-base md:text-lg', 'text-sm md:text-base', 'text-sm', 'text-xs'],
+    rom: 'text-sm',
+  },
+  large: {
+    script: ['text-5xl md:text-6xl', 'text-3xl md:text-4xl', 'text-2xl md:text-3xl', 'text-xl', 'text-lg'],
+    latin: ['text-xl md:text-2xl', 'text-lg md:text-xl', 'text-base md:text-lg', 'text-sm md:text-base', 'text-sm'],
+    rom: 'text-base',
+  },
 };
+
+/** Pick a smaller step the longer the word/phrase is so it always fits the card */
+const fitStep = (text: string) => {
+  const len = (text || '').trim().length;
+  if (len <= 8) return 0;
+  if (len <= 16) return 1;
+  if (len <= 28) return 2;
+  if (len <= 48) return 3;
+  return 4;
+};
+
 
 export const Card: React.FC<CardProps> = ({
   card,
