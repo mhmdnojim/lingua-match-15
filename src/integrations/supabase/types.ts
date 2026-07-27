@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      premium_voice_limits: {
+        Row: {
+          created_at: string
+          monthly_limit: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          monthly_limit?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          monthly_limit?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      premium_voice_usage: {
+        Row: {
+          chars: number
+          created_at: string
+          id: string
+          language: string | null
+          user_id: string
+        }
+        Insert: {
+          chars?: number
+          created_at?: string
+          id?: string
+          language?: string | null
+          user_id: string
+        }
+        Update: {
+          chars?: number
+          created_at?: string
+          id?: string
+          language?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       vocabulary_sets: {
         Row: {
           columns: Json
