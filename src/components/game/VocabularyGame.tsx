@@ -95,8 +95,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [completedBatches, setCompletedBatches] = useState<number[]>(savedProgress.completedBatches);
   const [shuffleMode, setShuffleMode] = useState(savedProgress.shuffleMode);
   const [translateScope, setTranslateScope] = useState<'batch' | 'all'>(savedProgress.translateScope);
-  /** Asks after an upload whether to translate the whole file or batch by batch */
-  const [scopePrompt, setScopePrompt] = useState<{ count: number } | null>(null);
+  /** Asks whether to translate the whole file or batch by batch when a language has no data yet */
+  const [scopePrompt, setScopePrompt] = useState<{ count: number; lang: string } | null>(null);
+
   const [muteSfx, setMuteSfx] = useState(savedProgress.muteSfx);
   const [voiceType, setVoiceType] = useState<VoiceType>(savedProgress.voiceType);
   const [fontSize, setFontSize] = useState<FontSize>(savedProgress.fontSize);
@@ -594,8 +595,6 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     setIsLoading(false);
     if (sheets.length === 0) return;
 
-    const totalWords = sheets.reduce((sum, sheet) => sum + sheet.rows.length, 0);
-    if (totalWords > batchSize) setScopePrompt({ count: totalWords });
 
     const [first, ...rest] = sheets;
 
@@ -715,18 +714,29 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     });
   }, [mainLang]);
 
+  /** Ask how much to translate when a newly chosen language has no data in the file */
+  const maybeAskScope = (lang: string) => {
+    const missing = vocabulary.filter(i => !(i.values[lang] || '').trim()).length;
+    if (missing > batchSize) setScopePrompt({ count: missing, lang });
+  };
+
   /** Change one column's language directly from its board title */
   const handleColumnLangChange = (index: number, lang: string) => {
     if (columns.some(c => c.lang === lang)) return;
+    
     handleColumnsChange(
       columns.map((c, i) => (i === index ? { ...c, lang, showRomanization: hasRomanization(lang) } : c)),
     );
   };
 
+
   const handleColumnsChange = (next: ColumnConfig[]) => {
+    const added = next.find(c => c.visible && !columns.some(p => p.lang === c.lang));
+    if (added) maybeAskScope(added.lang);
     setColumns(next);
     autoTranslatedRef.current = '';
   };
+
 
   const handleColumnVisibilityChange = useCallback((lang: string, visible: boolean) => {
     // Showing a column again must let it re-fetch any words it is still missing
@@ -1284,9 +1294,11 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
             <AlertDialogHeader>
               <AlertDialogTitle>Translate the whole file?</AlertDialogTitle>
               <AlertDialogDescription>
-                You uploaded {scopePrompt?.count ?? 0} words. Translate everything now, or only the round you are
-                playing? You can switch this any time in Options.
+                {scopePrompt ? getLanguage(scopePrompt.lang).name : ''} is missing for {scopePrompt?.count ?? 0} words in
+                this file. Translate everything now, or only the round you are playing? You can switch this any time in
+                Options.
               </AlertDialogDescription>
+
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => { setTranslateScope('batch'); setScopePrompt(null); }}>
