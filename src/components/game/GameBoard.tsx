@@ -30,7 +30,9 @@ interface GameBoardProps {
 export const GameBoard: React.FC<GameBoardProps> = ({
   columns,
   cards,
+  readyLangs = [],
   loadingLangs = [],
+
   fontSize = 'medium',
   onCardClick,
   onSpeak,
