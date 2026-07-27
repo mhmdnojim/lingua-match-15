@@ -266,7 +266,7 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
                 return (
                   <div key={entry.lang} className="flex flex-wrap items-center gap-2">
                     <span className="min-w-[10rem] text-sm text-foreground">
-                      {getLanguage(entry.lang).native} — {getLanguage(entry.lang).name}
+                      {getLanguage(entry.lang).name} — {getLanguage(entry.lang).native}
                     </span>
                     {(['column', 'extra'] as const).map(role => {
                       const disabled = role === 'column' && secondaryDisabled;
