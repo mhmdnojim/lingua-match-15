@@ -336,13 +336,29 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
               'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-all',
               voiceType === 'premium' ? 'bg-warning text-warning-foreground' : 'text-muted-foreground hover:text-foreground',
             )}
-            title="Premium voice"
+            title={
+              premiumSignedIn
+                ? `Premium voice — ${premiumUsed}/${premiumLimit} plays used this month`
+                : 'Premium voice (sign in required)'
+            }
           >
             <Crown className="w-4 h-4" />
             <span className="hidden sm:inline">Premium</span>
           </button>
+          {voiceType === 'premium' && (
+            <span
+              className={cn(
+                'px-1.5 text-xs font-medium tabular-nums',
+                premiumSignedIn && premiumUsed >= premiumLimit ? 'text-destructive' : 'text-muted-foreground',
+              )}
+              title="Premium voice plays used this month"
+            >
+              {premiumSignedIn ? `${premiumUsed}/${premiumLimit}` : 'sign in'}
+            </span>
+          )}
         </div>
       )}
+
 
       {/* Font Size Toggle */}
       {onFontSizeChange && (
