@@ -92,6 +92,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [columns, setColumns] = useState<ColumnConfig[]>(savedProgress.columns?.length ? savedProgress.columns : DEFAULT_COLUMNS);
   const [vocabulary, setVocabulary] = useState<VocabularyItem[]>(cached?.items?.length ? cached.items : sampleVocabulary);
   const [batches, setBatches] = useState<VocabularyItem[][]>([]);
+
   const [currentBatch, setCurrentBatch] = useState(savedProgress.currentBatch);
   const [completedBatches, setCompletedBatches] = useState<number[]>(savedProgress.completedBatches);
   const [shuffleMode, setShuffleMode] = useState(savedProgress.shuffleMode);
