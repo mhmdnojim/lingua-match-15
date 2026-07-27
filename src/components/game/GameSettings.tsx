@@ -76,7 +76,8 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   const [themeOpen, setThemeOpen] = React.useState(false);
   const activeTheme = THEMES.find(t => t.id === themeId);
 
-  const romanizableColumns = columns.filter(c => getLanguage(c.lang).romanizationLabel);
+  /** All per-column toggles (transliteration / visibility / voice) live in one collapsible group */
+  const [columnPanelOpen, setColumnPanelOpen] = useState(false);
 
 
   return (
