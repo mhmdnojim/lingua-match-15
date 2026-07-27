@@ -61,7 +61,7 @@ import WordEditorDialog from './WordEditorDialog';
 import ImportMappingDialog, { MappingRoles } from './ImportMappingDialog';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { BookOpen, LogIn, LogOut, Loader2, Cloud, CloudOff, CloudUpload, SlidersHorizontal, ChevronUp, ChevronDown } from 'lucide-react';
+import { BookOpen, LogIn, LogOut, Loader2, Cloud, CloudOff, CloudUpload, SlidersHorizontal, ChevronUp, ChevronDown, X } from 'lucide-react';
 import { sampleVocabulary } from '@/data/sampleVocabulary';
 
 
@@ -215,19 +215,30 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   /** true once the user pressed Stop — blocks automatic translation for every file until resumed */
   const haltedRef = useRef(false);
   const [translationHalted, setTranslationHalted] = useState(false);
+  const [haltNoticeOpen, setHaltNoticeOpen] = useState(false);
 
   const haltTranslation = useCallback(() => {
     cancelTranslationRef.current = true;
     haltedRef.current = true;
     autoTranslatedRef.current = 'cancelled';
     setTranslationHalted(true);
+    setHaltNoticeOpen(true);
   }, []);
 
   const resumeTranslation = useCallback(() => {
     haltedRef.current = false;
     autoTranslatedRef.current = '';
     setTranslationHalted(false);
+    setHaltNoticeOpen(false);
   }, []);
+
+  // Auto-hide the "stopped" notice after 8 seconds (translation stays halted)
+  useEffect(() => {
+    if (!haltNoticeOpen) return;
+    const t = setTimeout(() => setHaltNoticeOpen(false), 8000);
+    return () => clearTimeout(t);
+  }, [haltNoticeOpen]);
+
   /** After an import nothing is translated until the user picks a language that is missing from the file */
   const [autoTranslateOn, setAutoTranslateOn] = useState(true);
   /** false while the saved set is still being pulled from the account — no AI calls until then */
@@ -1229,12 +1240,23 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           </div>
         )}
 
-        {!isTranslating && translationHalted && (
-          <div className="max-w-xl mx-auto flex items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm">
+        {!isTranslating && translationHalted && haltNoticeOpen && (
+          <div className="max-w-xl mx-auto flex items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm animate-in fade-in duration-300">
             <span className="text-muted-foreground">Auto-translation stopped for all files.</span>
-            <Button size="sm" variant="outline" onClick={resumeTranslation}>
-              Resume
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button size="sm" variant="outline" onClick={resumeTranslation}>
+                Resume
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 shrink-0"
+                aria-label="Dismiss"
+                onClick={() => setHaltNoticeOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         )}
 
