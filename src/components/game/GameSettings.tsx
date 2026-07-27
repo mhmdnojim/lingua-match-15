@@ -32,9 +32,6 @@ interface GameSettingsProps {
   showToggle?: boolean;
   /** Extra controls rendered at the start of the expanded panel (e.g. file picker) */
   extraControls?: React.ReactNode;
-  /** Translate only the current batch or the whole uploaded file */
-  translateScope?: 'batch' | 'all';
-  onTranslateScopeChange?: (scope: 'batch' | 'all') => void;
   /** Translate every remaining word in the file right now */
   onTranslateWholeFile?: () => void;
   translating?: boolean;
