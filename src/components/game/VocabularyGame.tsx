@@ -427,12 +427,38 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   }, [batches, currentBatch, translationColumns, mainLang, cloudReady, translateScope, vocabulary, translationHalted, autoTranslateOn]);
 
   /** Translate every word still missing a translation in the whole file */
+  /** Words still missing at least one of the active column languages */
+  const missingCount = useMemo(
+    () =>
+      vocabulary.filter(item =>
+        translationColumns.some(c => !(item.values[c.lang] || '').trim()),
+      ).length,
+    [vocabulary, translationColumns],
+  );
+
+  const [confirmWholeFile, setConfirmWholeFile] = useState(false);
+
+  /** Ask first — this button used to start a paid run on an accidental click */
   const handleTranslateWholeFile = useCallback(() => {
+    if (vocabulary.length === 0 || isTranslating) return;
+    if (missingCount === 0) {
+      toast({
+        title: 'Nothing to translate',
+        description: 'Every word in this file already has all of its column translations.',
+      });
+      return;
+    }
+    setConfirmWholeFile(true);
+  }, [vocabulary.length, isTranslating, missingCount]);
+
+  const runTranslateWholeFile = useCallback(() => {
+    setConfirmWholeFile(false);
     if (vocabulary.length === 0 || isTranslating) return;
     setAutoTranslateOn(true);
     resumeTranslation();
     translateMissing(vocabulary, translationColumns, mainLang);
   }, [vocabulary, translationColumns, mainLang, isTranslating, translateMissing, resumeTranslation]);
+
 
 
   // Pull the saved set from the account (or seed it) when signed in
@@ -1352,6 +1378,24 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <AlertDialog open={confirmWholeFile} onOpenChange={setConfirmWholeFile}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Translate the rest of this file?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {missingCount} word{missingCount === 1 ? '' : 's'} in “{selectedFile || 'this file'}” still miss a
+                translation. Running this will generate them with AI now.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={runTranslateWholeFile}>Translate now</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+
 
         <ImportMappingDialog
           open={pendingSheet !== null}
