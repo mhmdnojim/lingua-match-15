@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import Card, { FontSize } from './Card';
 import { GameCard, ColumnConfig } from '@/utils/gameLogic';
 import { getLanguage, columnStyle, MAIN_LANGUAGES, PICKABLE_LANGUAGES } from '@/utils/languages';
-import { HelpCircle, RefreshCw, Languages, Pencil, Check, X } from 'lucide-react';
+import { HelpCircle, RefreshCw, Pencil, Check, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
@@ -42,8 +42,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   onColumnLangChange,
   regeneratingIds = [],
 }) => {
-  /** per-card override of the column romanization setting */
-  const [romOverrides, setRomOverrides] = React.useState<Record<string, boolean>>({});
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [draft, setDraft] = React.useState('');
 
@@ -56,9 +54,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     setEditingId(null);
     if (value && value !== card.content) onEditCard?.(card, value);
   };
-
-  const toggleRom = (id: string, current: boolean) =>
-    setRomOverrides(prev => ({ ...prev, [id]: !current }));
   // A column the user turned on always stays on the board — even while its words
   // are still empty (it shows placeholders instead of vanishing).
   const visibleColumns = columns.filter(c => c.visible);
@@ -154,7 +149,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 />
               ))}
             {columnCards.map(card => {
-              const showRom = romOverrides[card.id] ?? column.showRomanization;
               const isEditing = editingId === card.id;
               return (
               <div key={card.id} className="relative group">
@@ -190,7 +184,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   <Card
                     card={card}
                     columnIndex={originalIndex}
-                    showRomanization={showRom}
+                    showRomanization={column.showRomanization}
                     fontSize={fontSize}
                     onClick={onCardClick}
                     onSpeak={column.muted ? undefined : onSpeak}
@@ -235,18 +229,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     title="Regenerate translation"
                   >
                     <RefreshCw className={cn('w-4 h-4', regeneratingIds.includes(card.id) && 'animate-spin')} />
-                  </button>
-                )}
-                {card.romanization && !card.isMatched && (
-                  <button
-                    onClick={e => {
-                      e.stopPropagation();
-                      toggleRom(card.id, showRom);
-                    }}
-                    className="absolute -left-2 -bottom-2 p-1 bg-secondary text-secondary-foreground rounded-full opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shadow-md hover:scale-110"
-                    title={showRom ? 'Hide transliteration' : 'Show transliteration'}
-                  >
-                    <Languages className={cn('w-4 h-4', !showRom && 'opacity-50')} />
                   </button>
                 )}
               </div>
