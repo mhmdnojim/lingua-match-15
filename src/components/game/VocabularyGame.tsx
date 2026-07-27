@@ -876,7 +876,19 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     [selectedCards],
   );
 
+  /** Languages that already have data (from the file or saved translations) — no AI needed. */
+  const readyLangs = useMemo(() => {
+    const counts = new Map<string, number>();
+    vocabulary.forEach(item => {
+      Object.entries(item.values || {}).forEach(([lang, value]) => {
+        if (value && String(value).trim()) counts.set(lang, (counts.get(lang) ?? 0) + 1);
+      });
+    });
+    return Array.from(counts.keys());
+  }, [vocabulary]);
+
   const visibleColumns = useMemo(() => columns.filter(c => c.visible), [columns]);
+
 
   /** Every visible column must be picked — even one that is still being generated. */
   const requiredSelections = visibleColumns.length;
