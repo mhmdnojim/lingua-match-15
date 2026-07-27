@@ -72,6 +72,7 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
   const columnCount =
     assignedHeaders.filter(h => roles[h] === 'column').length + (mainHeader ? 1 : 0) + generatedColumns.length;
   const tooManyColumns = columnCount > 4;
+  const atColumnLimit = columnCount >= 4;
   const usedLangs = new Set([...assigned, ...generated.map(g => g.lang)]);
   const addableLanguages = PICKABLE_LANGUAGES.filter(l => !usedLangs.has(l.code));
 
@@ -205,22 +206,31 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
                         <span className="text-xs italic text-muted-foreground">not imported</span>
                       ) : (
                         <div className="flex flex-wrap gap-1.5">
-                          {ROLE_OPTIONS.map(option => (
-                            <button
-                              key={option.value}
-                              type="button"
-                              title={option.hint}
-                              onClick={() => setRole(header, option.value)}
-                              className={cn(
-                                'rounded-full border px-3 py-1 text-xs transition-colors',
-                                roles[header] === option.value
-                                  ? 'border-primary bg-primary text-primary-foreground'
-                                  : 'border-border bg-background text-muted-foreground hover:text-foreground',
-                              )}
-                            >
-                              {option.label}
-                            </button>
-                          ))}
+                          {ROLE_OPTIONS.map(option => {
+                            const disabled =
+                              option.value === 'column' &&
+                              atColumnLimit &&
+                              roles[header] !== 'column';
+                            return (
+                              <button
+                                key={option.value}
+                                type="button"
+                                disabled={disabled}
+                                title={disabled ? 'Maximum 4 columns on the board' : option.hint}
+                                onClick={() => setRole(header, option.value)}
+                                className={cn(
+                                  'rounded-full border px-3 py-1 text-xs transition-colors',
+                                  roles[header] === option.value
+                                    ? 'border-primary bg-primary text-primary-foreground'
+                                    : disabled
+                                      ? 'cursor-not-allowed border-border bg-muted text-muted-foreground/50'
+                                      : 'border-border bg-background text-muted-foreground hover:text-foreground',
+                                )}
+                              >
+                                {option.label}
+                              </button>
+                            );
+                          })}
                         </div>
                       )}
                     </td>
@@ -232,45 +242,65 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
         </div>
 
         <div className="rounded-lg border border-border p-3">
-          <h4 className="text-sm font-medium text-foreground">Languages your file does not have</h4>
-          <p className="pb-2 text-xs text-muted-foreground">
-            Add any language you also want — each one is translated with AI from the main column, right after the
-            import.
-          </p>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h4 className="text-sm font-medium text-foreground">Languages your file does not have</h4>
+              <p className="pb-2 text-xs text-muted-foreground">
+                Add any language you also want — each one is translated with AI from the main column, right after the
+                import.
+              </p>
+            </div>
+            {atColumnLimit && (
+              <span className="shrink-0 rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                4 columns max
+              </span>
+            )}
+          </div>
 
           {generated.length > 0 && (
             <div className="space-y-2 pb-2">
-              {generated.map(entry => (
-                <div key={entry.lang} className="flex flex-wrap items-center gap-2">
-                  <span className="min-w-[10rem] text-sm text-foreground">
-                    {getLanguage(entry.lang).native} — {getLanguage(entry.lang).name}
-                  </span>
-                  {(['column', 'extra'] as const).map(role => (
+              {generated.map(entry => {
+                const secondaryDisabled =
+                  entry.role !== 'column' && atColumnLimit;
+                return (
+                  <div key={entry.lang} className="flex flex-wrap items-center gap-2">
+                    <span className="min-w-[10rem] text-sm text-foreground">
+                      {getLanguage(entry.lang).native} — {getLanguage(entry.lang).name}
+                    </span>
+                    {(['column', 'extra'] as const).map(role => {
+                      const disabled = role === 'column' && secondaryDisabled;
+                      return (
+                        <button
+                          key={role}
+                          type="button"
+                          disabled={disabled}
+                          title={disabled ? 'Maximum 4 columns on the board' : undefined}
+                          onClick={() =>
+                            setGenerated(prev => prev.map(g => (g.lang === entry.lang ? { ...g, role } : g)))
+                          }
+                          className={cn(
+                            'rounded-full border px-3 py-1 text-xs transition-colors',
+                            entry.role === role
+                              ? 'border-primary bg-primary text-primary-foreground'
+                              : disabled
+                                ? 'cursor-not-allowed border-border bg-muted text-muted-foreground/50'
+                                : 'border-border bg-background text-muted-foreground hover:text-foreground',
+                          )}
+                        >
+                          {role === 'column' ? 'Secondary' : 'Stored only'}
+                        </button>
+                      );
+                    })}
                     <button
-                      key={role}
                       type="button"
-                      onClick={() =>
-                        setGenerated(prev => prev.map(g => (g.lang === entry.lang ? { ...g, role } : g)))
-                      }
-                      className={cn(
-                        'rounded-full border px-3 py-1 text-xs transition-colors',
-                        entry.role === role
-                          ? 'border-primary bg-primary text-primary-foreground'
-                          : 'border-border bg-background text-muted-foreground hover:text-foreground',
-                      )}
+                      onClick={() => setGenerated(prev => prev.filter(g => g.lang !== entry.lang))}
+                      className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground hover:text-destructive"
                     >
-                      {role === 'column' ? 'Secondary' : 'Stored only'}
+                      Remove
                     </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => setGenerated(prev => prev.filter(g => g.lang !== entry.lang))}
-                    className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground hover:text-destructive"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           )}
 
@@ -279,7 +309,7 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
             onChange={e => {
               const lang = e.target.value;
               if (!lang) return;
-              setGenerated(prev => [...prev, { lang, role: 'column' }]);
+              setGenerated(prev => [...prev, { lang, role: atColumnLimit ? 'extra' : 'column' }]);
             }}
             className="w-full min-w-[11rem] rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary sm:w-72"
           >
