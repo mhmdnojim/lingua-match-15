@@ -47,6 +47,13 @@ export function useAudio({ muteVoice, muteSfx, voiceType = 'free', onPremiumBloc
 
   const speakWithPremium = useCallback(async (text: string, langCode: string, token: number): Promise<boolean> => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        onPremiumBlocked?.('auth', { message: 'Sign in to use premium voice' });
+        return false;
+      }
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/text-to-speech`,
         {
@@ -54,7 +61,7 @@ export function useAudio({ muteVoice, muteSfx, voiceType = 'free', onPremiumBloc
           headers: {
             'Content-Type': 'application/json',
             'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            'Authorization': `Bearer ${accessToken}`,
           },
           body: JSON.stringify({ text, language: langCode }),
         }
@@ -62,18 +69,26 @@ export function useAudio({ muteVoice, muteSfx, voiceType = 'free', onPremiumBloc
 
       // Check content type first - if it's JSON, it's an error response
       const contentType = response.headers.get('content-type');
-      
+
       // Handle any non-success response or non-audio content
       if (!response.ok || !contentType?.includes('audio')) {
-        // Try to get error details for logging
         try {
           const errorData = await response.json();
           console.warn('Premium TTS error:', errorData.error || 'Unknown error');
+          if (response.status === 429) {
+            onPremiumBlocked?.('limit', { used: errorData.used, limit: errorData.limit, message: errorData.error });
+          } else if (response.status === 401) {
+            onPremiumBlocked?.('auth', { message: errorData.error });
+          }
         } catch {
           console.warn('Premium TTS not available, status:', response.status);
         }
         return false;
       }
+
+      const used = Number(response.headers.get('X-Premium-Used'));
+      const limit = Number(response.headers.get('X-Premium-Limit'));
+      if (used && limit) onPremiumUsage?.(used, limit);
 
       const audioBlob = await response.blob();
       // A newer card was clicked while this audio was loading — drop it
@@ -91,7 +106,8 @@ export function useAudio({ muteVoice, muteSfx, voiceType = 'free', onPremiumBloc
       console.warn('Premium TTS failed:', error);
       return false;
     }
-  }, []);
+  }, [onPremiumBlocked, onPremiumUsage]);
+
 
   const speak = useCallback(async (text: string, langCode: string) => {
     // Always cut off whatever is playing before starting the new word
