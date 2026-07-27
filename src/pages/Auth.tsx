@@ -1,29 +1,39 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable/index';
 
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Loader2 } from 'lucide-react';
+
+const emailSchema = z.string().trim().email('Enter a valid email address').max(255);
+const passwordSchema = z.string().min(6, 'Password must be at least 6 characters').max(72);
+
+type Mode = 'signin' | 'signup' | 'reset';
 
 const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const [mode, setMode] = useState<Mode>('signin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
   // Check if user is already logged in
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        navigate('/');
-      }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) navigate('/');
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        navigate('/');
-      }
+      if (session?.user) navigate('/');
     });
 
     return () => subscription.unsubscribe();
@@ -35,19 +45,66 @@ const Auth = () => {
     });
 
     if (result.error) {
-      toast({
-        title: 'Login Failed',
-        description: result.error.message,
-        variant: 'destructive',
-      });
+      toast({ title: 'Login failed', description: result.error.message, variant: 'destructive' });
       return;
     }
-
     if (result.redirected) return;
-
     navigate('/');
   };
 
+  /** Email + password sign in / sign up / password reset */
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const parsedEmail = emailSchema.safeParse(email);
+    if (!parsedEmail.success) {
+      toast({ title: 'Invalid email', description: parsedEmail.error.issues[0].message, variant: 'destructive' });
+      return;
+    }
+
+    if (mode !== 'reset') {
+      const parsedPassword = passwordSchema.safeParse(password);
+      if (!parsedPassword.success) {
+        toast({ title: 'Invalid password', description: parsedPassword.error.issues[0].message, variant: 'destructive' });
+        return;
+      }
+    }
+
+    setLoading(true);
+    try {
+      if (mode === 'signin') {
+        const { error } = await supabase.auth.signInWithPassword({ email: parsedEmail.data, password });
+        if (error) throw error;
+        navigate('/');
+      } else if (mode === 'signup') {
+        const { error } = await supabase.auth.signUp({
+          email: parsedEmail.data,
+          password,
+          options: { emailRedirectTo: window.location.origin },
+        });
+        if (error) throw error;
+        toast({
+          title: 'Check your inbox',
+          description: 'We sent you a confirmation link to finish creating your account.',
+        });
+      } else {
+        const { error } = await supabase.auth.resetPasswordForEmail(parsedEmail.data, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+        toast({
+          title: 'Reset link sent',
+          description: 'Check your email for a link to set a new password.',
+        });
+        setMode('signin');
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Something went wrong';
+      toast({ title: 'Authentication failed', description: message, variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -56,9 +113,13 @@ const Auth = () => {
           <div className="mx-auto w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-2">
             <BookOpen className="w-6 h-6 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold">Welcome</CardTitle>
+          <CardTitle className="text-2xl font-bold">
+            {mode === 'signup' ? 'Create your account' : mode === 'reset' ? 'Reset your password' : 'Welcome back'}
+          </CardTitle>
           <CardDescription className="text-muted-foreground">
-            Sign in to continue learning vocabulary
+            {mode === 'reset'
+              ? 'We will email you a link to choose a new password'
+              : 'Sign in to sync your vocabulary across devices'}
           </CardDescription>
         </CardHeader>
 
@@ -88,6 +149,73 @@ const Auth = () => {
             </svg>
             Continue with Google
           </Button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">or use email</span>
+            </div>
+          </div>
+
+          {mode !== 'reset' && (
+            <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="signin">Sign in</TabsTrigger>
+                <TabsTrigger value="signup">Sign up</TabsTrigger>
+              </TabsList>
+              <TabsContent value="signin" />
+              <TabsContent value="signup" />
+            </Tabs>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            {mode !== 'reset' && (
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+            )}
+
+            <Button type="submit" className="w-full h-11" disabled={loading}>
+              {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {mode === 'signup' ? 'Create account' : mode === 'reset' ? 'Send reset link' : 'Sign in'}
+            </Button>
+          </form>
+
+          <div className="text-center text-sm">
+            {mode === 'reset' ? (
+              <button type="button" className="text-primary hover:underline" onClick={() => setMode('signin')}>
+                Back to sign in
+              </button>
+            ) : (
+              <button type="button" className="text-muted-foreground hover:text-foreground hover:underline" onClick={() => setMode('reset')}>
+                Forgot your password?
+              </button>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
