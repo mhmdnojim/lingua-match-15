@@ -250,37 +250,48 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
 
           {generated.length > 0 && (
             <div className="space-y-2 pb-2">
-              {generated.map(entry => (
-                <div key={entry.lang} className="flex flex-wrap items-center gap-2">
-                  <span className="min-w-[10rem] text-sm text-foreground">
-                    {getLanguage(entry.lang).native} — {getLanguage(entry.lang).name}
-                  </span>
-                  {(['column', 'extra'] as const).map(role => (
+              {generated.map(entry => {
+                const secondaryDisabled =
+                  entry.role !== 'column' && atColumnLimit;
+                return (
+                  <div key={entry.lang} className="flex flex-wrap items-center gap-2">
+                    <span className="min-w-[10rem] text-sm text-foreground">
+                      {getLanguage(entry.lang).native} — {getLanguage(entry.lang).name}
+                    </span>
+                    {(['column', 'extra'] as const).map(role => {
+                      const disabled = role === 'column' && secondaryDisabled;
+                      return (
+                        <button
+                          key={role}
+                          type="button"
+                          disabled={disabled}
+                          title={disabled ? 'Maximum 4 columns on the board' : undefined}
+                          onClick={() =>
+                            setGenerated(prev => prev.map(g => (g.lang === entry.lang ? { ...g, role } : g)))
+                          }
+                          className={cn(
+                            'rounded-full border px-3 py-1 text-xs transition-colors',
+                            entry.role === role
+                              ? 'border-primary bg-primary text-primary-foreground'
+                              : disabled
+                                ? 'cursor-not-allowed border-border bg-muted text-muted-foreground/50'
+                                : 'border-border bg-background text-muted-foreground hover:text-foreground',
+                          )}
+                        >
+                          {role === 'column' ? 'Secondary' : 'Stored only'}
+                        </button>
+                      );
+                    })}
                     <button
-                      key={role}
                       type="button"
-                      onClick={() =>
-                        setGenerated(prev => prev.map(g => (g.lang === entry.lang ? { ...g, role } : g)))
-                      }
-                      className={cn(
-                        'rounded-full border px-3 py-1 text-xs transition-colors',
-                        entry.role === role
-                          ? 'border-primary bg-primary text-primary-foreground'
-                          : 'border-border bg-background text-muted-foreground hover:text-foreground',
-                      )}
+                      onClick={() => setGenerated(prev => prev.filter(g => g.lang !== entry.lang))}
+                      className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground hover:text-destructive"
                     >
-                      {role === 'column' ? 'Secondary' : 'Stored only'}
+                      Remove
                     </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => setGenerated(prev => prev.filter(g => g.lang !== entry.lang))}
-                    className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground hover:text-destructive"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           )}
 
