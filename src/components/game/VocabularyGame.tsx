@@ -240,7 +240,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   }, [haltNoticeOpen]);
 
   /** After an import nothing is translated until the user picks a language that is missing from the file */
-  const [autoTranslateOn, setAutoTranslateOn] = useState(true);
+  // Never auto-translate on its own: only an explicit user action (choosing a language,
+  // pressing "Translate rest", or confirming the scope prompt) turns this on.
+  const [autoTranslateOn, setAutoTranslateOn] = useState(false);
   /** false while the saved set is still being pulled from the account — no AI calls until then */
   const [cloudReady, setCloudReady] = useState(true);
 
