@@ -184,12 +184,38 @@ export function useAudio({ muteVoice, muteSfx, voiceType = 'free' }: UseAudioOpt
     }
   }, [muteSfx]);
 
+  /** Short two-note chime announcing that an AI translation run just started */
+  const playTranslateStart = useCallback(() => {
+    if (muteSfx) return;
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.type = 'triangle';
+      oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+      oscillator.frequency.setValueAtTime(660, audioContext.currentTime + 0.12);
+
+      gainNode.gain.setValueAtTime(0.18, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.35);
+
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.35);
+    } catch (error) {
+      console.error('Failed to play translate sound:', error);
+    }
+  }, [muteSfx]);
+
   const stopAudio = stopSpeaking;
 
   return {
     speak,
     playSuccess,
     playError,
+    playTranslateStart,
     playCelebration,
     stopAudio,
     stopSpeaking,

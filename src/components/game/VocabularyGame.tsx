@@ -142,7 +142,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
   const navigate = useNavigate();
   const mainLang = columns[0]?.lang || 'zh';
-  const { speak, playSuccess, playError, playCelebration } = useAudio({ muteVoice: false, muteSfx, voiceType });
+  const { speak, playSuccess, playError, playCelebration, playTranslateStart } = useAudio({ muteVoice: false, muteSfx, voiceType });
 
   /** Every file the user has imported, plus the bundled sample */
   const [library, setLibrary] = useState<string[]>(() =>
@@ -240,7 +240,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   }, [haltNoticeOpen]);
 
   /** After an import nothing is translated until the user picks a language that is missing from the file */
-  const [autoTranslateOn, setAutoTranslateOn] = useState(true);
+  // Never auto-translate on its own: only an explicit user action (choosing a language,
+  // pressing "Translate rest", or confirming the scope prompt) turns this on.
+  const [autoTranslateOn, setAutoTranslateOn] = useState(false);
   /** false while the saved set is still being pulled from the account — no AI calls until then */
   const [cloudReady, setCloudReady] = useState(true);
 
@@ -307,6 +309,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       if (targets.length === 0) return;
 
       cancelTranslationRef.current = false;
+      playTranslateStart();
       setIsTranslating(true);
 
       // Total work = every word that needs a translation across all target columns
@@ -378,7 +381,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         setTranslateProgress(null);
       }
     },
-    [persistVocabulary, toast, cloudSource],
+    [persistVocabulary, toast, cloudSource, playTranslateStart],
   );
 
   /**
