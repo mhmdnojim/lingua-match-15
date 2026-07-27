@@ -163,7 +163,21 @@ serve(async (req) => {
   }
 
   try {
-    const { text, language } = await req.json();
+    const { text, language, action } = await req.json();
+    const userId = await getUserId(req);
+
+    // Usage-only probe used by the UI counter
+    if (action === 'usage') {
+      if (!userId) {
+        return new Response(JSON.stringify({ signedIn: false, used: 0, limit: DEFAULT_MONTHLY_LIMIT }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const usage = await getUsage(userId);
+      return new Response(JSON.stringify({ signedIn: true, ...usage }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     if (!text) {
       return new Response(JSON.stringify({ error: 'Text is required' }), {
@@ -172,9 +186,40 @@ serve(async (req) => {
       });
     }
 
+    // Premium voice requires a signed-in user so usage can be metered
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: 'Sign in to use premium voice', reason: 'auth', fallback: true }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    const usage = await getUsage(userId);
+    if (usage.used >= usage.limit) {
+      return new Response(
+        JSON.stringify({
+          error: `Monthly premium voice limit reached (${usage.used}/${usage.limit})`,
+          reason: 'limit',
+          used: usage.used,
+          limit: usage.limit,
+          fallback: true,
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
     const lang = baseLang(language);
     const info = langInfo(lang);
     const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
+
+    const logUsage = async () => {
+      const { error } = await admin
+        .from('premium_voice_usage')
+        .insert({ user_id: userId, language: lang, chars: String(text).length });
+      if (error) console.error('Failed to log premium voice usage:', error.message);
+    };
+
+
 
     if (ELEVENLABS_API_KEY) {
       // Native-sounding multilingual voices, picked per language family
