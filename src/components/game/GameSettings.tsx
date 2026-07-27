@@ -107,7 +107,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
 
       {/* Everything else — hidden until needed */}
       {settingsOpen && (
-        <div className="flex flex-wrap items-center justify-center gap-2 rounded-lg border border-border bg-card/60 p-2">
+        <div className="flex flex-wrap items-center justify-start gap-2 rounded-lg border border-border bg-card/60 p-2">
       {extraControls}
       {/* Language / column setup */}
       <button
@@ -201,7 +201,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
       </button>
 
       {/* Transliteration group (collapsible on its own) */}
-      <div className="flex items-center gap-1 rounded-lg bg-secondary p-1" title="Transliteration per column">
+      <div className="relative flex items-center gap-1 rounded-lg bg-secondary p-1" title="Transliteration per column">
         <button
           onClick={() => setRomOpen(o => !o)}
           className={cn(
@@ -216,8 +216,8 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         </button>
         <div
           className={cn(
-            'flex items-center gap-1 overflow-hidden transition-all duration-300',
-            romOpen ? 'max-w-[20rem] opacity-100' : 'max-w-0 opacity-0',
+            'absolute left-0 top-full z-40 mt-1 flex items-center gap-1 rounded-lg border border-border bg-popover p-1 shadow-lg transition-all duration-200',
+            romOpen ? 'visible opacity-100' : 'invisible opacity-0',
           )}
         >
           {columns.map(column => {
@@ -249,7 +249,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
       </div>
 
       {/* Column visibility group (collapsible on its own) */}
-      <div className="flex items-center gap-1 rounded-lg bg-secondary p-1" title="Show / hide columns">
+      <div className="relative flex items-center gap-1 rounded-lg bg-secondary p-1" title="Show / hide columns">
         <button
           onClick={() => setVisOpen(o => !o)}
           className={cn(
@@ -264,8 +264,8 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         </button>
         <div
           className={cn(
-            'flex items-center gap-1 overflow-hidden transition-all duration-300',
-            visOpen ? 'max-w-[20rem] opacity-100' : 'max-w-0 opacity-0',
+            'absolute left-0 top-full z-40 mt-1 flex items-center gap-1 rounded-lg border border-border bg-popover p-1 shadow-lg transition-all duration-200',
+            visOpen ? 'visible opacity-100' : 'invisible opacity-0',
           )}
         >
           {columns.map((column, index) => {
@@ -292,7 +292,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
       </div>
 
       {/* Column voice group (collapsible on its own) */}
-      <div className="flex items-center gap-1 rounded-lg bg-secondary p-1" title="Mute / unmute columns">
+      <div className="relative flex items-center gap-1 rounded-lg bg-secondary p-1" title="Mute / unmute columns">
         <button
           onClick={() => setMuteOpen(o => !o)}
           className={cn(
@@ -307,8 +307,8 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         </button>
         <div
           className={cn(
-            'flex items-center gap-1 overflow-hidden transition-all duration-300',
-            muteOpen ? 'max-w-[20rem] opacity-100' : 'max-w-0 opacity-0',
+            'absolute left-0 top-full z-40 mt-1 flex items-center gap-1 rounded-lg border border-border bg-popover p-1 shadow-lg transition-all duration-200',
+            muteOpen ? 'visible opacity-100' : 'invisible opacity-0',
           )}
         >
           {columns.map((column, index) => {
@@ -387,7 +387,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
 
       {/* Theme picker (collapsible) */}
       {onThemeChange && (
-        <div className="flex items-center gap-1 rounded-lg bg-secondary p-1" title="Color theme">
+        <div className="relative flex items-center gap-1 rounded-lg bg-secondary p-1" title="Color theme">
           <button
             onClick={() => setThemeOpen(o => !o)}
             className={cn(
@@ -400,7 +400,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
             <Palette className="h-4 w-4 shrink-0" />
             <ChevronUp className={cn('h-3 w-3 shrink-0 transition-transform', themeOpen ? 'rotate-90' : '-rotate-90')} />
           </button>
-          {!themeOpen && activeTheme && (
+          {activeTheme && (
             <span className="flex h-6 w-6 overflow-hidden rounded-full border border-primary">
               {activeTheme.swatch.map((color, i) => (
                 <span key={i} className="h-full flex-1" style={{ backgroundColor: `hsl(${color})` }} />
@@ -409,8 +409,8 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
           )}
           <div
             className={cn(
-              'flex items-center gap-1 overflow-hidden transition-all duration-300',
-              themeOpen ? 'max-w-[16rem] opacity-100' : 'max-w-0 opacity-0',
+              'absolute left-0 top-full z-40 mt-1 flex items-center gap-1 rounded-lg border border-border bg-popover p-1 shadow-lg transition-all duration-200',
+              themeOpen ? 'visible opacity-100' : 'invisible opacity-0',
             )}
           >
             {THEMES.map(theme => (
