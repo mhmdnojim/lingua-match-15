@@ -33,7 +33,7 @@ import {
   VoiceType,
   FontSize,
 } from '@/utils/storage';
-import { getLanguage, romanizationCodeFor, hasRomanization } from '@/utils/languages';
+import { getLanguage, romanizationCodeFor, hasRomanization, equivalentLanguages } from '@/utils/languages';
 import { exportVocabularyToExcel } from '@/utils/exportExcel';
 import { translateWords } from '@/utils/translate';
 import { fetchCloudSet, saveCloudSet, deleteCloudSet, filledCount } from '@/utils/cloudVocabulary';
