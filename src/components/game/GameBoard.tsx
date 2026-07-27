@@ -103,16 +103,35 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   <SelectContent className="max-h-72">
                     {(() => {
                       const base = originalIndex === 0 ? MAIN_LANGUAGES : PICKABLE_LANGUAGES;
-                      return base.some(l => l.code === column.lang) ? base : [language, ...base];
+                      const list = base.some(l => l.code === column.lang) ? base : [language, ...base];
+                      const ready = list
+                        .filter(l => readyLangs.includes(l.code))
+                        .sort((a, b) => a.name.localeCompare(b.name));
+                      const rest = list
+                        .filter(l => !readyLangs.includes(l.code))
+                        .sort((a, b) => a.name.localeCompare(b.name));
+                      return [...ready, ...rest].map(option => ({
+                        ...option,
+                        isReady: readyLangs.includes(option.code),
+                      }));
                     })().map(option => (
                       <SelectItem
                         key={option.code}
                         value={option.code}
                         disabled={option.code !== column.lang && columns.some(c => c.lang === option.code)}
                       >
-                        {option.native} — {option.name}
+                        <span className="flex items-center gap-2">
+                          <span>
+                            {option.native} — {option.name}
+                          </span>
+                          {option.isReady && (
+                            <span className="rounded bg-primary/15 px-1 text-[10px] uppercase text-primary">ready</span>
+                          )}
+                        </span>
                       </SelectItem>
                     ))}
+                  </SelectContent>
+
                   </SelectContent>
                 </Select>
                 {originalIndex === 0 && <span className="text-[10px] text-muted-foreground">(main)</span>}
