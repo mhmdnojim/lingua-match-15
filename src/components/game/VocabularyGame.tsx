@@ -723,7 +723,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   /** Change one column's language directly from its board title */
   const handleColumnLangChange = (index: number, lang: string) => {
     if (columns.some(c => c.lang === lang)) return;
-    maybeAskScope(lang);
+    
     handleColumnsChange(
       columns.map((c, i) => (i === index ? { ...c, lang, showRomanization: hasRomanization(lang) } : c)),
     );
