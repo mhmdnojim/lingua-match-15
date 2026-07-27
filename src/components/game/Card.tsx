@@ -27,7 +27,7 @@ const FONT_SIZES: Record<FontSize, { script: string[]; latin: string[]; rom: str
     rom: 'text-sm',
   },
   large: {
-    script: ['text-5xl md:text-6xl', 'text-3xl md:text-4xl', 'text-2xl md:text-3xl', 'text-xl', 'text-lg'],
+    script: ['text-4xl md:text-5xl', 'text-3xl md:text-4xl', 'text-2xl md:text-3xl', 'text-xl', 'text-lg'],
     latin: ['text-xl md:text-2xl', 'text-lg md:text-xl', 'text-base md:text-lg', 'text-sm md:text-base', 'text-sm'],
     rom: 'text-base',
   },
@@ -78,7 +78,7 @@ export const Card: React.FC<CardProps> = ({
     <div
       onClick={handleClick}
       className={cn(
-        'relative flex flex-col items-center justify-center h-[100px] overflow-hidden px-3 py-2 rounded-lg cursor-pointer transition-all duration-300 z-0',
+        'relative flex flex-col items-center justify-center h-[100px] overflow-hidden px-3 py-1.5 rounded-lg cursor-pointer transition-all duration-300 z-0',
         background,
         card.isSelected && !card.isMatched && 'z-10',
         card.isMatched && 'card-matched opacity-50 cursor-default',
@@ -87,7 +87,7 @@ export const Card: React.FC<CardProps> = ({
     >
       <span
         className={cn(
-          'text-foreground/70 mb-0.5 font-medium h-4 w-full text-center truncate leading-tight',
+          'text-foreground/70 mb-0.5 font-medium shrink-0 leading-none w-full text-center truncate',
           sizes.rom,
           (!showRomanization || !card.romanization) && 'invisible',
         )}
@@ -98,7 +98,7 @@ export const Card: React.FC<CardProps> = ({
       <span
         dir={language.rtl ? 'rtl' : 'ltr'}
         className={cn(
-          'w-full text-center font-medium text-foreground leading-tight break-words hyphens-auto overflow-hidden line-clamp-3',
+          'w-full min-h-0 flex-1 flex items-center justify-center text-center font-medium text-foreground leading-[1.1] break-words hyphens-auto overflow-hidden line-clamp-3',
           contentSize,
           language.fontClass,
           language.romanizationOf && 'italic',
