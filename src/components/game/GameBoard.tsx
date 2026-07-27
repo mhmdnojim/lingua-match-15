@@ -132,7 +132,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     ))}
                   </SelectContent>
 
-                  </SelectContent>
                 </Select>
                 {originalIndex === 0 && <span className="text-[10px] text-muted-foreground">(main)</span>}
               </div>
