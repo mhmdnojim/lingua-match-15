@@ -56,6 +56,9 @@ export const Card: React.FC<CardProps> = ({
   const style = columnStyle(columnIndex);
   const sizes = FONT_SIZES[fontSize];
   const isScript = Boolean(language.fontClass) || Boolean(language.rtl);
+  const step = fitStep(card.content);
+  const contentSize = (isScript ? sizes.script : sizes.latin)[step];
+
 
   const handleClick = () => {
     if (card.isMatched) return;
