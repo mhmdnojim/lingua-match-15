@@ -1058,7 +1058,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
             headerOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 -mb-3 pointer-events-none',
           )}
         >
-          <div className="overflow-hidden">
+          <div className={headerOpen ? 'overflow-visible' : 'overflow-hidden'}>
             <div className="space-y-3">
         <header className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
