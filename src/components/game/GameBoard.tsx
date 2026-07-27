@@ -79,95 +79,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
         return (
           <div key={column.lang} className="flex flex-col gap-3">
-            {onColumnLangChange ? (
-              <div className="mb-2 flex items-center justify-center gap-1">
-                <Select
-                  value={column.lang}
-                  onValueChange={value => onColumnLangChange(originalIndex, value)}
-                >
-                  <SelectTrigger
-                    aria-label={`Language for column ${originalIndex + 1}`}
-                    className={cn(
-                      'h-8 w-auto max-w-full gap-1 border-transparent bg-transparent px-2 text-sm font-medium uppercase tracking-wider hover:border-border focus:ring-2 focus:ring-primary',
-                      style.text,
-                    )}
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-72">
-                    {(() => {
-                      const base = originalIndex === 0 ? MAIN_LANGUAGES : PICKABLE_LANGUAGES;
-                      const currentLang = column.lang;
-                      const columnLangs = columns.map(c => c.lang);
-
-                      // Make sure every column's current language is present in this picker
-                      const baseCodes = new Set(base.map(l => l.code));
-                      const missingColumnLangs = columnLangs.filter(code => !baseCodes.has(code));
-                      const fullList = [...missingColumnLangs.map(getLanguage), ...base];
-
-                      // 1) selected language of this column
-                      const current = fullList.filter(l => l.code === currentLang);
-
-                      // 2) languages of the other columns, in column order
-                      const otherColumnItems = fullList
-                        .filter(l => {
-                          const idx = columnLangs.indexOf(l.code);
-                          return l.code !== currentLang && idx !== -1 && idx !== originalIndex;
-                        })
-                        .sort((a, b) => columnLangs.indexOf(a.code) - columnLangs.indexOf(b.code));
-
-                      const shownCodes = new Set([...current, ...otherColumnItems].map(l => l.code));
-
-                      // 3) languages already available in the file / saved data
-                      const ready = fullList
-                        .filter(l => !shownCodes.has(l.code) && readyLangs.includes(l.code))
-                        .sort((a, b) => a.name.localeCompare(b.name));
-
-                      const readyCodes = new Set(ready.map(l => l.code));
-
-                      // 4) remaining supported languages
-                      const rest = fullList
-                        .filter(l => !shownCodes.has(l.code) && !readyCodes.has(l.code))
-                        .sort((a, b) => a.name.localeCompare(b.name));
-
-                      return [...current, ...otherColumnItems, ...ready, ...rest].map(option => ({
-                        ...option,
-                        isReady: readyLangs.includes(option.code),
-                      }));
-                    })().map(option => (
-                      <SelectPrimitive.Item
-                        key={option.code}
-                        value={option.code}
-                        textValue={option.name}
-                        className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground"
-                      >
-                        <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-                          <SelectPrimitive.ItemIndicator>
-                            <Check className="h-4 w-4" />
-                          </SelectPrimitive.ItemIndicator>
-                        </span>
-                        <SelectPrimitive.ItemText>{option.name}</SelectPrimitive.ItemText>
-                        <span className="ml-1 text-muted-foreground">— {option.native}</span>
-                        {option.isReady && (
-                          <span className="ml-1.5 rounded bg-primary/15 px-1 text-[10px] uppercase text-primary">ready</span>
-                        )}
-                        {option.code !== column.lang && columns.some(c => c.lang === option.code) && (
-                          <span className="ml-1.5 rounded bg-muted px-1 text-[10px] uppercase text-muted-foreground">swap</span>
-                        )}
-                      </SelectPrimitive.Item>
-                    ))}
-                  </SelectContent>
-
-                </Select>
-                {originalIndex === 0 && <span className="text-[10px] text-muted-foreground">(main)</span>}
-              </div>
-            ) : (
-
-              <h3 className={cn('text-center text-sm font-medium mb-2 uppercase tracking-wider', style.text)}>
-                {language.name}
-                {originalIndex === 0 && <span className="ml-1 text-[10px] text-muted-foreground">(main)</span>}
-              </h3>
-            )}
+            <h3 className={cn('text-center text-sm font-medium mb-2 uppercase tracking-wider', style.text)}>
+              {language.name}
+              {originalIndex === 0 && <span className="ml-1 text-[10px] text-muted-foreground">(main)</span>}
+            </h3>
             {isPending &&
               Array.from({ length: rowCount }).map((_, i) => (
                 <div
