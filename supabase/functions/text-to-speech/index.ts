@@ -263,14 +263,25 @@ serve(async (req) => {
       if (response.ok) {
         const audioBuffer = await response.arrayBuffer();
         console.log(`ElevenLabs TTS success: ${audioBuffer.byteLength} bytes (${lang})`);
-        return new Response(audioBuffer, { headers: { ...corsHeaders, 'Content-Type': 'audio/mpeg' } });
+        await logUsage();
+        return new Response(audioBuffer, {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'audio/mpeg',
+            'X-Premium-Used': String(usage.used + 1),
+            'X-Premium-Limit': String(usage.limit),
+          },
+        });
       }
 
       const errorText = await response.text().catch(() => '');
       console.error(`ElevenLabs error [${response.status}]: ${errorText} — using Lovable AI voice instead`);
     }
 
-    return await lovableAiSpeech(text, lang);
+    const aiResponse = await lovableAiSpeech(text, lang);
+    if (aiResponse.headers.get('content-type')?.includes('audio')) await logUsage();
+    return aiResponse;
+
   } catch (error) {
     console.error('TTS error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
