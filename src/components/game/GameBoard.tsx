@@ -121,12 +121,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                       <SelectItem
                         key={option.code}
                         value={option.code}
+                        textValue={option.name}
                         disabled={option.code !== column.lang && columns.some(c => c.lang === option.code)}
                       >
                         <span className="flex items-center gap-2">
                           <span>
-                            {option.native} — {option.name}
+                            {option.name} — {option.native}
                           </span>
+
                           {option.isReady && (
                             <span className="rounded bg-primary/15 px-1 text-[10px] uppercase text-primary">ready</span>
                           )}
