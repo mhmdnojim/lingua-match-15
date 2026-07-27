@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import Card, { FontSize } from './Card';
 import { GameCard, ColumnConfig } from '@/utils/gameLogic';
 import { getLanguage, columnStyle, MAIN_LANGUAGES, PICKABLE_LANGUAGES } from '@/utils/languages';
-import { HelpCircle, RefreshCw, Languages, Pencil, Check, X } from 'lucide-react';
+import { HelpCircle, RefreshCw, Pencil, Check, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
@@ -42,8 +42,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   onColumnLangChange,
   regeneratingIds = [],
 }) => {
-  /** per-card override of the column romanization setting */
-  const [romOverrides, setRomOverrides] = React.useState<Record<string, boolean>>({});
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [draft, setDraft] = React.useState('');
 
@@ -56,9 +54,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     setEditingId(null);
     if (value && value !== card.content) onEditCard?.(card, value);
   };
-
-  const toggleRom = (id: string, current: boolean) =>
-    setRomOverrides(prev => ({ ...prev, [id]: !current }));
   // A column the user turned on always stays on the board — even while its words
   // are still empty (it shows placeholders instead of vanishing).
   const visibleColumns = columns.filter(c => c.visible);
@@ -154,7 +149,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 />
               ))}
             {columnCards.map(card => {
-              const showRom = romOverrides[card.id] ?? column.showRomanization;
               const isEditing = editingId === card.id;
               return (
               <div key={card.id} className="relative group">
