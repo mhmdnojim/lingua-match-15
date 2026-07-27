@@ -78,7 +78,7 @@ export const Card: React.FC<CardProps> = ({
     <div
       onClick={handleClick}
       className={cn(
-        'relative flex flex-col items-center justify-center h-[100px] p-4 rounded-lg cursor-pointer transition-all duration-300 z-0',
+        'relative flex flex-col items-center justify-center h-[100px] overflow-hidden px-3 py-2 rounded-lg cursor-pointer transition-all duration-300 z-0',
         background,
         card.isSelected && !card.isMatched && 'z-10',
         card.isMatched && 'card-matched opacity-50 cursor-default',
@@ -86,7 +86,11 @@ export const Card: React.FC<CardProps> = ({
       )}
     >
       <span
-        className={cn('text-foreground/70 mb-1 font-medium h-4', sizes.rom, (!showRomanization || !card.romanization) && 'invisible')}
+        className={cn(
+          'text-foreground/70 mb-0.5 font-medium h-4 w-full text-center truncate leading-tight',
+          sizes.rom,
+          (!showRomanization || !card.romanization) && 'invisible',
+        )}
       >
         {card.romanization || '\u00A0'}
       </span>
@@ -94,8 +98,8 @@ export const Card: React.FC<CardProps> = ({
       <span
         dir={language.rtl ? 'rtl' : 'ltr'}
         className={cn(
-          'text-center font-medium text-foreground',
-          isScript ? sizes.script : sizes.latin,
+          'w-full text-center font-medium text-foreground leading-tight break-words hyphens-auto overflow-hidden line-clamp-3',
+          contentSize,
           language.fontClass,
           language.romanizationOf && 'italic',
         )}
@@ -103,9 +107,10 @@ export const Card: React.FC<CardProps> = ({
         {card.content}
       </span>
 
-      <span className="text-[10px] text-foreground/50 mt-1 uppercase tracking-wider">
+      <span className="text-[10px] text-foreground/50 mt-0.5 uppercase tracking-wider shrink-0">
         {language.native}
       </span>
+
 
       {onSpeak && !card.isMatched && (
         <button
