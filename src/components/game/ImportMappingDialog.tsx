@@ -206,22 +206,31 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
                         <span className="text-xs italic text-muted-foreground">not imported</span>
                       ) : (
                         <div className="flex flex-wrap gap-1.5">
-                          {ROLE_OPTIONS.map(option => (
-                            <button
-                              key={option.value}
-                              type="button"
-                              title={option.hint}
-                              onClick={() => setRole(header, option.value)}
-                              className={cn(
-                                'rounded-full border px-3 py-1 text-xs transition-colors',
-                                roles[header] === option.value
-                                  ? 'border-primary bg-primary text-primary-foreground'
-                                  : 'border-border bg-background text-muted-foreground hover:text-foreground',
-                              )}
-                            >
-                              {option.label}
-                            </button>
-                          ))}
+                          {ROLE_OPTIONS.map(option => {
+                            const disabled =
+                              option.value === 'column' &&
+                              atColumnLimit &&
+                              roles[header] !== 'column';
+                            return (
+                              <button
+                                key={option.value}
+                                type="button"
+                                disabled={disabled}
+                                title={disabled ? 'Maximum 4 columns on the board' : option.hint}
+                                onClick={() => setRole(header, option.value)}
+                                className={cn(
+                                  'rounded-full border px-3 py-1 text-xs transition-colors',
+                                  roles[header] === option.value
+                                    ? 'border-primary bg-primary text-primary-foreground'
+                                    : disabled
+                                      ? 'cursor-not-allowed border-border bg-muted text-muted-foreground/50'
+                                      : 'border-border bg-background text-muted-foreground hover:text-foreground',
+                                )}
+                              >
+                                {option.label}
+                              </button>
+                            );
+                          })}
                         </div>
                       )}
                     </td>
