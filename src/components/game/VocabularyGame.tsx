@@ -1379,6 +1379,24 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           </AlertDialogContent>
         </AlertDialog>
 
+        <AlertDialog open={confirmWholeFile} onOpenChange={setConfirmWholeFile}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Translate the rest of this file?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {missingCount} word{missingCount === 1 ? '' : 's'} in “{selectedFile || 'this file'}” still miss a
+                translation. Running this will generate them with AI now.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={runTranslateWholeFile}>Translate now</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+
+
         <ImportMappingDialog
           open={pendingSheet !== null}
           sheet={pendingSheet}
