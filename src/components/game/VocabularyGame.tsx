@@ -789,29 +789,6 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   };
 
 
-  /** Change one column's language directly from its board title */
-  const handleColumnLangChange = (index: number, lang: string) => {
-    if (columns[index]?.lang === lang) return;
-
-    // Language already used by another column → swap the two columns' languages
-    const otherIndex = columns.findIndex(c => c.lang === lang);
-    if (otherIndex !== -1) {
-      const currentLang = columns[index].lang;
-      handleColumnsChange(
-        columns.map((c, i) => {
-          if (i === index) return { ...c, lang, showRomanization: hasRomanization(lang) };
-          if (i === otherIndex) return { ...c, lang: currentLang, showRomanization: hasRomanization(currentLang) };
-          return c;
-        }),
-      );
-      return;
-    }
-
-    handleColumnsChange(
-      columns.map((c, i) => (i === index ? { ...c, lang, showRomanization: hasRomanization(lang) } : c)),
-    );
-  };
-
 
 
   const handleColumnsChange = (next: ColumnConfig[]) => {
@@ -906,17 +883,6 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     },
     [selectedCards],
   );
-
-  /** Languages that already have data (from the file or saved translations) — no AI needed. */
-  const readyLangs = useMemo(() => {
-    const counts = new Map<string, number>();
-    vocabulary.forEach(item => {
-      Object.entries(item.values || {}).forEach(([lang, value]) => {
-        if (value && String(value).trim()) counts.set(lang, (counts.get(lang) ?? 0) + 1);
-      });
-    });
-    return Array.from(counts.keys());
-  }, [vocabulary]);
 
   const visibleColumns = useMemo(() => columns.filter(c => c.visible), [columns]);
 
@@ -1365,7 +1331,6 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
             <GameBoard
               columns={columns}
               cards={cards}
-              readyLangs={readyLangs}
               loadingLangs={isTranslating ? columns.map(c => c.lang) : []}
 
               fontSize={fontSize}
@@ -1374,7 +1339,6 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               onHint={handleHint}
               onRegenerateCard={handleRegenerateCard}
               onEditCard={handleCardEdit}
-              onColumnLangChange={handleColumnLangChange}
               regeneratingIds={regeneratingCards}
             />
           </>
