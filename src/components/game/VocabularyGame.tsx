@@ -713,13 +713,21 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     });
   }, [mainLang]);
 
+  /** Ask how much to translate when a newly chosen language has no data in the file */
+  const maybeAskScope = (lang: string) => {
+    const missing = vocabulary.filter(i => !(i.values[lang] || '').trim()).length;
+    if (missing > batchSize) setScopePrompt({ count: missing, lang });
+  };
+
   /** Change one column's language directly from its board title */
   const handleColumnLangChange = (index: number, lang: string) => {
     if (columns.some(c => c.lang === lang)) return;
+    maybeAskScope(lang);
     handleColumnsChange(
       columns.map((c, i) => (i === index ? { ...c, lang, showRomanization: hasRomanization(lang) } : c)),
     );
   };
+
 
   const handleColumnsChange = (next: ColumnConfig[]) => {
     setColumns(next);
