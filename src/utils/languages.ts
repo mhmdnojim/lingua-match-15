@@ -229,3 +229,12 @@ export function romanizationCodeFor(code: string): string | null {
   const found = LANGUAGES.find(l => l.romanizationOf === code);
   return found ? found.code : null;
 }
+
+/** Codes that hold the same content under a different label (e.g. the two pinyin variants) */
+const EQUIVALENT_GROUPS: string[][] = [['zh-pinyin', 'zh-TW-pinyin']];
+
+/** Other language codes whose existing values can be reused for this one */
+export function equivalentLanguages(code: string): string[] {
+  const group = EQUIVALENT_GROUPS.find(g => g.includes(code));
+  return group ? group.filter(c => c !== code) : [];
+}
