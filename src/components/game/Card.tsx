@@ -107,9 +107,8 @@ export const Card: React.FC<CardProps> = ({
         {card.content}
       </span>
 
-      <span className="text-[10px] text-foreground/50 mt-0.5 uppercase tracking-wider shrink-0">
-        {language.native}
-      </span>
+
+
 
 
       {onSpeak && !card.isMatched && (
