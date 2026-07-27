@@ -1240,12 +1240,23 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           </div>
         )}
 
-        {!isTranslating && translationHalted && (
-          <div className="max-w-xl mx-auto flex items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm">
+        {!isTranslating && translationHalted && haltNoticeOpen && (
+          <div className="max-w-xl mx-auto flex items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm animate-fade-in">
             <span className="text-muted-foreground">Auto-translation stopped for all files.</span>
-            <Button size="sm" variant="outline" onClick={resumeTranslation}>
-              Resume
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button size="sm" variant="outline" onClick={resumeTranslation}>
+                Resume
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 shrink-0"
+                aria-label="Dismiss"
+                onClick={() => setHaltNoticeOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         )}
 
