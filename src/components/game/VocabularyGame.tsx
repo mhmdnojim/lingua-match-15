@@ -1225,6 +1225,10 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onOpenWordEditor={() => setWordEditorOpen(true)}
           muteSfx={muteSfx}
           voiceType={voiceType}
+          premiumUsed={premiumUsage.used}
+          premiumLimit={premiumUsage.limit}
+          premiumSignedIn={premiumUsage.signedIn}
+
           fontSize={fontSize}
           onMuteSfxChange={setMuteSfx}
           onVoiceTypeChange={setVoiceType}
