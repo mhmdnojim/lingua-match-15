@@ -62,8 +62,6 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   onSettingsOpenChange,
   showToggle = true,
   extraControls,
-  translateScope = 'batch',
-  onTranslateScopeChange,
   onTranslateWholeFile,
   translating = false,
   themeId = 'forest',
