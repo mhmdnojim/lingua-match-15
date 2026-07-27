@@ -137,22 +137,26 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                         isReady: readyLangs.includes(option.code),
                       }));
                     })().map(option => (
-
-                      <SelectItem key={option.code} value={option.code} textValue={option.name}>
-                        <span className="flex items-center gap-2">
-                          <span>
-                            {option.name} — {option.native}
-                          </span>
-
-                          {option.isReady && (
-                            <span className="rounded bg-primary/15 px-1 text-[10px] uppercase text-primary">ready</span>
-                          )}
-                          {option.code !== column.lang && columns.some(c => c.lang === option.code) && (
-                            <span className="rounded bg-muted px-1 text-[10px] uppercase text-muted-foreground">swap</span>
-                          )}
+                      <SelectPrimitive.Item
+                        key={option.code}
+                        value={option.code}
+                        textValue={option.name}
+                        className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground"
+                      >
+                        <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+                          <SelectPrimitive.ItemIndicator>
+                            <Check className="h-4 w-4" />
+                          </SelectPrimitive.ItemIndicator>
                         </span>
-
-                      </SelectItem>
+                        <SelectPrimitive.ItemText>{option.name}</SelectPrimitive.ItemText>
+                        <span className="ml-1 text-muted-foreground">— {option.native}</span>
+                        {option.isReady && (
+                          <span className="ml-1.5 rounded bg-primary/15 px-1 text-[10px] uppercase text-primary">ready</span>
+                        )}
+                        {option.code !== column.lang && columns.some(c => c.lang === option.code) && (
+                          <span className="ml-1.5 rounded bg-muted px-1 text-[10px] uppercase text-muted-foreground">swap</span>
+                        )}
+                      </SelectPrimitive.Item>
                     ))}
                   </SelectContent>
 
