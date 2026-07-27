@@ -68,8 +68,14 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
   const assigned = assignedHeaders.map(h => mapping[h]);
   const duplicate = assigned.length !== new Set(assigned).size;
   const mainHeader = assignedHeaders.find(h => roles[h] === 'main');
-  const columnCount = assignedHeaders.filter(h => roles[h] === 'column').length + (mainHeader ? 1 : 0);
+  const generatedColumns = generated.filter(g => g.role === 'column');
+  const columnCount =
+    assignedHeaders.filter(h => roles[h] === 'column').length + (mainHeader ? 1 : 0) + generatedColumns.length;
   const tooManyColumns = columnCount > 4;
+  const usedLangs = new Set([...assigned, ...generated.map(g => g.lang)]);
+  const addableLanguages = PICKABLE_LANGUAGES.filter(l => !usedLangs.has(l.code));
+
+
 
   const setRole = (header: string, role: ColumnRole) => {
     setRoles(prev => {
