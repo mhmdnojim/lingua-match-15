@@ -1,9 +1,51 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+/** Monthly premium-voice request allowance when the user has no custom limit */
+const DEFAULT_MONTHLY_LIMIT = Number(Deno.env.get('PREMIUM_VOICE_MONTHLY_LIMIT') ?? '300');
+
+const admin = createClient(
+  Deno.env.get('SUPABASE_URL')!,
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+  { auth: { persistSession: false } },
+);
+
+function monthStart(): string {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+}
+
+/** Resolve the signed-in user from the request bearer token (null when anonymous) */
+async function getUserId(req: Request): Promise<string | null> {
+  const auth = req.headers.get('Authorization') ?? '';
+  const token = auth.replace(/^Bearer\s+/i, '');
+  if (!token) return null;
+  const { data, error } = await admin.auth.getUser(token);
+  if (error || !data.user) return null;
+  return data.user.id;
+}
+
+/** How many premium calls this user made this month, and their allowance */
+async function getUsage(userId: string) {
+  const [{ count }, { data: limitRow }] = await Promise.all([
+    admin
+      .from('premium_voice_usage')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .gte('created_at', monthStart()),
+    admin.from('premium_voice_limits').select('monthly_limit').eq('user_id', userId).maybeSingle(),
+  ]);
+  return {
+    used: count ?? 0,
+    limit: limitRow?.monthly_limit ?? DEFAULT_MONTHLY_LIMIT,
+  };
+}
+
 
 /** Map any incoming code/locale/name to a base ISO language code */
 function baseLang(input: string): string {
@@ -121,7 +163,21 @@ serve(async (req) => {
   }
 
   try {
-    const { text, language } = await req.json();
+    const { text, language, action } = await req.json();
+    const userId = await getUserId(req);
+
+    // Usage-only probe used by the UI counter
+    if (action === 'usage') {
+      if (!userId) {
+        return new Response(JSON.stringify({ signedIn: false, used: 0, limit: DEFAULT_MONTHLY_LIMIT }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const usage = await getUsage(userId);
+      return new Response(JSON.stringify({ signedIn: true, ...usage }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     if (!text) {
       return new Response(JSON.stringify({ error: 'Text is required' }), {
@@ -130,9 +186,40 @@ serve(async (req) => {
       });
     }
 
+    // Premium voice requires a signed-in user so usage can be metered
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: 'Sign in to use premium voice', reason: 'auth', fallback: true }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    const usage = await getUsage(userId);
+    if (usage.used >= usage.limit) {
+      return new Response(
+        JSON.stringify({
+          error: `Monthly premium voice limit reached (${usage.used}/${usage.limit})`,
+          reason: 'limit',
+          used: usage.used,
+          limit: usage.limit,
+          fallback: true,
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
     const lang = baseLang(language);
     const info = langInfo(lang);
     const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
+
+    const logUsage = async () => {
+      const { error } = await admin
+        .from('premium_voice_usage')
+        .insert({ user_id: userId, language: lang, chars: String(text).length });
+      if (error) console.error('Failed to log premium voice usage:', error.message);
+    };
+
+
 
     if (ELEVENLABS_API_KEY) {
       // Native-sounding multilingual voices, picked per language family
@@ -176,14 +263,25 @@ serve(async (req) => {
       if (response.ok) {
         const audioBuffer = await response.arrayBuffer();
         console.log(`ElevenLabs TTS success: ${audioBuffer.byteLength} bytes (${lang})`);
-        return new Response(audioBuffer, { headers: { ...corsHeaders, 'Content-Type': 'audio/mpeg' } });
+        await logUsage();
+        return new Response(audioBuffer, {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'audio/mpeg',
+            'X-Premium-Used': String(usage.used + 1),
+            'X-Premium-Limit': String(usage.limit),
+          },
+        });
       }
 
       const errorText = await response.text().catch(() => '');
       console.error(`ElevenLabs error [${response.status}]: ${errorText} — using Lovable AI voice instead`);
     }
 
-    return await lovableAiSpeech(text, lang);
+    const aiResponse = await lovableAiSpeech(text, lang);
+    if (aiResponse.headers.get('content-type')?.includes('audio')) await logUsage();
+    return aiResponse;
+
   } catch (error) {
     console.error('TTS error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

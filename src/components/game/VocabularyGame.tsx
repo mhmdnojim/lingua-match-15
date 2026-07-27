@@ -38,6 +38,8 @@ import { exportVocabularyToExcel } from '@/utils/exportExcel';
 import { translateWords } from '@/utils/translate';
 import { fetchCloudSet, saveCloudSet, deleteCloudSet, filledCount } from '@/utils/cloudVocabulary';
 import { useAudio } from '@/hooks/useAudio';
+import { usePremiumVoiceUsage } from '@/hooks/usePremiumVoiceUsage';
+
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import GameBoard from './GameBoard';
@@ -144,7 +146,39 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
   const navigate = useNavigate();
   const mainLang = columns[0]?.lang || 'zh';
-  const { speak, playSuccess, playError, playCelebration, playTranslateStart } = useAudio({ muteVoice: false, muteSfx, voiceType });
+  const premiumUsage = usePremiumVoiceUsage();
+
+  /** Premium refused: warn once and fall back to the free browser voice */
+  const handlePremiumBlocked = useCallback(
+    (reason: 'auth' | 'limit' | 'error', info: { used?: number; limit?: number; message?: string }) => {
+      if (reason === 'limit') {
+        setVoiceType('free');
+        premiumUsage.refresh();
+        toast({
+          title: 'Premium voice limit reached',
+          description:
+            info.message ?? `You used all ${info.limit ?? ''} premium voice plays this month. Switched to free voice.`,
+          variant: 'destructive',
+        });
+      } else if (reason === 'auth') {
+        setVoiceType('free');
+        toast({
+          title: 'Sign in for premium voice',
+          description: 'Premium voice is metered per account. Sign in to use it.',
+        });
+      }
+    },
+    [premiumUsage, toast],
+  );
+
+  const { speak, playSuccess, playError, playCelebration, playTranslateStart } = useAudio({
+    muteVoice: false,
+    muteSfx,
+    voiceType,
+    onPremiumBlocked: handlePremiumBlocked,
+    onPremiumUsage: premiumUsage.setCounts,
+  });
+
 
   /** Every file the user has imported, plus the bundled sample */
   const [library, setLibrary] = useState<string[]>(() =>
@@ -1191,6 +1225,10 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onOpenWordEditor={() => setWordEditorOpen(true)}
           muteSfx={muteSfx}
           voiceType={voiceType}
+          premiumUsed={premiumUsage.used}
+          premiumLimit={premiumUsage.limit}
+          premiumSignedIn={premiumUsage.signedIn}
+
           fontSize={fontSize}
           onMuteSfxChange={setMuteSfx}
           onVoiceTypeChange={setVoiceType}
