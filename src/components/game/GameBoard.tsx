@@ -2,10 +2,8 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import Card, { FontSize } from './Card';
 import { GameCard, ColumnConfig } from '@/utils/gameLogic';
-import { getLanguage, columnStyle, MAIN_LANGUAGES, PICKABLE_LANGUAGES } from '@/utils/languages';
+import { getLanguage, columnStyle } from '@/utils/languages';
 import { HelpCircle, RefreshCw, Pencil, Check, X } from 'lucide-react';
-import { Select, SelectContent, SelectTrigger, SelectValue } from '@/components/ui/select';
-import * as SelectPrimitive from '@radix-ui/react-select';
 
 
 interface GameBoardProps {
