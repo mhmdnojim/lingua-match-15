@@ -73,8 +73,8 @@ export function getLanguage(code: string): LanguageDef {
 /** Real languages only — transliterations are never their own column, they render above the word */
 export const MAIN_LANGUAGES = LANGUAGES.filter(l => !l.romanizationOf);
 
-/** Languages that can be picked as a column */
-export const PICKABLE_LANGUAGES = MAIN_LANGUAGES;
+/** Languages that can be picked as a column — real languages first, then romanization columns (Pinyin, Romaji, transliterations) */
+export const PICKABLE_LANGUAGES = [...MAIN_LANGUAGES, ...LANGUAGES.filter(l => l.romanizationOf)];
 
 /** True when the language has a transliteration/romanization that can show above the word */
 export function hasRomanization(code: string): boolean {
