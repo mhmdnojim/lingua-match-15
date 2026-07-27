@@ -118,12 +118,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                       }));
                     })().map(option => (
 
-                      <SelectItem
-                        key={option.code}
-                        value={option.code}
-                        textValue={option.name}
-                        disabled={option.code !== column.lang && columns.some(c => c.lang === option.code)}
-                      >
+                      <SelectItem key={option.code} value={option.code} textValue={option.name}>
                         <span className="flex items-center gap-2">
                           <span>
                             {option.name} — {option.native}
@@ -132,7 +127,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                           {option.isReady && (
                             <span className="rounded bg-primary/15 px-1 text-[10px] uppercase text-primary">ready</span>
                           )}
+                          {option.code !== column.lang && columns.some(c => c.lang === option.code) && (
+                            <span className="rounded bg-muted px-1 text-[10px] uppercase text-muted-foreground">swap</span>
+                          )}
                         </span>
+
                       </SelectItem>
                     ))}
                   </SelectContent>
