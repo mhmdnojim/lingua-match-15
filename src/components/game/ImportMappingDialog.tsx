@@ -242,11 +242,20 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
         </div>
 
         <div className="rounded-lg border border-border p-3">
-          <h4 className="text-sm font-medium text-foreground">Languages your file does not have</h4>
-          <p className="pb-2 text-xs text-muted-foreground">
-            Add any language you also want — each one is translated with AI from the main column, right after the
-            import.
-          </p>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h4 className="text-sm font-medium text-foreground">Languages your file does not have</h4>
+              <p className="pb-2 text-xs text-muted-foreground">
+                Add any language you also want — each one is translated with AI from the main column, right after the
+                import.
+              </p>
+            </div>
+            {atColumnLimit && (
+              <span className="shrink-0 rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                4 columns max
+              </span>
+            )}
+          </div>
 
           {generated.length > 0 && (
             <div className="space-y-2 pb-2">
