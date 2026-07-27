@@ -309,7 +309,7 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
             onChange={e => {
               const lang = e.target.value;
               if (!lang) return;
-              setGenerated(prev => [...prev, { lang, role: 'column' }]);
+              setGenerated(prev => [...prev, { lang, role: atColumnLimit ? 'extra' : 'column' }]);
             }}
             className="w-full min-w-[11rem] rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary sm:w-72"
           >
