@@ -157,33 +157,6 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
       </button>
 
 
-      {/* Translation scope: current batch vs whole file */}
-      <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
-        <button
-          onClick={() => onTranslateScopeChange?.('batch')}
-          disabled={disabled}
-          className={cn(
-            'flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all',
-            translateScope === 'batch' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
-          )}
-          title="Translate only the words in the current round"
-        >
-          <Layers className="w-3.5 h-3.5 shrink-0" />
-          <span className="hidden sm:inline">Batch</span>
-        </button>
-        <button
-          onClick={() => onTranslateScopeChange?.('all')}
-          disabled={disabled}
-          className={cn(
-            'flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-all',
-            translateScope === 'all' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
-          )}
-          title="Translate the whole file automatically"
-        >
-          <FileStack className="w-3.5 h-3.5 shrink-0" />
-          <span className="hidden sm:inline">Whole file</span>
-        </button>
-      </div>
 
       {/* Translate everything that is still missing, right now */}
       <button
