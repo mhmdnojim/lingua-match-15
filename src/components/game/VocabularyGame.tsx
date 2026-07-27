@@ -95,8 +95,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [completedBatches, setCompletedBatches] = useState<number[]>(savedProgress.completedBatches);
   const [shuffleMode, setShuffleMode] = useState(savedProgress.shuffleMode);
   const [translateScope, setTranslateScope] = useState<'batch' | 'all'>(savedProgress.translateScope);
-  /** Asks after an upload whether to translate the whole file or batch by batch */
-  const [scopePrompt, setScopePrompt] = useState<{ count: number } | null>(null);
+  /** Asks whether to translate the whole file or batch by batch when a language has no data yet */
+  const [scopePrompt, setScopePrompt] = useState<{ count: number; lang: string } | null>(null);
+
   const [muteSfx, setMuteSfx] = useState(savedProgress.muteSfx);
   const [voiceType, setVoiceType] = useState<VoiceType>(savedProgress.voiceType);
   const [fontSize, setFontSize] = useState<FontSize>(savedProgress.fontSize);
