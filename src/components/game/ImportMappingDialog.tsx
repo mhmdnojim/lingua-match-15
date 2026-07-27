@@ -188,7 +188,8 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
                         <option value="ignore">Ignore this column</option>
                         {PICKABLE_LANGUAGES.map(l => (
                           <option key={l.code} value={l.code}>
-                            {l.native} — {l.name}
+                            {l.name} — {l.native}
+
                           </option>
                         ))}
                         <optgroup label="Transliteration columns">
@@ -265,7 +266,7 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
                 return (
                   <div key={entry.lang} className="flex flex-wrap items-center gap-2">
                     <span className="min-w-[10rem] text-sm text-foreground">
-                      {getLanguage(entry.lang).native} — {getLanguage(entry.lang).name}
+                      {getLanguage(entry.lang).name} — {getLanguage(entry.lang).native}
                     </span>
                     {(['column', 'extra'] as const).map(role => {
                       const disabled = role === 'column' && secondaryDisabled;
@@ -316,7 +317,7 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
             <option value="">+ Add a language to translate…</option>
             {addableLanguages.map(l => (
               <option key={l.code} value={l.code}>
-                {l.native} — {l.name}
+                {l.name} — {l.native}
               </option>
             ))}
           </select>

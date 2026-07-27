@@ -79,7 +79,7 @@ export const LanguageColumnsDialog: React.FC<LanguageColumnsDialogProps> = ({
                   >
                     {options.map(option => (
                       <option key={option.code} value={option.code} disabled={usedLangs.includes(option.code) && option.code !== column.lang}>
-                        {option.native} — {option.name}
+                        {option.name} — {option.native}
                       </option>
                     ))}
                   </select>
