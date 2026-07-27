@@ -791,12 +791,27 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
   /** Change one column's language directly from its board title */
   const handleColumnLangChange = (index: number, lang: string) => {
-    if (columns.some(c => c.lang === lang)) return;
-    
+    if (columns[index]?.lang === lang) return;
+
+    // Language already used by another column → swap the two columns' languages
+    const otherIndex = columns.findIndex(c => c.lang === lang);
+    if (otherIndex !== -1) {
+      const currentLang = columns[index].lang;
+      handleColumnsChange(
+        columns.map((c, i) => {
+          if (i === index) return { ...c, lang, showRomanization: hasRomanization(lang) };
+          if (i === otherIndex) return { ...c, lang: currentLang, showRomanization: hasRomanization(currentLang) };
+          return c;
+        }),
+      );
+      return;
+    }
+
     handleColumnsChange(
       columns.map((c, i) => (i === index ? { ...c, lang, showRomanization: hasRomanization(lang) } : c)),
     );
   };
+
 
 
   const handleColumnsChange = (next: ColumnConfig[]) => {
