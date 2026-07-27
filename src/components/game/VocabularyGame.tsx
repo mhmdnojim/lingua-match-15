@@ -228,6 +228,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     autoTranslatedRef.current = '';
     setTranslationHalted(false);
   }, []);
+  /** After an import nothing is translated until the user picks a language that is missing from the file */
+  const [autoTranslateOn, setAutoTranslateOn] = useState(true);
   /** false while the saved set is still being pulled from the account — no AI calls until then */
   const [cloudReady, setCloudReady] = useState(true);
 
@@ -388,7 +390,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const autoTranslatedRef = useRef<string>('');
   useEffect(() => {
     const batch = batches[currentBatch];
-    if (!batch || isTranslating || !cloudReady || translationHalted) return;
+    if (!batch || isTranslating || !cloudReady || translationHalted || !autoTranslateOn) return;
 
     // In "whole file" mode every word is translated at once, not just this round
     const scopeItems = translateScope === 'all' ? vocabulary : batch;
@@ -407,11 +409,12 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     autoTranslatedRef.current = key;
     translateMissing(scopeItems, translationColumns, mainLang);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [batches, currentBatch, translationColumns, mainLang, cloudReady, translateScope, vocabulary, translationHalted]);
+  }, [batches, currentBatch, translationColumns, mainLang, cloudReady, translateScope, vocabulary, translationHalted, autoTranslateOn]);
 
   /** Translate every word still missing a translation in the whole file */
   const handleTranslateWholeFile = useCallback(() => {
     if (vocabulary.length === 0 || isTranslating) return;
+    setAutoTranslateOn(true);
     resumeTranslation();
     translateMissing(vocabulary, translationColumns, mainLang);
   }, [vocabulary, translationColumns, mainLang, isTranslating, translateMissing, resumeTranslation]);
@@ -688,9 +691,11 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     saveProgress({ currentBatch: 0, score: 0, completedBatches: [], columns: nextColumns });
     setPendingSheet(null);
     autoTranslatedRef.current = '';
+    // Imported files are never translated on their own — only when a missing language is chosen
+    setAutoTranslateOn(false);
     toast({
       title: 'File imported',
-      description: `${items.length} words loaded — main language: ${getLanguage(newMain).native}. Missing columns are generated with AI.`,
+      description: `${items.length} words loaded — main language: ${getLanguage(newMain).native}. Pick a language column to generate what the file is missing.`,
     });
     return true;
   };
@@ -717,7 +722,12 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   /** Ask how much to translate when a newly chosen language has no data in the file */
   const maybeAskScope = (lang: string) => {
     const missing = vocabulary.filter(i => !(i.values[lang] || '').trim()).length;
-    if (missing > batchSize) setScopePrompt({ count: missing, lang });
+    if (missing === 0) return;
+    if (missing > batchSize) {
+      setScopePrompt({ count: missing, lang });
+      return;
+    }
+    setAutoTranslateOn(true);
   };
 
   /** Change one column's language directly from its board title */
@@ -740,9 +750,14 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
   const handleColumnVisibilityChange = useCallback((lang: string, visible: boolean) => {
     // Showing a column again must let it re-fetch any words it is still missing
-    if (visible) autoTranslatedRef.current = '';
+    if (visible) {
+      autoTranslatedRef.current = '';
+      maybeAskScope(lang);
+    }
     setColumns(prev => prev.map(c => (c.lang === lang ? { ...c, visible } : c)));
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vocabulary, batchSize]);
+
 
 
   const handleColumnMuteChange = useCallback((lang: string, muted: boolean) => {
@@ -1301,10 +1316,10 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => { setTranslateScope('batch'); setScopePrompt(null); }}>
+              <AlertDialogCancel onClick={() => { setTranslateScope('batch'); setAutoTranslateOn(true); setScopePrompt(null); }}>
                 Batch by batch
               </AlertDialogCancel>
-              <AlertDialogAction onClick={() => { setTranslateScope('all'); setScopePrompt(null); }}>
+              <AlertDialogAction onClick={() => { setTranslateScope('all'); setAutoTranslateOn(true); setScopePrompt(null); }}>
                 Translate whole file
               </AlertDialogAction>
             </AlertDialogFooter>
