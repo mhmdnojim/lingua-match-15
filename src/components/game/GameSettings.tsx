@@ -251,7 +251,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
       {/* Column visibility group (collapsible on its own) */}
       <div className="relative flex items-center gap-1 rounded-lg bg-secondary p-1" title="Show / hide columns">
         <button
-          onClick={() => setVisOpen(o => !o)}
+          onClick={() => setVisOpen(o => { const next = !o; if (next) { setRomOpen(false); setMuteOpen(false); } return next; })}
           className={cn(
             'flex h-6 items-center gap-1 rounded-md px-1.5 transition-colors',
             visOpen ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
