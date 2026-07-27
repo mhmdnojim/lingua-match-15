@@ -12,7 +12,10 @@ export interface MappingRoles {
   mainLang: string;
   /** languages shown as playable columns, main first */
   columnLangs: string[];
+  /** languages that are not in the file and must be translated with AI */
+  generateLangs: string[];
 }
+
 
 interface ImportMappingDialogProps {
   open: boolean;
