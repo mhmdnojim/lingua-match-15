@@ -381,7 +381,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         setTranslateProgress(null);
       }
     },
-    [persistVocabulary, toast, cloudSource],
+    [persistVocabulary, toast, cloudSource, playTranslateStart],
   );
 
   /**
