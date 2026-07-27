@@ -38,6 +38,8 @@ import { exportVocabularyToExcel } from '@/utils/exportExcel';
 import { translateWords } from '@/utils/translate';
 import { fetchCloudSet, saveCloudSet, deleteCloudSet, filledCount } from '@/utils/cloudVocabulary';
 import { useAudio } from '@/hooks/useAudio';
+import { usePremiumVoiceUsage } from '@/hooks/usePremiumVoiceUsage';
+
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import GameBoard from './GameBoard';
