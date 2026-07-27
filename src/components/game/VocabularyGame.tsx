@@ -14,6 +14,7 @@ import {
   ColumnConfig,
   createColumnCards,
   sortVocabulary,
+  shuffleVocabulary,
   calculateAccuracy,
 } from '@/utils/gameLogic';
 import {
@@ -207,7 +208,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       setBatches([]);
       return;
     }
-    const ordered = shuffleMode ? vocabulary : sortVocabulary(vocabulary, mainLang);
+    const ordered = shuffleMode ? shuffleVocabulary(vocabulary, mainLang) : sortVocabulary(vocabulary, mainLang);
     setBatches(createBatches(ordered, batchSize));
   }, [vocabulary, shuffleMode, mainLang, batchSize]);
 
@@ -484,7 +485,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     (batchIndex: number) => {
       const batch = batches[batchIndex];
       if (!batch) return;
-      setCards(createColumnCards(batch, columns, shuffleMode));
+      setCards(createColumnCards(batch, columns, true));
       setSelectedCards([]);
       setMatchedPairs(0);
       setTime(0);

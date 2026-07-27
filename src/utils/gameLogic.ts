@@ -96,6 +96,11 @@ export function sortVocabulary(items: VocabularyItem[], mainLang: string): Vocab
   return [...items].sort((a, b) => sortKey(a, mainLang).localeCompare(sortKey(b, mainLang), 'en'));
 }
 
+/** Shuffle the whole dataset so the batches themselves contain different groupings */
+export function shuffleVocabulary(items: VocabularyItem[], mainLang: string): VocabularyItem[] {
+  return smartShuffle(items, item => sortKey(item, mainLang));
+}
+
 export function createColumnCards(
   items: VocabularyItem[],
   columns: ColumnConfig[],
