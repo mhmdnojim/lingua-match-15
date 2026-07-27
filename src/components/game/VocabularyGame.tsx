@@ -61,7 +61,7 @@ import WordEditorDialog from './WordEditorDialog';
 import ImportMappingDialog, { MappingRoles } from './ImportMappingDialog';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { BookOpen, LogIn, LogOut, Loader2, Cloud, CloudOff, CloudUpload, SlidersHorizontal, ChevronUp, ChevronDown } from 'lucide-react';
+import { BookOpen, LogIn, LogOut, Loader2, Cloud, CloudOff, CloudUpload, SlidersHorizontal, ChevronUp, ChevronDown, X } from 'lucide-react';
 import { sampleVocabulary } from '@/data/sampleVocabulary';
 
 
