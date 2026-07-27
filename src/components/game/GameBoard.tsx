@@ -4,7 +4,8 @@ import Card, { FontSize } from './Card';
 import { GameCard, ColumnConfig } from '@/utils/gameLogic';
 import { getLanguage, columnStyle, MAIN_LANGUAGES, PICKABLE_LANGUAGES } from '@/utils/languages';
 import { HelpCircle, RefreshCw, Pencil, Check, X } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectTrigger, SelectValue } from '@/components/ui/select';
+import * as SelectPrimitive from '@radix-ui/react-select';
 
 
 interface GameBoardProps {
@@ -136,22 +137,26 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                         isReady: readyLangs.includes(option.code),
                       }));
                     })().map(option => (
-
-                      <SelectItem key={option.code} value={option.code} textValue={option.name}>
-                        <span className="flex items-center gap-2">
-                          <span>
-                            {option.name} — {option.native}
-                          </span>
-
-                          {option.isReady && (
-                            <span className="rounded bg-primary/15 px-1 text-[10px] uppercase text-primary">ready</span>
-                          )}
-                          {option.code !== column.lang && columns.some(c => c.lang === option.code) && (
-                            <span className="rounded bg-muted px-1 text-[10px] uppercase text-muted-foreground">swap</span>
-                          )}
+                      <SelectPrimitive.Item
+                        key={option.code}
+                        value={option.code}
+                        textValue={option.name}
+                        className="relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground"
+                      >
+                        <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+                          <SelectPrimitive.ItemIndicator>
+                            <Check className="h-4 w-4" />
+                          </SelectPrimitive.ItemIndicator>
                         </span>
-
-                      </SelectItem>
+                        <SelectPrimitive.ItemText>{option.name}</SelectPrimitive.ItemText>
+                        <span className="ml-1 text-muted-foreground">— {option.native}</span>
+                        {option.isReady && (
+                          <span className="ml-1.5 rounded bg-primary/15 px-1 text-[10px] uppercase text-primary">ready</span>
+                        )}
+                        {option.code !== column.lang && columns.some(c => c.lang === option.code) && (
+                          <span className="ml-1.5 rounded bg-muted px-1 text-[10px] uppercase text-muted-foreground">swap</span>
+                        )}
+                      </SelectPrimitive.Item>
                     ))}
                   </SelectContent>
 
@@ -161,7 +166,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             ) : (
 
               <h3 className={cn('text-center text-sm font-medium mb-2 uppercase tracking-wider', style.text)}>
-                {language.native}
+                {language.name}
                 {originalIndex === 0 && <span className="ml-1 text-[10px] text-muted-foreground">(main)</span>}
               </h3>
             )}

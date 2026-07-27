@@ -1125,8 +1125,6 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   };
 
 
-  const headerSubtitle = columns.map(c => getLanguage(c.lang).native).join(' • ');
-
   return (
     <div className={cn('min-h-screen bg-background p-4 md:p-6', className)}>
       <div className="max-w-6xl mx-auto space-y-3">
@@ -1146,7 +1144,6 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
             </div>
             <div>
               <h1 className="text-lg font-bold text-foreground">Vocabulary Match</h1>
-              <p className="text-xs text-muted-foreground">{headerSubtitle}</p>
             </div>
             <button
               onClick={() => setSettingsOpen(!settingsOpen)}
