@@ -309,6 +309,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       if (targets.length === 0) return;
 
       cancelTranslationRef.current = false;
+      playTranslateStart();
       setIsTranslating(true);
 
       // Total work = every word that needs a translation across all target columns
