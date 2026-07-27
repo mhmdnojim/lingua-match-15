@@ -11,6 +11,21 @@ interface UseAudioOptions {
 
 export function useAudio({ muteVoice, muteSfx, voiceType = 'free' }: UseAudioOptions) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  /** increments on every speak request so stale async audio never plays over a newer one */
+  const speakTokenRef = useRef(0);
+
+  /** Immediately stop any voice that is currently playing or pending */
+  const stopSpeaking = useCallback(() => {
+    speakTokenRef.current += 1;
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = '';
+      audioRef.current = null;
+    }
+    if ('speechSynthesis' in window) {
+      speechSynthesis.cancel();
+    }
+  }, []);
 
   /** langCode is a language code from the language catalog, e.g. 'zh', 'en', 'ar', 'fr' */
   const speakWithWebSpeech = useCallback((text: string, langCode: string) => {
@@ -22,7 +37,7 @@ export function useAudio({ muteVoice, muteSfx, voiceType = 'free' }: UseAudioOpt
     }
   }, []);
 
-  const speakWithPremium = useCallback(async (text: string, langCode: string): Promise<boolean> => {
+  const speakWithPremium = useCallback(async (text: string, langCode: string, token: number): Promise<boolean> => {
     try {
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/text-to-speech`,
@@ -53,12 +68,14 @@ export function useAudio({ muteVoice, muteSfx, voiceType = 'free' }: UseAudioOpt
       }
 
       const audioBlob = await response.blob();
+      // A newer card was clicked while this audio was loading — drop it
+      if (token !== speakTokenRef.current) return true;
       const audioUrl = URL.createObjectURL(audioBlob);
-      
+
       if (audioRef.current) {
         audioRef.current.pause();
       }
-      
+
       audioRef.current = new Audio(audioUrl);
       await audioRef.current.play();
       return true;
@@ -69,10 +86,14 @@ export function useAudio({ muteVoice, muteSfx, voiceType = 'free' }: UseAudioOpt
   }, []);
 
   const speak = useCallback(async (text: string, langCode: string) => {
+    // Always cut off whatever is playing before starting the new word
+    stopSpeaking();
     if (muteVoice) return;
+    const token = speakTokenRef.current;
 
     if (voiceType === 'premium') {
-      const success = await speakWithPremium(text, langCode);
+      const success = await speakWithPremium(text, langCode, token);
+      if (token !== speakTokenRef.current) return;
       if (!success) {
         // Fallback to free voice if premium fails
         console.warn('Premium voice failed, falling back to free voice');
@@ -81,7 +102,7 @@ export function useAudio({ muteVoice, muteSfx, voiceType = 'free' }: UseAudioOpt
     } else {
       speakWithWebSpeech(text, langCode);
     }
-  }, [muteVoice, voiceType, speakWithPremium, speakWithWebSpeech]);
+  }, [muteVoice, voiceType, speakWithPremium, speakWithWebSpeech, stopSpeaking]);
 
   const playSuccess = useCallback(() => {
     if (muteSfx) return;
@@ -163,15 +184,7 @@ export function useAudio({ muteVoice, muteSfx, voiceType = 'free' }: UseAudioOpt
     }
   }, [muteSfx]);
 
-  const stopAudio = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    if ('speechSynthesis' in window) {
-      speechSynthesis.cancel();
-    }
-  }, []);
+  const stopAudio = stopSpeaking;
 
   return {
     speak,
@@ -179,5 +192,6 @@ export function useAudio({ muteVoice, muteSfx, voiceType = 'free' }: UseAudioOpt
     playError,
     playCelebration,
     stopAudio,
+    stopSpeaking,
   };
 }
