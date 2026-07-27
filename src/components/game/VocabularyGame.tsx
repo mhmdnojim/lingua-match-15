@@ -875,14 +875,22 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     [selectedCards],
   );
 
-  const requiredSelections = useMemo(
-    () => columns.filter(c => c.visible && (cards[c.lang]?.length ?? 0) > 0).length,
-    [columns, cards],
+  const visibleColumns = useMemo(() => columns.filter(c => c.visible), [columns]);
+
+  /** Every visible column must be picked — even one that is still being generated. */
+  const requiredSelections = visibleColumns.length;
+
+  /** A visible column with no cards yet (e.g. language just switched / still translating). */
+  const hasPendingColumn = useMemo(
+    () => visibleColumns.some(c => (cards[c.lang]?.length ?? 0) === 0),
+    [visibleColumns, cards],
   );
 
   // Match checking
   useEffect(() => {
+    if (hasPendingColumn) return;
     if (requiredSelections < 2 || selectedCards.length !== requiredSelections) return;
+
 
     setAttempts(a => a + 1);
     const vocabIds = selectedCards.map(c => c.vocabId);
