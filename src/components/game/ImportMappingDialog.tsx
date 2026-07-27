@@ -33,8 +33,11 @@ const ROLE_OPTIONS: { value: ColumnRole; label: string; hint: string }[] = [
 export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, sheet, onOpenChange, onConfirm }) => {
   const [mapping, setMapping] = useState<ColumnMapping>({});
   const [roles, setRoles] = useState<Record<string, ColumnRole>>({});
+  /** languages the file does not have — generated with AI. code -> board or stored */
+  const [generated, setGenerated] = useState<{ lang: string; role: 'column' | 'extra' }[]>([]);
 
   useEffect(() => {
+
     if (!sheet) return;
     const initialMapping: ColumnMapping = {};
     const initialRoles: Record<string, ColumnRole> = {};
