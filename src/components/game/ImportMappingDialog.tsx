@@ -317,7 +317,7 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
             <option value="">+ Add a language to translate…</option>
             {addableLanguages.map(l => (
               <option key={l.code} value={l.code}>
-                {l.native} — {l.name}
+                {l.name} — {l.native}
               </option>
             ))}
           </select>
