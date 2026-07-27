@@ -200,8 +200,6 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         <span className="hidden sm:inline">Translate rest</span>
       </button>
 
-      {/* Per-column controls — collapsed into one pill to save space */}
-      <div className="flex items-center gap-1">
       {/* Transliteration group (collapsible on its own) */}
       <div className="flex items-center gap-1 rounded-lg bg-secondary p-1" title="Transliteration per column">
         <button
