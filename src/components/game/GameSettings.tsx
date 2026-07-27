@@ -294,7 +294,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
       {/* Column voice group (collapsible on its own) */}
       <div className="relative flex items-center gap-1 rounded-lg bg-secondary p-1" title="Mute / unmute columns">
         <button
-          onClick={() => setMuteOpen(o => !o)}
+          onClick={() => setMuteOpen(o => { const next = !o; if (next) { setRomOpen(false); setVisOpen(false); } return next; })}
           className={cn(
             'flex h-6 items-center gap-1 rounded-md px-1.5 transition-colors',
             muteOpen ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
