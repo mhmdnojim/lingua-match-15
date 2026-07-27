@@ -19,6 +19,12 @@ interface GameSettingsProps {
   onOpenWordEditor: () => void;
   muteSfx?: boolean;
   voiceType?: VoiceType;
+  /** Premium voice requests used this month */
+  premiumUsed?: number;
+  /** Monthly premium voice allowance */
+  premiumLimit?: number;
+  premiumSignedIn?: boolean;
+
   fontSize?: FontSize;
   onMuteSfxChange?: (mute: boolean) => void;
   onVoiceTypeChange?: (type: VoiceType) => void;
