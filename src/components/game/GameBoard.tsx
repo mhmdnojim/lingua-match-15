@@ -93,7 +93,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                       style.text,
                     )}
                   >
-                    <SelectValue />
+                    <span className="truncate">{language.name}</span>
+                    <SelectValue className="sr-only" />
                   </SelectTrigger>
                   <SelectContent className="max-h-72">
                     {(() => {
@@ -161,7 +162,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             ) : (
 
               <h3 className={cn('text-center text-sm font-medium mb-2 uppercase tracking-wider', style.text)}>
-                {language.native}
+                {language.name}
                 {originalIndex === 0 && <span className="ml-1 text-[10px] text-muted-foreground">(main)</span>}
               </h3>
             )}
