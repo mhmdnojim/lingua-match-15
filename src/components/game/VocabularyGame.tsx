@@ -215,19 +215,30 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   /** true once the user pressed Stop — blocks automatic translation for every file until resumed */
   const haltedRef = useRef(false);
   const [translationHalted, setTranslationHalted] = useState(false);
+  const [haltNoticeOpen, setHaltNoticeOpen] = useState(false);
 
   const haltTranslation = useCallback(() => {
     cancelTranslationRef.current = true;
     haltedRef.current = true;
     autoTranslatedRef.current = 'cancelled';
     setTranslationHalted(true);
+    setHaltNoticeOpen(true);
   }, []);
 
   const resumeTranslation = useCallback(() => {
     haltedRef.current = false;
     autoTranslatedRef.current = '';
     setTranslationHalted(false);
+    setHaltNoticeOpen(false);
   }, []);
+
+  // Auto-hide the "stopped" notice after 8 seconds (translation stays halted)
+  useEffect(() => {
+    if (!haltNoticeOpen) return;
+    const t = setTimeout(() => setHaltNoticeOpen(false), 8000);
+    return () => clearTimeout(t);
+  }, [haltNoticeOpen]);
+
   /** After an import nothing is translated until the user picks a language that is missing from the file */
   const [autoTranslateOn, setAutoTranslateOn] = useState(true);
   /** false while the saved set is still being pulled from the account — no AI calls until then */
