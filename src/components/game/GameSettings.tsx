@@ -76,8 +76,10 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   const [themeOpen, setThemeOpen] = React.useState(false);
   const activeTheme = THEMES.find(t => t.id === themeId);
 
-  /** All per-column toggles (transliteration / visibility / voice) live in one collapsible group */
-  const [columnPanelOpen, setColumnPanelOpen] = useState(false);
+  /** Each per-column group (transliteration / visibility / voice) expands on its own */
+  const [romOpen, setRomOpen] = useState(false);
+  const [visOpen, setVisOpen] = useState(false);
+  const [muteOpen, setMuteOpen] = useState(false);
 
 
   return (
