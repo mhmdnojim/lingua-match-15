@@ -19,8 +19,8 @@ export interface LanguageDef {
 }
 
 export const LANGUAGES: LanguageDef[] = [
-  { code: 'zh', name: 'Chinese (Simplified)', native: '中文', locale: 'zh-CN', fontClass: 'font-chinese', romanizationLabel: 'Transliteration', short: '中' },
-  { code: 'zh-TW', name: 'Chinese (Traditional)', native: '繁體中文', locale: 'zh-TW', fontClass: 'font-chinese', romanizationLabel: 'Transliteration', short: '繁' },
+  { code: 'zh', name: 'Chinese (Simplified)', native: '中文', locale: 'zh-CN', fontClass: 'font-chinese', romanizationLabel: 'Pinyin', short: '中' },
+  { code: 'zh-TW', name: 'Chinese (Traditional)', native: '繁體中文', locale: 'zh-TW', fontClass: 'font-chinese', romanizationLabel: 'Pinyin', short: '繁' },
   { code: 'zh-TW-pinyin', name: 'Pinyin (Traditional)', native: '拼音', locale: 'zh-TW', romanizationOf: 'zh-TW', short: '拼' },
   { code: 'zh-pinyin', name: 'Pinyin', native: '拼音', locale: 'zh-CN', romanizationOf: 'zh', short: '拼' },
   { code: 'en', name: 'English', native: 'English', locale: 'en-US', short: 'EN' },
@@ -36,7 +36,7 @@ export const LANGUAGES: LanguageDef[] = [
   { code: 'pl', name: 'Polish', native: 'Polski', locale: 'pl-PL', short: 'PL' },
   { code: 'ru', name: 'Russian', native: 'Русский', locale: 'ru-RU', romanizationLabel: 'Transliteration', short: 'RU' },
   { code: 'tr', name: 'Turkish', native: 'Türkçe', locale: 'tr-TR', short: 'TR' },
-  { code: 'ja', name: 'Japanese', native: '日本語', locale: 'ja-JP', romanizationLabel: 'Transliteration', short: '日' },
+  { code: 'ja', name: 'Japanese', native: '日本語', locale: 'ja-JP', romanizationLabel: 'Romaji', short: '日' },
   { code: 'ja-romaji', name: 'Romaji', native: 'Rōmaji', locale: 'ja-JP', romanizationOf: 'ja', short: 'JA-R' },
   { code: 'ko', name: 'Korean', native: '한국어', locale: 'ko-KR', romanizationLabel: 'Transliteration', short: '한' },
   { code: 'hi', name: 'Hindi', native: 'हिन्दी', locale: 'hi-IN', romanizationLabel: 'Transliteration', short: 'HI' },
