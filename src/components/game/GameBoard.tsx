@@ -237,18 +237,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     <RefreshCw className={cn('w-4 h-4', regeneratingIds.includes(card.id) && 'animate-spin')} />
                   </button>
                 )}
-                {card.romanization && !card.isMatched && (
-                  <button
-                    onClick={e => {
-                      e.stopPropagation();
-                      toggleRom(card.id, showRom);
-                    }}
-                    className="absolute -left-2 -bottom-2 p-1 bg-secondary text-secondary-foreground rounded-full opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shadow-md hover:scale-110"
-                    title={showRom ? 'Hide transliteration' : 'Show transliteration'}
-                  >
-                    <Languages className={cn('w-4 h-4', !showRom && 'opacity-50')} />
-                  </button>
-                )}
               </div>
               );
             })}
