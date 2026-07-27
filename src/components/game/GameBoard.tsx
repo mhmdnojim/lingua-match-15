@@ -9,8 +9,6 @@ import { HelpCircle, RefreshCw, Pencil, Check, X } from 'lucide-react';
 interface GameBoardProps {
   columns: ColumnConfig[];
   cards: Record<string, GameCard[]>;
-  /** languages already available in the file / saved data (listed first in pickers) */
-  readyLangs?: string[];
   /** languages whose translations are currently being generated */
   loadingLangs?: string[];
 
@@ -21,15 +19,12 @@ interface GameBoardProps {
   onRegenerateCard?: (card: GameCard) => void;
   /** save a manual edit of one card; editing the main column retranslates the row */
   onEditCard?: (card: GameCard, value: string) => void;
-  /** change the language of a column straight from its title */
-  onColumnLangChange?: (index: number, lang: string) => void;
   regeneratingIds?: string[];
 }
 
 export const GameBoard: React.FC<GameBoardProps> = ({
   columns,
   cards,
-  readyLangs = [],
   loadingLangs = [],
 
   fontSize = 'medium',
@@ -38,7 +33,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   onHint,
   onRegenerateCard,
   onEditCard,
-  onColumnLangChange,
   regeneratingIds = [],
 }) => {
   const [editingId, setEditingId] = React.useState<string | null>(null);
