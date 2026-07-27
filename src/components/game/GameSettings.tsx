@@ -58,6 +58,10 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   onOpenWordEditor,
   muteSfx = false,
   voiceType = 'free',
+  premiumUsed = 0,
+  premiumLimit = 300,
+  premiumSignedIn = false,
+
   fontSize = 'medium',
   onMuteSfxChange,
   onVoiceTypeChange,
