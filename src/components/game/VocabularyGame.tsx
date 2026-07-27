@@ -1391,14 +1391,19 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               </AlertDialogDescription>
 
             </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => { setTranslateScope('batch'); setAutoTranslateOn(true); setScopePrompt(null); }}>
+            <AlertDialogFooter className="gap-2 sm:gap-2">
+              <AlertDialogCancel onClick={() => setScopePrompt(null)}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                onClick={() => { setTranslateScope('batch'); setAutoTranslateOn(true); setScopePrompt(null); }}
+              >
                 Batch by batch
-              </AlertDialogCancel>
+              </AlertDialogAction>
               <AlertDialogAction onClick={() => { setTranslateScope('all'); setAutoTranslateOn(true); setScopePrompt(null); }}>
                 Translate whole file
               </AlertDialogAction>
             </AlertDialogFooter>
+
           </AlertDialogContent>
         </AlertDialog>
 
