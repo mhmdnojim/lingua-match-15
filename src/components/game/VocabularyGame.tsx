@@ -764,7 +764,22 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
   /** Ask how much to translate when a newly chosen language has no data in the file */
   const maybeAskScope = (lang: string) => {
-    const missing = vocabulary.filter(i => !(i.values[lang] || '').trim()).length;
+    // A variant of a column the file already has (e.g. the two pinyin labels) reuses its words
+    const twins = equivalentLanguages(lang);
+    let data = vocabulary;
+    if (twins.length) {
+      let copied = false;
+      data = vocabulary.map(item => {
+        if ((item.values[lang] || '').trim()) return item;
+        const source = twins.map(t => item.values[t]).find(v => (v || '').trim());
+        if (!source) return item;
+        copied = true;
+        return { ...item, values: { ...item.values, [lang]: source } };
+      });
+      if (copied) setVocabulary(data);
+    }
+
+    const missing = data.filter(i => !(i.values[lang] || '').trim()).length;
     if (missing === 0) return;
     if (missing > batchSize) {
       setScopePrompt({ count: missing, lang });
@@ -772,6 +787,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     }
     setAutoTranslateOn(true);
   };
+
 
   /** Change one column's language directly from its board title */
   const handleColumnLangChange = (index: number, lang: string) => {
