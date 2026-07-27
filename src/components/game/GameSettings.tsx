@@ -197,84 +197,109 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         <span className="hidden sm:inline">Translate rest</span>
       </button>
 
-      {/* Transliteration — one toggle per column */}
-      {romanizableColumns.length > 0 && (
-        <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
-          {romanizableColumns.map(column => {
-            const language = getLanguage(column.lang);
-            return (
-              <button
-                key={`rom-${column.lang}`}
-                onClick={() => onColumnRomanizationChange(column.lang, !column.showRomanization)}
-                disabled={disabled}
-                className={cn(
-                  'flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all',
-                  column.showRomanization
-                    ? 'bg-game-pinyin text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground',
-                  disabled && 'opacity-50 cursor-not-allowed',
-                )}
-                title={`${column.showRomanization ? 'Hide' : 'Show'} transliteration on ${language.name} cards`}
-              >
-                <Languages className="w-4 h-4 shrink-0" />
-                <span>{language.short}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
+      {/* Per-column controls — collapsed into one pill to save space */}
+      <div className="flex items-center gap-1">
+        <button
+          onClick={() => setColumnPanelOpen(o => !o)}
+          className={cn(
+            'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all',
+            columnPanelOpen
+              ? 'bg-primary text-primary-foreground border-transparent'
+              : 'bg-secondary border-border text-muted-foreground hover:text-foreground',
+          )}
+          title={columnPanelOpen ? 'Hide column controls' : 'Show column controls'}
+        >
+          <Columns3 className="w-4 h-4 shrink-0" />
+          <span className="hidden sm:inline">Columns</span>
+          <ChevronDown className={cn('w-3 h-3 shrink-0 transition-transform', columnPanelOpen && 'rotate-180')} />
+        </button>
 
+        {columnPanelOpen && (
+          <div className="flex flex-wrap items-center gap-1 animate-in fade-in duration-200">
+            {/* Transliteration — one toggle per column */}
+            <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
+              <Languages className="w-3.5 h-3.5 text-muted-foreground mx-0.5 shrink-0" />
+              {columns.map(column => {
+                const language = getLanguage(column.lang);
+                const canRomanize = Boolean(language.romanizationLabel);
+                return (
+                  <button
+                    key={`rom-${column.lang}`}
+                    onClick={() => onColumnRomanizationChange(column.lang, !column.showRomanization)}
+                    disabled={disabled || !canRomanize}
+                    className={cn(
+                      'flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all',
+                      column.showRomanization && canRomanize
+                        ? 'bg-game-pinyin text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground',
+                      (disabled || !canRomanize) && 'opacity-40 cursor-not-allowed',
+                    )}
+                    title={
+                      canRomanize
+                        ? `${column.showRomanization ? 'Hide' : 'Show'} transliteration above ${language.name} words`
+                        : `${language.name} has no transliteration`
+                    }
+                  >
+                    <span>{language.short}</span>
+                  </button>
+                );
+              })}
+            </div>
 
-      {/* Column visibility */}
-      <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
-        {columns.map((column, index) => {
-          const language = getLanguage(column.lang);
-          const style = columnStyle(index);
-          return (
-            <button
-              key={`vis-${column.lang}`}
-              onClick={() => onColumnVisibilityChange(column.lang, !column.visible)}
-              disabled={disabled}
-              className={cn(
-                'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all',
-                column.visible ? cn(style.solid, 'text-primary-foreground') : 'text-muted-foreground hover:text-foreground',
-                disabled && 'opacity-50 cursor-not-allowed',
-              )}
-              title={`${column.visible ? 'Hide' : 'Show'} ${language.name} column`}
-            >
-              {column.visible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-              <span>{language.short}</span>
-            </button>
-          );
-        })}
+            {/* Column visibility */}
+            <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
+              {columns.map((column, index) => {
+                const language = getLanguage(column.lang);
+                const style = columnStyle(index);
+                return (
+                  <button
+                    key={`vis-${column.lang}`}
+                    onClick={() => onColumnVisibilityChange(column.lang, !column.visible)}
+                    disabled={disabled}
+                    className={cn(
+                      'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all',
+                      column.visible ? cn(style.solid, 'text-primary-foreground') : 'text-muted-foreground hover:text-foreground',
+                      disabled && 'opacity-50 cursor-not-allowed',
+                    )}
+                    title={`${column.visible ? 'Hide' : 'Show'} ${language.name} column`}
+                  >
+                    {column.visible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                    <span>{language.short}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Column mute */}
+            <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
+              <span className="text-xs text-muted-foreground px-1">🔊</span>
+              {columns.map((column, index) => {
+                const language = getLanguage(column.lang);
+                const style = columnStyle(index);
+                return (
+                  <button
+                    key={`mute-${column.lang}`}
+                    onClick={() => onColumnMuteChange(column.lang, !column.muted)}
+                    disabled={disabled}
+                    className={cn(
+                      'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all',
+                      !column.muted
+                        ? cn(style.solid, 'text-primary-foreground')
+                        : 'text-muted-foreground hover:text-foreground line-through',
+                      disabled && 'opacity-50 cursor-not-allowed',
+                    )}
+                    title={`${column.muted ? 'Unmute' : 'Mute'} ${language.name} voice`}
+                  >
+                    {column.muted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
+                    <span>{language.short}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Column mute */}
-      <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
-        <span className="text-xs text-muted-foreground px-1">🔊</span>
-        {columns.map((column, index) => {
-          const language = getLanguage(column.lang);
-          const style = columnStyle(index);
-          return (
-            <button
-              key={`mute-${column.lang}`}
-              onClick={() => onColumnMuteChange(column.lang, !column.muted)}
-              disabled={disabled}
-              className={cn(
-                'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all',
-                !column.muted
-                  ? cn(style.solid, 'text-primary-foreground')
-                  : 'text-muted-foreground hover:text-foreground line-through',
-                disabled && 'opacity-50 cursor-not-allowed',
-              )}
-              title={`${column.muted ? 'Unmute' : 'Mute'} ${language.name} voice`}
-            >
-              {column.muted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
-              <span>{language.short}</span>
-            </button>
-          );
-        })}
-      </div>
 
       {/* Voice Type Toggle */}
       {onVoiceTypeChange && (
