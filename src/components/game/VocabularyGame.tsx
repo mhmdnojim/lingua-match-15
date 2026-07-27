@@ -750,9 +750,14 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
   const handleColumnVisibilityChange = useCallback((lang: string, visible: boolean) => {
     // Showing a column again must let it re-fetch any words it is still missing
-    if (visible) autoTranslatedRef.current = '';
+    if (visible) {
+      autoTranslatedRef.current = '';
+      maybeAskScope(lang);
+    }
     setColumns(prev => prev.map(c => (c.lang === lang ? { ...c, visible } : c)));
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vocabulary, batchSize]);
+
 
 
   const handleColumnMuteChange = useCallback((lang: string, muted: boolean) => {
