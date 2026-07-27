@@ -76,8 +76,10 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   const [themeOpen, setThemeOpen] = React.useState(false);
   const activeTheme = THEMES.find(t => t.id === themeId);
 
-  /** All per-column toggles (transliteration / visibility / voice) live in one collapsible group */
-  const [columnPanelOpen, setColumnPanelOpen] = useState(false);
+  /** Each per-column group (transliteration / visibility / voice) expands on its own */
+  const [romOpen, setRomOpen] = useState(false);
+  const [visOpen, setVisOpen] = useState(false);
+  const [muteOpen, setMuteOpen] = useState(false);
 
 
   return (
@@ -198,108 +200,142 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         <span className="hidden sm:inline">Translate rest</span>
       </button>
 
-      {/* Per-column controls — collapsed into one pill to save space */}
-      <div className="flex items-center gap-1">
+      {/* Transliteration group (collapsible on its own) */}
+      <div className="flex items-center gap-1 rounded-lg bg-secondary p-1" title="Transliteration per column">
         <button
-          onClick={() => setColumnPanelOpen(o => !o)}
+          onClick={() => setRomOpen(o => !o)}
           className={cn(
-            'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all',
-            columnPanelOpen
-              ? 'bg-primary text-primary-foreground border-transparent'
-              : 'bg-secondary border-border text-muted-foreground hover:text-foreground',
+            'flex h-6 items-center gap-1 rounded-md px-1.5 transition-colors',
+            romOpen ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
           )}
-          title={columnPanelOpen ? 'Hide column controls' : 'Show column controls'}
+          title={romOpen ? 'Hide transliteration toggles' : 'Show transliteration toggles'}
+          aria-expanded={romOpen}
         >
-          <Columns3 className="w-4 h-4 shrink-0" />
-          <span className="hidden sm:inline">Columns</span>
-          <ChevronDown className={cn('w-3 h-3 shrink-0 transition-transform', columnPanelOpen && 'rotate-180')} />
+          <Languages className="h-4 w-4 shrink-0" />
+          <ChevronUp className={cn('h-3 w-3 shrink-0 transition-transform', romOpen ? 'rotate-90' : '-rotate-90')} />
         </button>
-
-        {columnPanelOpen && (
-          <div className="flex flex-wrap items-center gap-1 animate-in fade-in duration-200">
-            {/* Transliteration — one toggle per column */}
-            <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
-              <Languages className="w-3.5 h-3.5 text-muted-foreground mx-0.5 shrink-0" />
-              {columns.map(column => {
-                const language = getLanguage(column.lang);
-                const canRomanize = Boolean(language.romanizationLabel);
-                return (
-                  <button
-                    key={`rom-${column.lang}`}
-                    onClick={() => onColumnRomanizationChange(column.lang, !column.showRomanization)}
-                    disabled={disabled || !canRomanize}
-                    className={cn(
-                      'flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-all',
-                      column.showRomanization && canRomanize
-                        ? 'bg-game-pinyin text-primary-foreground'
-                        : 'text-muted-foreground hover:text-foreground',
-                      (disabled || !canRomanize) && 'opacity-40 cursor-not-allowed',
-                    )}
-                    title={
-                      canRomanize
-                        ? `${column.showRomanization ? 'Hide' : 'Show'} transliteration above ${language.name} words`
-                        : `${language.name} has no transliteration`
-                    }
-                  >
-                    <span>{language.short}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Column visibility */}
-            <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
-              {columns.map((column, index) => {
-                const language = getLanguage(column.lang);
-                const style = columnStyle(index);
-                return (
-                  <button
-                    key={`vis-${column.lang}`}
-                    onClick={() => onColumnVisibilityChange(column.lang, !column.visible)}
-                    disabled={disabled}
-                    className={cn(
-                      'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all',
-                      column.visible ? cn(style.solid, 'text-primary-foreground') : 'text-muted-foreground hover:text-foreground',
-                      disabled && 'opacity-50 cursor-not-allowed',
-                    )}
-                    title={`${column.visible ? 'Hide' : 'Show'} ${language.name} column`}
-                  >
-                    {column.visible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-                    <span>{language.short}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Column mute */}
-            <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
-              <span className="text-xs text-muted-foreground px-1">🔊</span>
-              {columns.map((column, index) => {
-                const language = getLanguage(column.lang);
-                const style = columnStyle(index);
-                return (
-                  <button
-                    key={`mute-${column.lang}`}
-                    onClick={() => onColumnMuteChange(column.lang, !column.muted)}
-                    disabled={disabled}
-                    className={cn(
-                      'flex items-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all',
-                      !column.muted
-                        ? cn(style.solid, 'text-primary-foreground')
-                        : 'text-muted-foreground hover:text-foreground line-through',
-                      disabled && 'opacity-50 cursor-not-allowed',
-                    )}
-                    title={`${column.muted ? 'Unmute' : 'Mute'} ${language.name} voice`}
-                  >
-                    {column.muted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
-                    <span>{language.short}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        <div
+          className={cn(
+            'flex items-center gap-1 overflow-hidden transition-all duration-300',
+            romOpen ? 'max-w-[20rem] opacity-100' : 'max-w-0 opacity-0',
+          )}
+        >
+          {columns.map(column => {
+            const language = getLanguage(column.lang);
+            const canRomanize = Boolean(language.romanizationLabel);
+            return (
+              <button
+                key={`rom-${column.lang}`}
+                onClick={() => onColumnRomanizationChange(column.lang, !column.showRomanization)}
+                disabled={disabled || !canRomanize}
+                className={cn(
+                  'flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-all',
+                  column.showRomanization && canRomanize
+                    ? 'bg-game-pinyin text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground',
+                  (disabled || !canRomanize) && 'opacity-40 cursor-not-allowed',
+                )}
+                title={
+                  canRomanize
+                    ? `${column.showRomanization ? 'Hide' : 'Show'} transliteration above ${language.name} words`
+                    : `${language.name} has no transliteration`
+                }
+              >
+                <span>{language.short}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
+
+      {/* Column visibility group (collapsible on its own) */}
+      <div className="flex items-center gap-1 rounded-lg bg-secondary p-1" title="Show / hide columns">
+        <button
+          onClick={() => setVisOpen(o => !o)}
+          className={cn(
+            'flex h-6 items-center gap-1 rounded-md px-1.5 transition-colors',
+            visOpen ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+          )}
+          title={visOpen ? 'Hide column toggles' : 'Show column toggles'}
+          aria-expanded={visOpen}
+        >
+          <Columns3 className="h-4 w-4 shrink-0" />
+          <ChevronUp className={cn('h-3 w-3 shrink-0 transition-transform', visOpen ? 'rotate-90' : '-rotate-90')} />
+        </button>
+        <div
+          className={cn(
+            'flex items-center gap-1 overflow-hidden transition-all duration-300',
+            visOpen ? 'max-w-[20rem] opacity-100' : 'max-w-0 opacity-0',
+          )}
+        >
+          {columns.map((column, index) => {
+            const language = getLanguage(column.lang);
+            const style = columnStyle(index);
+            return (
+              <button
+                key={`vis-${column.lang}`}
+                onClick={() => onColumnVisibilityChange(column.lang, !column.visible)}
+                disabled={disabled}
+                className={cn(
+                  'flex shrink-0 items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-all',
+                  column.visible ? cn(style.solid, 'text-primary-foreground') : 'text-muted-foreground hover:text-foreground',
+                  disabled && 'opacity-50 cursor-not-allowed',
+                )}
+                title={`${column.visible ? 'Hide' : 'Show'} ${language.name} column`}
+              >
+                {column.visible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                <span>{language.short}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Column voice group (collapsible on its own) */}
+      <div className="flex items-center gap-1 rounded-lg bg-secondary p-1" title="Mute / unmute columns">
+        <button
+          onClick={() => setMuteOpen(o => !o)}
+          className={cn(
+            'flex h-6 items-center gap-1 rounded-md px-1.5 transition-colors',
+            muteOpen ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+          )}
+          title={muteOpen ? 'Hide voice toggles' : 'Show voice toggles'}
+          aria-expanded={muteOpen}
+        >
+          <Volume2 className="h-4 w-4 shrink-0" />
+          <ChevronUp className={cn('h-3 w-3 shrink-0 transition-transform', muteOpen ? 'rotate-90' : '-rotate-90')} />
+        </button>
+        <div
+          className={cn(
+            'flex items-center gap-1 overflow-hidden transition-all duration-300',
+            muteOpen ? 'max-w-[20rem] opacity-100' : 'max-w-0 opacity-0',
+          )}
+        >
+          {columns.map((column, index) => {
+            const language = getLanguage(column.lang);
+            const style = columnStyle(index);
+            return (
+              <button
+                key={`mute-${column.lang}`}
+                onClick={() => onColumnMuteChange(column.lang, !column.muted)}
+                disabled={disabled}
+                className={cn(
+                  'flex shrink-0 items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-all',
+                  !column.muted
+                    ? cn(style.solid, 'text-primary-foreground')
+                    : 'text-muted-foreground hover:text-foreground line-through',
+                  disabled && 'opacity-50 cursor-not-allowed',
+                )}
+                title={`${column.muted ? 'Unmute' : 'Mute'} ${language.name} voice`}
+              >
+                {column.muted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
+                <span>{language.short}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
 
 
       {/* Voice Type Toggle */}
