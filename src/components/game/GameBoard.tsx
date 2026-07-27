@@ -104,17 +104,20 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     {(() => {
                       const base = originalIndex === 0 ? MAIN_LANGUAGES : PICKABLE_LANGUAGES;
                       const list = base.some(l => l.code === column.lang) ? base : [language, ...base];
-                      const ready = list
+                      const current = list.filter(l => l.code === column.lang);
+                      const others = list.filter(l => l.code !== column.lang);
+                      const ready = others
                         .filter(l => readyLangs.includes(l.code))
                         .sort((a, b) => a.name.localeCompare(b.name));
-                      const rest = list
+                      const rest = others
                         .filter(l => !readyLangs.includes(l.code))
                         .sort((a, b) => a.name.localeCompare(b.name));
-                      return [...ready, ...rest].map(option => ({
+                      return [...current, ...ready, ...rest].map(option => ({
                         ...option,
                         isReady: readyLangs.includes(option.code),
                       }));
                     })().map(option => (
+
                       <SelectItem
                         key={option.code}
                         value={option.code}
