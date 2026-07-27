@@ -98,16 +98,40 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   <SelectContent className="max-h-72">
                     {(() => {
                       const base = originalIndex === 0 ? MAIN_LANGUAGES : PICKABLE_LANGUAGES;
-                      const list = base.some(l => l.code === column.lang) ? base : [language, ...base];
-                      const current = list.filter(l => l.code === column.lang);
-                      const others = list.filter(l => l.code !== column.lang);
-                      const ready = others
-                        .filter(l => readyLangs.includes(l.code))
+                      const currentLang = column.lang;
+                      const columnLangs = columns.map(c => c.lang);
+
+                      // Make sure every column's current language is present in this picker
+                      const baseCodes = new Set(base.map(l => l.code));
+                      const missingColumnLangs = columnLangs.filter(code => !baseCodes.has(code));
+                      const fullList = [...missingColumnLangs.map(getLanguage), ...base];
+
+                      // 1) selected language of this column
+                      const current = fullList.filter(l => l.code === currentLang);
+
+                      // 2) languages of the other columns, in column order
+                      const otherColumnItems = fullList
+                        .filter(l => {
+                          const idx = columnLangs.indexOf(l.code);
+                          return l.code !== currentLang && idx !== -1 && idx !== originalIndex;
+                        })
+                        .sort((a, b) => columnLangs.indexOf(a.code) - columnLangs.indexOf(b.code));
+
+                      const shownCodes = new Set([...current, ...otherColumnItems].map(l => l.code));
+
+                      // 3) languages already available in the file / saved data
+                      const ready = fullList
+                        .filter(l => !shownCodes.has(l.code) && readyLangs.includes(l.code))
                         .sort((a, b) => a.name.localeCompare(b.name));
-                      const rest = others
-                        .filter(l => !readyLangs.includes(l.code))
+
+                      const readyCodes = new Set(ready.map(l => l.code));
+
+                      // 4) remaining supported languages
+                      const rest = fullList
+                        .filter(l => !shownCodes.has(l.code) && !readyCodes.has(l.code))
                         .sort((a, b) => a.name.localeCompare(b.name));
-                      return [...current, ...ready, ...rest].map(option => ({
+
+                      return [...current, ...otherColumnItems, ...ready, ...rest].map(option => ({
                         ...option,
                         isReady: readyLangs.includes(option.code),
                       }));
