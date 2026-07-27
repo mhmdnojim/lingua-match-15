@@ -1291,9 +1291,11 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
             <AlertDialogHeader>
               <AlertDialogTitle>Translate the whole file?</AlertDialogTitle>
               <AlertDialogDescription>
-                You uploaded {scopePrompt?.count ?? 0} words. Translate everything now, or only the round you are
-                playing? You can switch this any time in Options.
+                {scopePrompt ? getLanguage(scopePrompt.lang).name : ''} is missing for {scopePrompt?.count ?? 0} words in
+                this file. Translate everything now, or only the round you are playing? You can switch this any time in
+                Options.
               </AlertDialogDescription>
+
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => { setTranslateScope('batch'); setScopePrompt(null); }}>
