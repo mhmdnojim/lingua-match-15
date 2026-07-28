@@ -107,7 +107,7 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel autoFocus>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => onDeleteFile(selectedFile)}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
