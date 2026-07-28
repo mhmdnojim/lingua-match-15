@@ -1,6 +1,17 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Upload, FileSpreadsheet, ChevronDown, Trash2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface FileSelectorProps {
   selectedFile: string | null;
@@ -22,6 +33,7 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
   className,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -72,22 +84,39 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
       </button>
 
       {onDeleteFile && selectedFile && (
-        <button
-          onClick={() => {
-            if (window.confirm(`Delete "${selectedFile}" from your vocabulary list?`)) {
-              onDeleteFile(selectedFile);
-            }
-          }}
-          title={`Delete ${selectedFile}`}
-          aria-label={`Delete ${selectedFile}`}
-          className={cn(
-            'flex items-center justify-center p-2 rounded-lg',
-            'border border-destructive text-destructive',
-            'hover:bg-destructive/10 transition-colors duration-200',
-          )}
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
+        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <AlertDialogTrigger asChild>
+            <button
+              title={`Delete ${selectedFile}`}
+              aria-label={`Delete ${selectedFile}`}
+              className={cn(
+                'flex items-center justify-center p-2 rounded-lg',
+                'border border-destructive text-destructive',
+                'hover:bg-destructive/10 transition-colors duration-200',
+              )}
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete "{selectedFile.replace('.xlsx', '')}"?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This permanently removes the file, its words and all generated translations.
+                This action cannot be undone — you can't restore it afterwards.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => onDeleteFile(selectedFile)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete permanently
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
 
       <input
