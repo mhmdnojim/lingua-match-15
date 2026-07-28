@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered, Languages, Pencil, SlidersHorizontal, ChevronUp, ChevronDown, Columns3, Wand2, Palette } from 'lucide-react';
 import { ColumnConfig } from '@/utils/gameLogic';
 import { getLanguage, columnStyle, COLUMN_COLOR_COUNT } from '@/utils/languages';
-import { THEMES } from '@/utils/themes';
+import { THEMES, nextThemeId, getTheme } from '@/utils/themes';
 
 export type VoiceType = 'free' | 'premium';
 export type FontSize = 'small' | 'medium' | 'large' | 'x-large';
@@ -80,7 +80,6 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   onThemeChange,
 
 }) => {
-  const [themeOpen, setThemeOpen] = React.useState(false);
   const activeTheme = THEMES.find(t => t.id === themeId);
 
   /** Per-column control rows (transliteration / visibility / voice / color) */
