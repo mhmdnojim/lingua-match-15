@@ -919,6 +919,10 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
 
 
+  const handleColumnColorChange = useCallback((lang: string, colorIndex: number) => {
+    setColumns(prev => prev.map(c => (c.lang === lang ? { ...c, colorIndex } : c)));
+  }, []);
+
   const handleColumnMuteChange = useCallback((lang: string, muted: boolean) => {
     setColumns(prev => prev.map(c => (c.lang === lang ? { ...c, muted } : c)));
   }, []);
@@ -1345,6 +1349,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onColumnVisibilityChange={handleColumnVisibilityChange}
           onColumnMuteChange={handleColumnMuteChange}
           onColumnRomanizationChange={handleColumnRomanizationChange}
+          onColumnColorChange={handleColumnColorChange}
           onOpenLanguages={() => setLanguagesOpen(true)}
           onOpenWordEditor={() => setWordEditorOpen(true)}
           muteSfx={muteSfx}
