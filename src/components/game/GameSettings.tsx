@@ -275,6 +275,32 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
                     <Palette className="h-3.5 w-3.5" />
                   </button>
                 )}
+
+                {/* Font size for this column only — cycles S → M → L → XL */}
+                {onColumnFontSizeChange && (() => {
+                  const order: FontSize[] = ['small', 'medium', 'large', 'x-large'];
+                  const current = column.fontSize ?? fontSize;
+                  const next = order[(order.indexOf(current) + 1) % order.length];
+                  const label = current === 'x-large' ? 'XL' : current.charAt(0).toUpperCase();
+                  return (
+                    <button
+                      onClick={() => onColumnFontSizeChange(column.lang, next)}
+                      disabled={disabled}
+                      className={cn(
+                        'flex h-7 w-8 shrink-0 items-center justify-center gap-0.5 rounded-md transition-all',
+                        column.fontSize
+                          ? cn(style.solid, 'text-primary-foreground')
+                          : 'text-muted-foreground hover:text-foreground',
+                        disabled && 'cursor-not-allowed opacity-50',
+                      )}
+                      title={`${language.name} font size: ${current} — click for ${next}`}
+                      aria-label={`${language.name} font size ${current}, click for ${next}`}
+                    >
+                      <Type className="h-3 w-3 shrink-0" />
+                      <span className="text-[9px] font-semibold uppercase leading-none">{label}</span>
+                    </button>
+                  );
+                })()}
               </div>
             );
           })}
