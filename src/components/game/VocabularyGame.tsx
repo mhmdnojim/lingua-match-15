@@ -1199,11 +1199,21 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const handleRegenerateOne = async (vocabId: string, lang: string, instruction?: string) => {
     const item = vocabulary.find(i => i.id === vocabId);
     if (!item) return;
+    if (lang === mainLang) return;
+    const sourceWord = (item.values[mainLang] || '').trim();
+    if (!sourceWord) {
+      toast({
+        title: 'Cannot regenerate',
+        description: 'The main word is empty. Add the main word first.',
+        variant: 'destructive',
+      });
+      return;
+    }
     try {
       const [result] = await translateWords({
         sourceLang: mainLang,
         targetLang: lang,
-        words: [item.values[mainLang] || ''],
+        words: [sourceWord],
         instruction,
       });
       if (result) {
@@ -1213,6 +1223,10 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           );
           persistVocabulary(next, mainLang);
           return next;
+        });
+        toast({
+          title: 'Translation regenerated',
+          description: `Regenerated ${getLanguage(lang).name} for “${sourceWord}” only.`,
         });
       }
     } catch (error) {
