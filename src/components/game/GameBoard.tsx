@@ -83,13 +83,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         return (
           <div key={column.lang} className="flex flex-col gap-3">
             {onColumnLangChange ? (
-              <div className="relative mb-2 flex items-center justify-center">
-                {originalIndex === 0 && (
-                  <span className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 text-[10px] uppercase tracking-wider text-muted-foreground">
-                    main
-                  </span>
-                )}
+              <div className="mb-2 flex flex-col items-start">
+                <span className="h-4 pl-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {originalIndex === 0 ? 'main' : ''}
+                </span>
                 <Select value={column.lang} onValueChange={value => onColumnLangChange(originalIndex, value)}>
+
                   <SelectTrigger
                     aria-label={`Language for column ${originalIndex + 1}`}
                     className={cn(
