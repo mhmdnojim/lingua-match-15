@@ -98,10 +98,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         const isPending = columnCards.length === 0;
 
         return (
-          <div key={column.lang} className="flex flex-col gap-3">
+          <div key={column.lang} className="flex flex-col gap-1.5 md:gap-2">
             {onColumnLangChange ? (
-              <div className="mb-2 flex w-full flex-col items-start">
-                <span className="h-4 text-[10px] uppercase tracking-wider text-muted-foreground">
+              <div className="mb-0 flex w-full flex-col items-start">
+                <span className="h-3 text-[9px] leading-3 uppercase tracking-wider text-muted-foreground">
                   {originalIndex === 0 ? 'main' : ''}
                 </span>
                 <Select value={column.lang} onValueChange={value => onColumnLangChange(originalIndex, value)}>
