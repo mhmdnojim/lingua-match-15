@@ -923,6 +923,10 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     setColumns(prev => prev.map(c => (c.lang === lang ? { ...c, colorIndex } : c)));
   }, []);
 
+  const handleColumnFontSizeChange = useCallback((lang: string, size: FontSize) => {
+    setColumns(prev => prev.map(c => (c.lang === lang ? { ...c, fontSize: size } : c)));
+  }, []);
+
   const handleColumnMuteChange = useCallback((lang: string, muted: boolean) => {
     setColumns(prev => prev.map(c => (c.lang === lang ? { ...c, muted } : c)));
   }, []);
