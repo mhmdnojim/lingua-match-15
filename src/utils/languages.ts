@@ -161,6 +161,10 @@ const HEADER_ALIASES: Record<string, string> = {
   translit: 'ar-latin',
 };
 
+/** Words in a header that mean "this column holds the romanization/transliteration" */
+const ROMANIZATION_HINT =
+  /\b(transliteration|transliterated|translit|romanization|romanisation|romanized|romanised|romanization|latin|latinization|pronunciation|phonetic|phonetics|pinyin|romaji|romaja|reading)\b/;
+
 /** Try to map an excel header to a language code */
 export function detectLanguageFromHeader(header: string): string | null {
   const raw = header.toLowerCase().trim();
@@ -174,26 +178,40 @@ export function detectLanguageFromHeader(header: string): string | null {
     return byName ? byName.code : null;
   };
 
+  const wantsRomanization = ROMANIZATION_HINT.test(raw);
+
+  /** Resolve a base language to its romanization code when the header asks for one */
+  const withRomanization = (code: string | null): string | null => {
+    if (!code) return null;
+    if (!wantsRomanization) return code;
+    if (getLanguage(code).romanizationOf) return code; // already a romanization
+    return romanizationCodeFor(code) ?? code;
+  };
+
   // exact match first
   const direct = lookup(raw);
-  if (direct) return direct;
+  if (direct) return withRomanization(direct);
 
   // "Arabic (ar)", "Word - Arabic", "arabic_translation", "col3: Arabic"
   const parts = raw
-    .split(/[()\[\]{}\-_/|,:;+.]+|\s{2,}/)
+    .split(/[()\[\]{}\-_/|,:;+.]+|\s+/)
     .map(p => p.trim())
     .filter(Boolean);
   for (const part of parts) {
     const hit = lookup(part) || lookup(part.replace(/\b(word|words|translation|text|column|col|lang|language)\b/g, '').trim());
-    if (hit) return hit;
+    if (hit) return withRomanization(hit);
   }
 
-  // last resort: a language name appearing anywhere in the header
+  // a language name appearing anywhere in the header ("arabic transliteration")
   const contained = LANGUAGES.filter(l => !l.romanizationOf).find(
     l => raw.includes(l.name.toLowerCase()) || raw.includes(l.native.toLowerCase()),
   );
-  return contained ? contained.code : null;
+  if (contained) return withRomanization(contained.code);
+
+  // bare "transliteration" / "pinyin" column with no language named
+  return wantsRomanization ? (HEADER_ALIASES[raw] ?? null) : null;
 }
+
 
 
 /** Visual style per column position (cycled) */

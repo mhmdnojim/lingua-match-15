@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import Card, { FontSize } from './Card';
 import { GameCard, ColumnConfig } from '@/utils/gameLogic';
 import { Select, SelectContent, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getLanguage, columnStyle, MAIN_LANGUAGES, PICKABLE_LANGUAGES } from '@/utils/languages';
+import { getLanguage, columnStyle, MAIN_LANGUAGES, PICKABLE_LANGUAGES, romanizationCodeFor } from '@/utils/languages';
 import { HelpCircle, RefreshCw, Pencil, Check, X } from 'lucide-react';
 
 
@@ -129,7 +129,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                       return [...current, ...otherColumnItems, ...ready, ...rest].map(option => ({
                         ...option,
                         isReady: readyLangs.includes(option.code),
+                        hasTranslit: (() => {
+                          const rom = romanizationCodeFor(option.code);
+                          return Boolean(rom && readyLangs.includes(rom));
+                        })(),
                       }));
+
                     })().map(option => (
                       <SelectPrimitive.Item
                         key={option.code}
@@ -147,6 +152,15 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                         {option.isReady && (
                           <span className="ml-1.5 rounded bg-primary/15 px-1 text-[10px] uppercase text-primary">ready</span>
                         )}
+                        {option.hasTranslit && (
+                          <span
+                            className="ml-1.5 rounded bg-accent px-1 text-[10px] uppercase text-accent-foreground"
+                            title="Transliteration available in your file"
+                          >
+                            Aa
+                          </span>
+                        )}
+
                         {option.code !== column.lang && columns.some(c => c.lang === option.code) && (
                           <span className="ml-1.5 rounded bg-muted px-1 text-[10px] uppercase text-muted-foreground">swap</span>
                         )}
