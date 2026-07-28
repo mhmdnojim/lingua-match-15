@@ -55,10 +55,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 }) => {
 
   const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [editingCard, setEditingCard] = React.useState<GameCard | null>(null);
   const [draft, setDraft] = React.useState('');
 
   const startEdit = (card: GameCard) => {
     setEditingId(card.id);
+    setEditingCard(card);
     setDraft(card.content);
   };
   const commitEdit = (card: GameCard) => {
