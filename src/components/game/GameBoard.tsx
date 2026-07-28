@@ -5,7 +5,17 @@ import Card, { FontSize } from './Card';
 import { GameCard, ColumnConfig } from '@/utils/gameLogic';
 import { Select, SelectContent, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getLanguage, columnStyle, MAIN_LANGUAGES, PICKABLE_LANGUAGES, romanizationCodeFor } from '@/utils/languages';
-import { HelpCircle, RefreshCw, Pencil, Check, X } from 'lucide-react';
+import { HelpCircle, RefreshCw, Pencil, Check } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 
 
 interface GameBoardProps {
@@ -45,15 +55,21 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 }) => {
 
   const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [editingCard, setEditingCard] = React.useState<GameCard | null>(null);
   const [draft, setDraft] = React.useState('');
 
   const startEdit = (card: GameCard) => {
     setEditingId(card.id);
+    setEditingCard(card);
     setDraft(card.content);
+  };
+  const closeEdit = () => {
+    setEditingId(null);
+    setEditingCard(null);
   };
   const commitEdit = (card: GameCard) => {
     const value = draft.trim();
-    setEditingId(null);
+    closeEdit();
     if (value && value !== card.content) onEditCard?.(card, value);
   };
   // A column the user turned on always stays on the board — even while its words
@@ -64,6 +80,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
 
   return (
+    <>
     <div
       className={cn(
         'grid gap-4 md:gap-6',
@@ -186,44 +203,15 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               const isEditing = editingId === card.id;
               return (
               <div key={card.id} className="relative group">
-                {isEditing ? (
-                  <div className="flex min-h-[76px] items-center gap-2 rounded-xl border border-primary bg-card p-3 shadow-md">
-                    <input
-                      autoFocus
-                      value={draft}
-                      onChange={e => setDraft(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') commitEdit(card);
-                        if (e.key === 'Escape') setEditingId(null);
-                      }}
-                      className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none"
-                      aria-label="Edit word"
-                    />
-                    <button
-                      onClick={() => commitEdit(card)}
-                      className="rounded-full bg-primary p-1 text-primary-foreground hover:scale-110 transition-transform"
-                      title="Save"
-                    >
-                      <Check className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => setEditingId(null)}
-                      className="rounded-full bg-muted p-1 text-muted-foreground hover:scale-110 transition-transform"
-                      title="Cancel"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <Card
-                    card={card}
-                    columnIndex={originalIndex}
-                    showRomanization={column.showRomanization}
-                    fontSize={fontSize}
-                    onClick={onCardClick}
-                    onSpeak={column.muted ? undefined : onSpeak}
-                  />
-                )}
+                <Card
+                  card={card}
+                  columnIndex={originalIndex}
+                  showRomanization={column.showRomanization}
+                  fontSize={fontSize}
+                  onClick={onCardClick}
+                  onSpeak={column.muted ? undefined : onSpeak}
+                />
+
                 {!card.isMatched && !isEditing && (
                   <button
                     onClick={e => {
@@ -272,7 +260,52 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         );
       })}
     </div>
+
+    <Dialog open={!!editingCard} onOpenChange={open => !open && closeEdit()}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>
+            {editingCard ? getLanguage(editingCard.lang).name : ''} — edit word
+          </DialogTitle>
+          <DialogDescription>
+            {editingCard && columns.findIndex(c => c.lang === editingCard.lang) === 0
+              ? 'Editing the main word retranslates the other columns.'
+              : 'Fix or rewrite this translation manually.'}
+          </DialogDescription>
+        </DialogHeader>
+        {editingCard && (
+          <>
+            <Textarea
+              autoFocus
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) commitEdit(editingCard);
+                if (e.key === 'Escape') closeEdit();
+              }}
+              dir={getLanguage(editingCard.lang).rtl ? 'rtl' : 'ltr'}
+              rows={4}
+              className={cn(
+                'min-h-[120px] text-xl leading-relaxed',
+                getLanguage(editingCard.lang).fontClass,
+              )}
+              aria-label="Edit word"
+            />
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => closeEdit()}>
+                Cancel
+              </Button>
+              <Button onClick={() => commitEdit(editingCard)}>
+                <Check className="mr-1 h-4 w-4" /> Save
+              </Button>
+            </DialogFooter>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+    </>
   );
+
 };
 
 export default GameBoard;
