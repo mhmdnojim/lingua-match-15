@@ -360,24 +360,23 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
       )}
 
 
-      {/* Font Size Toggle */}
-      {onFontSizeChange && (
-        <div className="flex items-center gap-1 bg-secondary rounded-lg p-1">
-          {(['small', 'medium', 'large'] as FontSize[]).map((size, i) => (
-            <button
-              key={size}
-              onClick={() => onFontSizeChange(size)}
-              className={cn(
-                'flex items-center gap-1 px-2 py-1.5 rounded-md font-medium transition-all',
-                fontSize === size ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
-              )}
-              title={`${size} font`}
-            >
-              <Type className={i === 0 ? 'w-3 h-3' : i === 1 ? 'w-4 h-4' : 'w-5 h-5'} />
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Font Size — single cycling button: small → medium → large → small */}
+      {onFontSizeChange && (() => {
+        const order: FontSize[] = ['small', 'medium', 'large'];
+        const next = order[(order.indexOf(fontSize) + 1) % order.length];
+        return (
+          <button
+            onClick={() => onFontSizeChange(next)}
+            className="flex items-center gap-1 rounded-lg bg-secondary px-2 py-1.5 font-medium text-muted-foreground transition-all hover:text-foreground"
+            title={`Font size: ${fontSize} — click for ${next}`}
+            aria-label={`Font size ${fontSize}, click for ${next}`}
+          >
+            <Type className={fontSize === 'small' ? 'w-3.5 h-3.5' : fontSize === 'medium' ? 'w-4 h-4' : 'w-5 h-5'} />
+            <span className="text-[10px] uppercase tracking-wide">{fontSize.charAt(0)}</span>
+          </button>
+        );
+      })()}
+
 
       {/* Theme picker (collapsible) */}
       {onThemeChange && (
