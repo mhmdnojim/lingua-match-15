@@ -4,7 +4,7 @@ import { GameCard } from '@/utils/gameLogic';
 import { getLanguage, columnStyle } from '@/utils/languages';
 import { splitMeanings, joinMeanings, useMeaningSelection } from '@/utils/meanings';
 import MeaningsPanel from './MeaningsPanel';
-import { Volume2, Layers } from 'lucide-react';
+import { Layers } from 'lucide-react';
 
 export type FontSize = 'small' | 'medium' | 'large';
 
