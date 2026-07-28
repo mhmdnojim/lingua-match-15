@@ -63,6 +63,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     setEditingCard(card);
     setDraft(card.content);
   };
+  const closeEdit = () => {
+    setEditingId(null);
+    setEditingCard(null);
+  };
   const commitEdit = (card: GameCard) => {
     const value = draft.trim();
     closeEdit();
