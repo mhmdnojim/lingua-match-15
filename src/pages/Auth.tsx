@@ -159,16 +159,8 @@ const Auth = () => {
             </div>
           </div>
 
-          {mode !== 'reset' && (
-            <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Sign in</TabsTrigger>
-                <TabsTrigger value="signup">Sign up</TabsTrigger>
-              </TabsList>
-              <TabsContent value="signin" />
-              <TabsContent value="signup" />
-            </Tabs>
-          )}
+
+
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
