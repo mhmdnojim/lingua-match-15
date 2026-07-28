@@ -186,44 +186,15 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               const isEditing = editingId === card.id;
               return (
               <div key={card.id} className="relative group">
-                {isEditing ? (
-                  <div className="flex min-h-[76px] items-center gap-2 rounded-xl border border-primary bg-card p-3 shadow-md">
-                    <input
-                      autoFocus
-                      value={draft}
-                      onChange={e => setDraft(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') commitEdit(card);
-                        if (e.key === 'Escape') setEditingId(null);
-                      }}
-                      className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none"
-                      aria-label="Edit word"
-                    />
-                    <button
-                      onClick={() => commitEdit(card)}
-                      className="rounded-full bg-primary p-1 text-primary-foreground hover:scale-110 transition-transform"
-                      title="Save"
-                    >
-                      <Check className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => setEditingId(null)}
-                      className="rounded-full bg-muted p-1 text-muted-foreground hover:scale-110 transition-transform"
-                      title="Cancel"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <Card
-                    card={card}
-                    columnIndex={originalIndex}
-                    showRomanization={column.showRomanization}
-                    fontSize={fontSize}
-                    onClick={onCardClick}
-                    onSpeak={column.muted ? undefined : onSpeak}
-                  />
-                )}
+                <Card
+                  card={card}
+                  columnIndex={originalIndex}
+                  showRomanization={column.showRomanization}
+                  fontSize={fontSize}
+                  onClick={onCardClick}
+                  onSpeak={column.muted ? undefined : onSpeak}
+                />
+
                 {!card.isMatched && !isEditing && (
                   <button
                     onClick={e => {
