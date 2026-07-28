@@ -962,16 +962,22 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     [columns, speak],
   );
 
+  const [hintedIds, setHintedIds] = useState<string[]>([]);
+  const hintTimer = useRef<number | null>(null);
+
   const handleHint = useCallback(
     (card: GameCard) => {
       const vocabId = card.vocabId;
-      const ids: string[] = [];
-      Object.values(cardsRef.current).forEach(list => {
-        list.forEach(c => {
-          if (c.vocabId === vocabId && !c.isMatched) ids.push(c.id);
+      setCards(prev => {
+        const ids: string[] = [];
+        Object.values(prev).forEach(list => {
+          list.forEach(c => {
+            if (c.vocabId === vocabId && !c.isMatched) ids.push(c.id);
+          });
         });
+        setHintedIds(ids);
+        return prev;
       });
-      setHintedIds(ids);
       if (hintTimer.current) window.clearTimeout(hintTimer.current);
       hintTimer.current = window.setTimeout(() => setHintedIds([]), 2500);
       toast({ title: 'Hint used', description: 'Matching cards are blinking — pick them yourself. -5 points' });
