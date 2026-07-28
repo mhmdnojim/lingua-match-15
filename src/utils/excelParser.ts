@@ -39,6 +39,27 @@ function readWorkbook(arrayBuffer: ArrayBuffer): SheetData {
     detected[h] = detectLanguageFromHeader(h);
   });
 
+  // A bare "Transliteration" / "Pinyin" / "Pronunciation" column belongs to the
+  // language of the closest column on its left (or right) — re-anchor it there.
+  const BARE = /^(transliteration|translit|romanization|romanisation|romanized|latin|pronunciation|phonetic|reading|pinyin|romaji|romaja)$/;
+  headers.forEach((header, index) => {
+    const key = header.toLowerCase().trim();
+    const code = detected[header];
+    if (!BARE.test(key) && !(code && getLanguage(code).romanizationOf && BARE.test(key))) return;
+
+    const neighbours = [...headers.slice(0, index).reverse(), ...headers.slice(index + 1)];
+    for (const other of neighbours) {
+      const otherCode = detected[other];
+      if (!otherCode || getLanguage(otherCode).romanizationOf) continue;
+      const rom = romanizationCodeFor(otherCode);
+      if (rom) {
+        detected[header] = rom;
+        return;
+      }
+    }
+  });
+
+
   return { success: true, headers, rows, detected };
 }
 
