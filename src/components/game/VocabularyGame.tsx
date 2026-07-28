@@ -1400,6 +1400,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               columns={columns}
               cards={cards}
               loadingLangs={isTranslating ? columns.map(c => c.lang) : []}
+              readyLangs={readyLangs}
 
               fontSize={fontSize}
               onCardClick={handleCardClick}
@@ -1407,7 +1408,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               onHint={handleHint}
               onRegenerateCard={handleRegenerateCard}
               onEditCard={handleCardEdit}
+              onColumnLangChange={handleColumnLangChange}
               regeneratingIds={regeneratingCards}
+
             />
           </>
         )}
