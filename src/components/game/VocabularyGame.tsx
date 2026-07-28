@@ -16,6 +16,9 @@ import {
   sortVocabulary,
   shuffleVocabulary,
   calculateAccuracy,
+  valueFor,
+  romanizationFor,
+
 } from '@/utils/gameLogic';
 import {
   saveProgress,
@@ -558,9 +561,63 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     [batches, columns, shuffleMode],
   );
 
+  /**
+   * Only re-deal (and re-shuffle) the board when the batch itself or the set of column
+   * languages changes — never when a display flag (transliteration / visibility / mute)
+   * is toggled or when a translation lands.
+   */
+  const batchKey = useMemo(
+    () => (batches[currentBatch] || []).map(i => i.id).join(','),
+    [batches, currentBatch],
+  );
+  const columnsKey = useMemo(() => columns.map(c => c.lang).join(','), [columns]);
+
   useEffect(() => {
     if (batches.length > 0) initializeBatch(currentBatch);
-  }, [batches, currentBatch, initializeBatch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [batchKey, columnsKey]);
+
+  /** Keep the dealt cards in sync with newly generated text without reshuffling them. */
+  useEffect(() => {
+    const batch = batches[currentBatch];
+    if (!batch) return;
+    const byId = new Map(batch.map(i => [i.id, i]));
+    setCards(prev => {
+      let changed = false;
+      const next: Record<string, GameCard[]> = {};
+      Object.entries(prev).forEach(([lang, list]) => {
+        const updated = list.map(card => {
+          const item = byId.get(card.vocabId);
+          if (!item) return card;
+          const content = valueFor(item, lang);
+          const romanization = romanizationFor(item, lang);
+          if (content === card.content && romanization === card.romanization) return card;
+          changed = true;
+          return { ...card, content: content || card.content, romanization };
+        });
+        const present = new Set(updated.map(c => c.vocabId));
+        batch.forEach(item => {
+          if (present.has(item.id)) return;
+          const content = valueFor(item, lang);
+          if (!content) return;
+          changed = true;
+          updated.push({
+            id: `${lang}-${item.id}`,
+            vocabId: item.id,
+            lang,
+            content,
+            romanization: romanizationFor(item, lang),
+            isSelected: false,
+            isMatched: false,
+            isError: false,
+          });
+        });
+        next[lang] = updated;
+      });
+      return changed ? next : prev;
+    });
+  }, [batches, currentBatch]);
+
 
   // Load a hosted file
   const loadVocabulary = useCallback(
@@ -849,9 +906,27 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     setColumns(prev => prev.map(c => (c.lang === lang ? { ...c, muted } : c)));
   }, []);
 
-  const handleColumnRomanizationChange = useCallback((lang: string, showRomanization: boolean) => {
-    setColumns(prev => prev.map(c => (c.lang === lang ? { ...c, showRomanization } : c)));
-  }, []);
+  const handleColumnRomanizationChange = useCallback(
+    (lang: string, showRomanization: boolean) => {
+      setColumns(prev => prev.map(c => (c.lang === lang ? { ...c, showRomanization } : c)));
+
+      // Turning it on: generate the missing romanization/transliteration right away
+      if (!showRomanization) return;
+      const romCode = romanizationCodeFor(lang);
+      if (!romCode || isTranslating) return;
+      const scopeItems = translateScope === 'all' ? vocabulary : batches[currentBatch] || [];
+      const pending = scopeItems.filter(i => !(i.values[romCode] || '').trim());
+      if (pending.length === 0) return;
+      resumeTranslation();
+      translateMissing(
+        scopeItems,
+        [{ lang: romCode, visible: false, muted: true, showRomanization: false }],
+        lang,
+      );
+    },
+    [isTranslating, translateScope, vocabulary, batches, currentBatch, translateMissing, resumeTranslation],
+  );
+
 
   const handleSpeak = useCallback(
     (card: GameCard) => {
