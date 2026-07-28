@@ -243,7 +243,52 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         );
       })}
     </div>
+
+    <Dialog open={!!editingCard} onOpenChange={open => !open && setEditingId(null)}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>
+            {editingCard ? getLanguage(editingCard.lang).name : ''} — edit word
+          </DialogTitle>
+          <DialogDescription>
+            {editingCard && columns.findIndex(c => c.lang === editingCard.lang) === 0
+              ? 'Editing the main word retranslates the other columns.'
+              : 'Fix or rewrite this translation manually.'}
+          </DialogDescription>
+        </DialogHeader>
+        {editingCard && (
+          <>
+            <Textarea
+              autoFocus
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) commitEdit(editingCard);
+                if (e.key === 'Escape') setEditingId(null);
+              }}
+              dir={getLanguage(editingCard.lang).rtl ? 'rtl' : 'ltr'}
+              rows={4}
+              className={cn(
+                'min-h-[120px] text-xl leading-relaxed',
+                getLanguage(editingCard.lang).fontClass,
+              )}
+              aria-label="Edit word"
+            />
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setEditingId(null)}>
+                Cancel
+              </Button>
+              <Button onClick={() => commitEdit(editingCard)}>
+                <Check className="mr-1 h-4 w-4" /> Save
+              </Button>
+            </DialogFooter>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+    </>
   );
+
 };
 
 export default GameBoard;
