@@ -65,7 +65,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   };
   const commitEdit = (card: GameCard) => {
     const value = draft.trim();
-    setEditingId(null);
+    closeEdit();
     if (value && value !== card.content) onEditCard?.(card, value);
   };
   // A column the user turned on always stays on the board — even while its words
@@ -257,7 +257,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       })}
     </div>
 
-    <Dialog open={!!editingCard} onOpenChange={open => !open && setEditingId(null)}>
+    <Dialog open={!!editingCard} onOpenChange={open => !open && closeEdit()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
@@ -277,7 +277,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               onChange={e => setDraft(e.target.value)}
               onKeyDown={e => {
                 if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) commitEdit(editingCard);
-                if (e.key === 'Escape') setEditingId(null);
+                if (e.key === 'Escape') closeEdit();
               }}
               dir={getLanguage(editingCard.lang).rtl ? 'rtl' : 'ltr'}
               rows={4}
@@ -288,7 +288,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               aria-label="Edit word"
             />
             <DialogFooter>
-              <Button variant="ghost" onClick={() => setEditingId(null)}>
+              <Button variant="ghost" onClick={() => closeEdit()}>
                 Cancel
               </Button>
               <Button onClick={() => commitEdit(editingCard)}>
