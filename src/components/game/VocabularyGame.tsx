@@ -776,10 +776,19 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     const mappedLangs = Object.entries(mapping)
       .filter(([, lang]) => lang && lang !== 'ignore')
       .map(([, lang]) => lang);
-    const newMain = roles?.mainLang || mappedLangs[0];
+
+    // Transliteration columns coming from the file are display data, not their own column
+    const fileRomanizations = new Set(
+      mappedLangs.filter(lang => {
+        const root = getLanguage(lang).romanizationOf;
+        return root ? mappedLangs.includes(root) : false;
+      }),
+    );
+    const columnLangsFromFile = mappedLangs.filter(l => !fileRomanizations.has(l));
+    const newMain = roles?.mainLang || columnLangsFromFile[0] || mappedLangs[0];
 
     // Keep configured columns, put the file's main language first, then existing extras
-    const chosen = roles?.columnLangs?.length ? roles.columnLangs : mappedLangs;
+    const chosen = roles?.columnLangs?.length ? roles.columnLangs : columnLangsFromFile;
     const extras = columns.map(c => c.lang).filter(lang => lang !== newMain);
     const langs = [
       newMain,
@@ -787,10 +796,14 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     ].slice(0, 4);
     const nextColumns: ColumnConfig[] = langs.map((lang, index) => {
       const existing = columns.find(c => c.lang === lang);
+      // when the file already carries this language's transliteration, show it by default
+      const romCode = romanizationCodeFor(lang);
+      const fromFile = Boolean(romCode && fileRomanizations.has(romCode));
       return existing
-        ? { ...existing, showRomanization: existing.showRomanization && hasRomanization(lang) }
-        : { lang, visible: true, muted: false, showRomanization: hasRomanization(lang) };
+        ? { ...existing, showRomanization: (existing.showRomanization || fromFile) && hasRomanization(lang) }
+        : { lang, visible: true, muted: false, showRomanization: fromFile };
     });
+
 
     const items = buildVocabulary(sheet, mapping, newMain);
 
