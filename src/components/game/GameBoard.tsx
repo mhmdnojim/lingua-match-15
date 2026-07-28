@@ -211,6 +211,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   columnIndex={column.colorIndex ?? originalIndex}
                   showRomanization={column.showRomanization}
                   fontSize={column.fontSize ?? fontSize}
+                  isHinted={hintedIds.includes(card.id)}
                   onClick={onCardClick}
                   onSpeak={column.muted ? undefined : onSpeak}
                 />
