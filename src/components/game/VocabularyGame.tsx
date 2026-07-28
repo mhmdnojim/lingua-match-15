@@ -13,7 +13,7 @@ import {
   GameCard,
   ColumnConfig,
   createColumnCards,
-  sortVocabulary,
+  
   shuffleVocabulary,
   calculateAccuracy,
   valueFor,
