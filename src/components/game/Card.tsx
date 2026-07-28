@@ -17,31 +17,36 @@ interface CardProps {
   onSpeak?: (card: GameCard) => void;
 }
 
-const FONT_SIZES: Record<FontSize, { script: string[]; latin: string[]; rom: string }> = {
-  small: {
-    script: ['text-2xl md:text-3xl', 'text-xl md:text-2xl', 'text-lg', 'text-base', 'text-sm'],
-    latin: ['text-base md:text-lg', 'text-sm md:text-base', 'text-sm', 'text-xs', 'text-[11px]'],
-    rom: 'text-xs',
-  },
-  medium: {
-    script: ['text-3xl md:text-4xl', 'text-2xl md:text-3xl', 'text-xl', 'text-lg', 'text-base'],
-    latin: ['text-lg md:text-xl', 'text-base md:text-lg', 'text-sm md:text-base', 'text-sm', 'text-xs'],
-    rom: 'text-sm',
-  },
-  large: {
-    script: ['text-4xl md:text-5xl', 'text-3xl md:text-4xl', 'text-2xl md:text-3xl', 'text-xl', 'text-lg'],
-    latin: ['text-xl md:text-2xl', 'text-lg md:text-xl', 'text-base md:text-lg', 'text-sm md:text-base', 'text-sm'],
-    rom: 'text-base',
-  },
-};
-
 /** Base (max) font size in px per size preset */
 const BASE_PX: Record<FontSize, { script: number; latin: number }> = {
   small: { script: 26, latin: 17 },
   medium: { script: 34, latin: 21 },
   large: { script: 44, latin: 26 },
 };
-const MIN_PX = 9;
+const MIN_PX = 8;
+
+/** Scale the max font size with the viewport so phones don't get oversized text */
+const useViewportScale = () => {
+  const read = () => {
+    if (typeof window === 'undefined') return 1;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const byWidth = w < 360 ? 0.62 : w < 480 ? 0.7 : w < 640 ? 0.8 : w < 768 ? 0.88 : w < 1024 ? 0.95 : 1;
+    const byHeight = h < 560 ? 0.8 : h < 700 ? 0.9 : 1;
+    return Math.min(byWidth, byHeight);
+  };
+  const [scale, setScale] = React.useState(read);
+  React.useEffect(() => {
+    const onResize = () => setScale(read());
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+    };
+  }, []);
+  return scale;
+};
 
 /** Shrink the text until it fits its fixed-size box */
 const useAutoFit = (text: string, maxPx: number) => {
@@ -51,22 +56,29 @@ const useAutoFit = (text: string, maxPx: number) => {
   React.useLayoutEffect(() => {
     const el = boxRef.current;
     if (!el) return;
-    let size = maxPx;
-    el.style.fontSize = `${size}px`;
-    let guard = 0;
-    while (
-      guard++ < 60 &&
-      size > MIN_PX &&
-      (el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1)
-    ) {
-      size -= 1;
+    const fit = () => {
+      let size = maxPx;
       el.style.fontSize = `${size}px`;
-    }
-    setPx(size);
+      let guard = 0;
+      while (
+        guard++ < 60 &&
+        size > MIN_PX &&
+        (el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1)
+      ) {
+        size -= 1;
+        el.style.fontSize = `${size}px`;
+      }
+      setPx(size);
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, [text, maxPx]);
 
   return { boxRef, px };
 };
+
 
 export const Card: React.FC<CardProps> = ({
   card,
@@ -78,9 +90,12 @@ export const Card: React.FC<CardProps> = ({
 }) => {
   const language = getLanguage(card.lang);
   const style = columnStyle(columnIndex);
-  const sizes = FONT_SIZES[fontSize];
   const isScript = Boolean(language.fontClass) || Boolean(language.rtl);
-  const maxPx = isScript ? BASE_PX[fontSize].script : BASE_PX[fontSize].latin;
+  const scale = useViewportScale();
+  const maxPx = Math.max(
+    MIN_PX,
+    Math.round((isScript ? BASE_PX[fontSize].script : BASE_PX[fontSize].latin) * scale),
+  );
 
   const meanings = React.useMemo(() => splitMeanings(card.content), [card.content]);
   const hasMultiple = meanings.length > 1;
@@ -113,7 +128,7 @@ export const Card: React.FC<CardProps> = ({
       ref={cardRef}
       onClick={handleClick}
       className={cn(
-        'relative flex flex-col items-center justify-center h-[100px] w-full overflow-hidden p-3 rounded-lg cursor-pointer transition-all duration-300 z-0',
+        'relative flex flex-col items-center justify-center h-[68px] sm:h-[88px] md:h-[100px] w-full overflow-hidden p-1.5 sm:p-2.5 md:p-3 rounded-lg cursor-pointer transition-all duration-300 z-0',
         background,
         card.isSelected && !card.isMatched && 'z-10',
         card.isMatched && 'card-matched opacity-50 cursor-default',
@@ -123,8 +138,8 @@ export const Card: React.FC<CardProps> = ({
       {showRomanization && card.romanization && (
         <span
           className={cn(
-            'pointer-events-none absolute left-2 right-2 top-1.5 text-foreground/70 font-medium leading-none text-center truncate',
-            sizes.rom,
+            'pointer-events-none absolute left-1.5 right-1.5 top-1 sm:left-2 sm:right-2 sm:top-1.5 text-foreground/70 font-medium leading-none text-center truncate text-[9px] sm:text-[11px]',
+            fontSize === 'large' ? 'md:text-sm' : 'md:text-xs',
           )}
         >
           {card.romanization}
@@ -137,7 +152,7 @@ export const Card: React.FC<CardProps> = ({
         style={{ fontSize: `${px}px` }}
         className={cn(
           'w-full h-full flex items-center justify-center text-center font-medium text-foreground leading-[1.15] break-words hyphens-auto overflow-hidden',
-          showRomanization && card.romanization && 'pt-4',
+          showRomanization && card.romanization && 'pt-2.5 sm:pt-4',
           language.fontClass,
           language.romanizationOf && 'italic',
         )}
