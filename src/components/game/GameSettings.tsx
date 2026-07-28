@@ -16,6 +16,7 @@ interface GameSettingsProps {
   onColumnMuteChange: (lang: string, mute: boolean) => void;
   onColumnRomanizationChange: (lang: string, show: boolean) => void;
   onColumnColorChange?: (lang: string, colorIndex: number) => void;
+  onColumnFontSizeChange?: (lang: string, size: FontSize) => void;
   onOpenLanguages: () => void;
   onOpenWordEditor: () => void;
   muteSfx?: boolean;
