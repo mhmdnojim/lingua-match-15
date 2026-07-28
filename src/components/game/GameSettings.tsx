@@ -193,7 +193,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         </button>
         <div
           className={cn(
-            'absolute left-0 top-full z-40 mt-1 flex w-max flex-col gap-1 rounded-lg border border-border bg-popover p-1.5 shadow-lg transition-all duration-200',
+            'absolute left-0 top-full z-40 mt-1 flex w-max flex-row items-start gap-2 rounded-lg border border-border bg-popover p-1.5 shadow-lg transition-all duration-200',
             colsOpen ? 'visible opacity-100' : 'invisible opacity-0',
           )}
         >
@@ -202,8 +202,8 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
             const style = columnStyle(column.colorIndex ?? index);
             const canRomanize = Boolean(language.romanizationLabel);
             return (
-              <div key={`col-${column.lang}`} className="flex items-center gap-1">
-                <span className={cn('w-14 shrink-0 truncate text-xs font-semibold uppercase', style.text)}>
+              <div key={`col-${column.lang}`} className="flex flex-col items-center gap-1">
+                <span className={cn('w-9 shrink-0 truncate text-center text-xs font-semibold uppercase', style.text)}>
                   {language.short}
                 </span>
 
