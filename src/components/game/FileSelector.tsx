@@ -33,6 +33,7 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
   className,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
