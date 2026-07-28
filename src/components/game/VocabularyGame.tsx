@@ -800,7 +800,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       const romCode = romanizationCodeFor(lang);
       const fromFile = Boolean(romCode && fileRomanizations.has(romCode));
       return existing
-        ? { ...existing, showRomanization: (existing.showRomanization || fromFile) && hasRomanization(lang) }
+        ? { ...existing, showRomanization: (existing.showRomanization && hasRomanization(lang)) || fromFile }
         : { lang, visible: true, muted: false, showRomanization: fromFile };
     });
 
