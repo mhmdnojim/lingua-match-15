@@ -85,7 +85,13 @@ export const MeaningsPanel: React.FC<MeaningsPanelProps> = ({
 
   return createPortal(
     <>
-      <div className="fixed inset-0 z-40" onClick={onClose} />
+      <div
+        className="fixed inset-0 z-40"
+        onClick={e => {
+          e.stopPropagation();
+          onClose();
+        }}
+      />
       <div
         ref={panelRef}
         style={{ left: pos.x, top: pos.y, width: PANEL_WIDTH }}
