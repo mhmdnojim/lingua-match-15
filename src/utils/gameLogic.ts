@@ -10,6 +10,8 @@ export interface ColumnConfig {
   showRomanization: boolean;
   /** overrides the default position-based card color (index into COLUMN_STYLES) */
   colorIndex?: number;
+  /** overrides the global font size for this column only */
+  fontSize?: 'small' | 'medium' | 'large' | 'x-large';
 }
 
 export interface GameCard {
