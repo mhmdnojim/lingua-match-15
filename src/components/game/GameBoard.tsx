@@ -36,6 +36,8 @@ interface GameBoardProps {
   /** change the language of a column straight from its title */
   onColumnLangChange?: (index: number, lang: string) => void;
   regeneratingIds?: string[];
+  /** card ids currently blinking from a hint */
+  hintedIds?: string[];
 }
 
 export const GameBoard: React.FC<GameBoardProps> = ({
