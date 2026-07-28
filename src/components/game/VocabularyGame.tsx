@@ -16,6 +16,9 @@ import {
   sortVocabulary,
   shuffleVocabulary,
   calculateAccuracy,
+  valueFor,
+  romanizationFor,
+
 } from '@/utils/gameLogic';
 import {
   saveProgress,
