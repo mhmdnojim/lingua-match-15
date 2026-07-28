@@ -1250,8 +1250,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
 
   return (
-    <div className={cn('min-h-screen bg-background p-4 md:p-6', className)}>
-      <div className="max-w-6xl mx-auto space-y-3">
+    <div className={cn('min-h-screen bg-background p-2 md:p-4', className)}>
+      <div className="max-w-6xl mx-auto space-y-1">
         {/* Collapsible top chrome — folds away so only the cards remain */}
         <div
           className={cn(
