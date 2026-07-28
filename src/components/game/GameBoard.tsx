@@ -83,8 +83,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         return (
           <div key={column.lang} className="flex flex-col gap-3">
             {onColumnLangChange ? (
-              <div className="mb-2 flex flex-col items-start">
-                <span className="h-4 pl-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+              <div className="mb-2 flex w-full flex-col items-start">
+                <span className="h-4 text-[10px] uppercase tracking-wider text-muted-foreground">
                   {originalIndex === 0 ? 'main' : ''}
                 </span>
                 <Select value={column.lang} onValueChange={value => onColumnLangChange(originalIndex, value)}>
@@ -92,12 +92,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   <SelectTrigger
                     aria-label={`Language for column ${originalIndex + 1}`}
                     className={cn(
-                      'h-8 w-auto max-w-full gap-1 border-transparent bg-transparent px-2 text-sm font-medium uppercase tracking-wider hover:border-border focus:ring-2 focus:ring-primary',
+                      'h-8 w-full justify-between gap-1 overflow-hidden border-transparent bg-transparent px-0 text-left text-sm font-medium uppercase tracking-wider [&>span]:truncate hover:border-border focus:ring-2 focus:ring-primary',
                       style.text,
                     )}
                   >
                     <SelectValue />
                   </SelectTrigger>
+
                   <SelectContent className="max-h-72">
                     {(() => {
                       const base = originalIndex === 0 ? MAIN_LANGUAGES : PICKABLE_LANGUAGES;
