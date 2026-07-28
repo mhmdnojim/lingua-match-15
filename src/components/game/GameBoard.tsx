@@ -83,7 +83,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     <>
     <div
       className={cn(
-        'grid gap-4 md:gap-6',
+        'grid gap-x-2 gap-y-1.5 md:gap-x-4 md:gap-y-2',
         count <= 1 && 'grid-cols-1 max-w-md mx-auto',
         count === 2 && 'grid-cols-2',
         count === 3 && 'grid-cols-3',
