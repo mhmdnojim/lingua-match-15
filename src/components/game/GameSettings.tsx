@@ -140,26 +140,6 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         <span className="hidden sm:inline text-center w-[3.75rem]">{shuffleMode ? 'Shuffle' : 'Order'}</span>
       </button>
 
-      {/* Daily Mode — seeded sequence, identical all day */}
-      <button
-        onClick={() => onDailyModeChange?.(!dailyMode)}
-        disabled={disabled}
-        className={cn(
-          'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
-          dailyMode
-            ? 'bg-primary border-primary text-primary-foreground'
-            : 'bg-secondary border-border text-muted-foreground hover:text-foreground',
-          disabled && 'opacity-50 cursor-not-allowed',
-        )}
-        title={
-          dailyMode
-            ? "Daily mode on — today's sequence is fixed and repeats until tomorrow"
-            : 'Daily mode off — a new random sequence every time'
-        }
-      >
-        <CalendarClock className="w-4 h-4 shrink-0" />
-        <span className="hidden sm:inline text-center w-[3.75rem]">{dailyMode ? 'Daily' : 'Random'}</span>
-      </button>
 
 
 
