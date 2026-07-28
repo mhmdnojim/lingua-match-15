@@ -17,24 +17,6 @@ interface CardProps {
   onSpeak?: (card: GameCard) => void;
 }
 
-const FONT_SIZES: Record<FontSize, { script: string[]; latin: string[]; rom: string }> = {
-  small: {
-    script: ['text-2xl md:text-3xl', 'text-xl md:text-2xl', 'text-lg', 'text-base', 'text-sm'],
-    latin: ['text-base md:text-lg', 'text-sm md:text-base', 'text-sm', 'text-xs', 'text-[11px]'],
-    rom: 'text-xs',
-  },
-  medium: {
-    script: ['text-3xl md:text-4xl', 'text-2xl md:text-3xl', 'text-xl', 'text-lg', 'text-base'],
-    latin: ['text-lg md:text-xl', 'text-base md:text-lg', 'text-sm md:text-base', 'text-sm', 'text-xs'],
-    rom: 'text-sm',
-  },
-  large: {
-    script: ['text-4xl md:text-5xl', 'text-3xl md:text-4xl', 'text-2xl md:text-3xl', 'text-xl', 'text-lg'],
-    latin: ['text-xl md:text-2xl', 'text-lg md:text-xl', 'text-base md:text-lg', 'text-sm md:text-base', 'text-sm'],
-    rom: 'text-base',
-  },
-};
-
 /** Base (max) font size in px per size preset */
 const BASE_PX: Record<FontSize, { script: number; latin: number }> = {
   small: { script: 26, latin: 17 },
@@ -108,7 +90,6 @@ export const Card: React.FC<CardProps> = ({
 }) => {
   const language = getLanguage(card.lang);
   const style = columnStyle(columnIndex);
-  const sizes = FONT_SIZES[fontSize];
   const isScript = Boolean(language.fontClass) || Boolean(language.rtl);
   const scale = useViewportScale();
   const maxPx = Math.max(
