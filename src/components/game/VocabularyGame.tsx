@@ -127,11 +127,15 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     words: string[];
   } | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
-  const [languagesOpen, setLanguagesOpen] = useState(savedUi.languagesOpen);
-  const [wordEditorOpen, setWordEditorOpen] = useState(savedUi.wordEditorOpen);
-  const [settingsOpen, setSettingsOpen] = useState(savedUi.settingsOpen);
+  /** On phones every menu starts folded so the board gets the whole screen */
+  const isSmallScreen =
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
+  const [languagesOpen, setLanguagesOpen] = useState(!isSmallScreen && savedUi.languagesOpen);
+  const [wordEditorOpen, setWordEditorOpen] = useState(!isSmallScreen && savedUi.wordEditorOpen);
+  const [settingsOpen, setSettingsOpen] = useState(!isSmallScreen && savedUi.settingsOpen);
   /** Top chrome (title, options, stats, progress) — collapsed for distraction-free play */
   const [headerOpen, setHeaderOpen] = useState(savedUi.headerOpen);
+
   const [pendingSheet, setPendingSheet] = useState<SheetData | null>(null);
   const [pendingQueue, setPendingQueue] = useState<SheetData[]>([]);
 
