@@ -137,20 +137,6 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
 
 
 
-      {/* Translate everything that is still missing, right now */}
-      <button
-        onClick={onTranslateWholeFile}
-        disabled={disabled || translating}
-        className={cn(
-          'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
-          'bg-secondary border-border text-muted-foreground hover:text-foreground',
-          (disabled || translating) && 'opacity-50 cursor-not-allowed',
-        )}
-        title="Translate every remaining word in this file now"
-      >
-        <Wand2 className="w-4 h-4 shrink-0" />
-        <span className="hidden sm:inline">Translate rest</span>
-      </button>
 
       {/* Per-column controls — one row per column with all of its toggles */}
       <div className="relative flex items-center gap-1 rounded-lg bg-secondary p-1" title="Per-column controls">
