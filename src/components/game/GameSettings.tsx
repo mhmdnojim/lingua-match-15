@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered, Languages, Pencil, SlidersHorizontal, ChevronUp, ChevronDown, Columns3, Wand2, Palette } from 'lucide-react';
 import { ColumnConfig } from '@/utils/gameLogic';
-import { getLanguage, columnStyle } from '@/utils/languages';
+import { getLanguage, columnStyle, COLUMN_COLOR_COUNT } from '@/utils/languages';
 import { THEMES } from '@/utils/themes';
 
 export type VoiceType = 'free' | 'premium';
@@ -15,6 +15,7 @@ interface GameSettingsProps {
   onColumnVisibilityChange: (lang: string, visible: boolean) => void;
   onColumnMuteChange: (lang: string, mute: boolean) => void;
   onColumnRomanizationChange: (lang: string, show: boolean) => void;
+  onColumnColorChange?: (lang: string, colorIndex: number) => void;
   onOpenLanguages: () => void;
   onOpenWordEditor: () => void;
   muteSfx?: boolean;
@@ -54,6 +55,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   onColumnVisibilityChange,
   onColumnMuteChange,
   onColumnRomanizationChange,
+  onColumnColorChange,
   onOpenLanguages,
   onOpenWordEditor,
   muteSfx = false,
@@ -81,10 +83,8 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   const [themeOpen, setThemeOpen] = React.useState(false);
   const activeTheme = THEMES.find(t => t.id === themeId);
 
-  /** Each per-column group (transliteration / visibility / voice) expands on its own */
-  const [romOpen, setRomOpen] = useState(false);
-  const [visOpen, setVisOpen] = useState(false);
-  const [muteOpen, setMuteOpen] = useState(false);
+  /** Per-column control rows (transliteration / visibility / voice / color) */
+  const [colsOpen, setColsOpen] = useState(false);
 
 
   return (
