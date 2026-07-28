@@ -129,7 +129,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                       return [...current, ...otherColumnItems, ...ready, ...rest].map(option => ({
                         ...option,
                         isReady: readyLangs.includes(option.code),
+                        hasTranslit: (() => {
+                          const rom = romanizationCodeFor(option.code);
+                          return Boolean(rom && readyLangs.includes(rom));
+                        })(),
                       }));
+
                     })().map(option => (
                       <SelectPrimitive.Item
                         key={option.code}
