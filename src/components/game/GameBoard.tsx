@@ -152,6 +152,15 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                         {option.isReady && (
                           <span className="ml-1.5 rounded bg-primary/15 px-1 text-[10px] uppercase text-primary">ready</span>
                         )}
+                        {option.hasTranslit && (
+                          <span
+                            className="ml-1.5 rounded bg-accent px-1 text-[10px] uppercase text-accent-foreground"
+                            title="Transliteration available in your file"
+                          >
+                            Aa
+                          </span>
+                        )}
+
                         {option.code !== column.lang && columns.some(c => c.lang === option.code) && (
                           <span className="ml-1.5 rounded bg-muted px-1 text-[10px] uppercase text-muted-foreground">swap</span>
                         )}
