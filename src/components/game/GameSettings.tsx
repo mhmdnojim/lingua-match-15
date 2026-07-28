@@ -57,6 +57,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   onColumnMuteChange,
   onColumnRomanizationChange,
   onColumnColorChange,
+  onColumnFontSizeChange,
   onOpenLanguages,
   onOpenWordEditor,
   muteSfx = false,
