@@ -4,7 +4,7 @@ import { GameCard } from '@/utils/gameLogic';
 import { getLanguage, columnStyle } from '@/utils/languages';
 import { splitMeanings, joinMeanings, useMeaningSelection } from '@/utils/meanings';
 import MeaningsPanel from './MeaningsPanel';
-import { Volume2, Layers } from 'lucide-react';
+import { Layers } from 'lucide-react';
 
 export type FontSize = 'small' | 'medium' | 'large';
 
@@ -157,22 +157,6 @@ export const Card: React.FC<CardProps> = ({
         >
           <Layers className="h-4 w-4 text-foreground" />
           <span className="text-[10px] font-semibold leading-none text-foreground">{meanings.length}</span>
-        </button>
-      )}
-
-      {onSpeak && !card.isMatched && (
-        <button
-          onClick={e => {
-            e.stopPropagation();
-            speakCard();
-          }}
-          className={cn(
-            'absolute -top-1 p-2 rounded-full bg-background/80 backdrop-blur-sm shadow-md ring-1 ring-foreground/20 hover:bg-background hover:scale-110 opacity-90 hover:opacity-100 transition-all z-20',
-            hasMultiple ? 'right-8' : '-right-1',
-          )}
-          aria-label="Speak"
-        >
-          <Volume2 className="w-4 h-4 text-foreground" />
         </button>
       )}
 
