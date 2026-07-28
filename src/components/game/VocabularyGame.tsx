@@ -1350,6 +1350,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onColumnMuteChange={handleColumnMuteChange}
           onColumnRomanizationChange={handleColumnRomanizationChange}
           onColumnColorChange={handleColumnColorChange}
+          onColumnFontSizeChange={handleColumnFontSizeChange}
           onOpenLanguages={() => setLanguagesOpen(true)}
           onOpenWordEditor={() => setWordEditorOpen(true)}
           muteSfx={muteSfx}
