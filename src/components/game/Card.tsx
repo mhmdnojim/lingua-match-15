@@ -2,7 +2,9 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { GameCard } from '@/utils/gameLogic';
 import { getLanguage, columnStyle } from '@/utils/languages';
-import { Volume2 } from 'lucide-react';
+import { splitMeanings, joinMeanings, useMeaningSelection } from '@/utils/meanings';
+import MeaningsPanel from './MeaningsPanel';
+import { Volume2, Layers } from 'lucide-react';
 
 export type FontSize = 'small' | 'medium' | 'large';
 
