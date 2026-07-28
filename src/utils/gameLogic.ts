@@ -25,10 +25,42 @@ export interface GameCard {
   isError: boolean;
 }
 
-export function shuffleArray<T>(array: T[]): T[] {
+/** Random source: returns a float in [0, 1). Defaults to Math.random */
+export type RandomFn = () => number;
+
+/** Deterministic PRNG (mulberry32) — same seed always yields the same sequence */
+export function createSeededRandom(seed: string): RandomFn {
+  // xfnv1a string hash
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  let a = h >>> 0;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Local calendar day key (YYYY-MM-DD) used to keep a daily sequence stable */
+export function todayKey(date: Date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/** Seed string for Daily Mode — stable for the whole day and per dataset/scope */
+export function dailySeed(...parts: (string | number)[]): string {
+  return [todayKey(), ...parts].join('|');
+}
+
+export function shuffleArray<T>(array: T[], rand: RandomFn = Math.random): T[] {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rand() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;
