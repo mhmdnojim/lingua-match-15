@@ -36,6 +36,8 @@ interface GameBoardProps {
   /** change the language of a column straight from its title */
   onColumnLangChange?: (index: number, lang: string) => void;
   regeneratingIds?: string[];
+  /** card ids currently blinking from a hint */
+  hintedIds?: string[];
 }
 
 export const GameBoard: React.FC<GameBoardProps> = ({
@@ -52,6 +54,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   onEditCard,
   onColumnLangChange,
   regeneratingIds = [],
+  hintedIds = [],
 }) => {
 
   const [editingId, setEditingId] = React.useState<string | null>(null);
@@ -208,6 +211,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   columnIndex={column.colorIndex ?? originalIndex}
                   showRomanization={column.showRomanization}
                   fontSize={column.fontSize ?? fontSize}
+                  isHinted={hintedIds.includes(card.id)}
                   onClick={onCardClick}
                   onSpeak={column.muted ? undefined : onSpeak}
                 />

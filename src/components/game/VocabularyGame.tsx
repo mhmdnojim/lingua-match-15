@@ -962,26 +962,25 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     [columns, speak],
   );
 
+  const [hintedIds, setHintedIds] = useState<string[]>([]);
+  const hintTimer = useRef<number | null>(null);
+
   const handleHint = useCallback(
     (card: GameCard) => {
       const vocabId = card.vocabId;
-      const highlighted: GameCard[] = [];
       setCards(prev => {
-        const next: Record<string, GameCard[]> = {};
-        Object.entries(prev).forEach(([lang, list]) => {
-          next[lang] = list.map(c => {
-            if (c.vocabId === vocabId && !c.isMatched) {
-              const updated = { ...c, isSelected: true };
-              highlighted.push(updated);
-              return updated;
-            }
-            return c;
+        const ids: string[] = [];
+        Object.values(prev).forEach(list => {
+          list.forEach(c => {
+            if (c.vocabId === vocabId && !c.isMatched) ids.push(c.id);
           });
         });
-        return next;
+        setHintedIds(ids);
+        return prev;
       });
-      setSelectedCards(highlighted);
-      toast({ title: 'Hint used', description: 'Matching cards highlighted! -5 points' });
+      if (hintTimer.current) window.clearTimeout(hintTimer.current);
+      hintTimer.current = window.setTimeout(() => setHintedIds([]), 2500);
+      toast({ title: 'Hint used', description: 'Matching cards are blinking — pick them yourself. -5 points' });
       setScore(s => Math.max(0, s - 5));
       setBatchScore(s => Math.max(0, s - 5));
     },
@@ -1512,6 +1511,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               onEditCard={handleCardEdit}
               onColumnLangChange={handleColumnLangChange}
               regeneratingIds={regeneratingCards}
+              hintedIds={hintedIds}
 
             />
           </>

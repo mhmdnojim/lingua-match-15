@@ -13,6 +13,8 @@ interface CardProps {
   columnIndex: number;
   showRomanization?: boolean;
   fontSize?: FontSize;
+  /** hint mode: blink this card without selecting or matching it */
+  isHinted?: boolean;
   onClick: (card: GameCard) => void;
   onSpeak?: (card: GameCard) => void;
 }
@@ -86,6 +88,7 @@ export const Card: React.FC<CardProps> = ({
   columnIndex,
   showRomanization = true,
   fontSize = 'medium',
+  isHinted = false,
   onClick,
   onSpeak,
 }) => {
@@ -134,6 +137,7 @@ export const Card: React.FC<CardProps> = ({
         card.isSelected && !card.isMatched && 'z-10',
         card.isMatched && 'card-matched opacity-50 cursor-default',
         card.isError && 'card-shake',
+        isHinted && !card.isMatched && 'animate-pulse ring-4 ring-foreground/60 z-10',
       )}
     >
       {showRomanization && card.romanization && (
