@@ -64,6 +64,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
 
   return (
+    <>
     <div
       className={cn(
         'grid gap-4 md:gap-6',
