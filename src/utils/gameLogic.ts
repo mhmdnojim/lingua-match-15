@@ -97,7 +97,7 @@ export function smartShuffle<T>(array: T[], keyOf: (item: T) => string, rand: Ra
     }
     if (valid.length === 0) valid = initials;
 
-    const chosen = valid[Math.floor(Math.random() * valid.length)];
+    const chosen = valid[Math.floor(rand() * valid.length)];
     const group = available.get(chosen)!;
     result.push(group.shift()!);
 
