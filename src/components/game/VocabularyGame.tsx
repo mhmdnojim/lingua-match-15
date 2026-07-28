@@ -988,14 +988,23 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         setHintedIds(ids);
         return prev;
       });
+      // Always pronounce the word in the MAIN language (the source it was translated from)
+      const mainColumn = columns[0];
+      if (mainColumn && !mainColumn.muted) {
+        const item = vocabulary.find(v => v.id === vocabId);
+        const mainText = (item?.values?.[mainColumn.lang] || '').trim();
+        if (mainText) speak(mainText, mainColumn.lang);
+      }
       if (hintTimer.current) window.clearTimeout(hintTimer.current);
       hintTimer.current = window.setTimeout(() => setHintedIds([]), 2500);
       toast({ title: 'Hint used', description: 'Matching cards are blinking — pick them yourself. -5 points' });
       setScore(s => Math.max(0, s - 5));
       setBatchScore(s => Math.max(0, s - 5));
     },
-    [toast],
+    [toast, columns, vocabulary, speak],
+
   );
+
 
   const updateCardSelection = (cardId: string, isSelected: boolean) => {
     setCards(prev => {
