@@ -250,7 +250,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       setBatches([]);
       return;
     }
-    const ordered = shuffleMode ? shuffleVocabulary(vocabulary, mainLang) : sortVocabulary(vocabulary, mainLang);
+    // Order mode: keep the original file order so batches are fixed and sequential.
+    // Shuffle mode: shuffle the whole dataset so batches mix words from anywhere in the file.
+    const ordered = shuffleMode ? shuffleVocabulary(vocabulary, mainLang) : [...vocabulary];
     setBatches(createBatches(ordered, batchSize));
   }, [vocabulary, shuffleMode, mainLang, batchSize]);
 
