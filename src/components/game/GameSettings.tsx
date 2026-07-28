@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered, Languages, Pencil, SlidersHorizontal, ChevronUp, ChevronDown, Columns3, Wand2, Palette } from 'lucide-react';
+import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered, SlidersHorizontal, ChevronUp, ChevronDown, Columns3, Palette } from 'lucide-react';
 import { ColumnConfig } from '@/utils/gameLogic';
 import { getLanguage, columnStyle, COLUMN_COLOR_COUNT } from '@/utils/languages';
 import { THEMES, nextThemeId, getTheme } from '@/utils/themes';
@@ -115,35 +115,8 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
       {settingsOpen && (
         <div className="flex flex-wrap items-center justify-start gap-2 rounded-lg border border-border bg-card/60 p-2">
       {extraControls}
-      {/* Language / column setup */}
-      <button
-        onClick={onOpenLanguages}
-        disabled={disabled}
-        className={cn(
-          'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
-          'bg-primary border-primary text-primary-foreground hover:opacity-90',
-          disabled && 'opacity-50 cursor-not-allowed',
-        )}
-        title="Choose the language of each column"
-      >
-        <Languages className="w-4 h-4 shrink-0" />
-        <span className="hidden sm:inline">Languages</span>
-      </button>
 
-      {/* Word editor */}
-      <button
-        onClick={onOpenWordEditor}
-        disabled={disabled}
-        className={cn(
-          'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
-          'bg-secondary border-border text-muted-foreground hover:text-foreground',
-          disabled && 'opacity-50 cursor-not-allowed',
-        )}
-        title="Edit or regenerate translations"
-      >
-        <Pencil className="w-4 h-4 shrink-0" />
-        <span className="hidden sm:inline">Words</span>
-      </button>
+
 
       {/* Shuffle/Order Toggle */}
       <button
@@ -164,20 +137,6 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
 
 
 
-      {/* Translate everything that is still missing, right now */}
-      <button
-        onClick={onTranslateWholeFile}
-        disabled={disabled || translating}
-        className={cn(
-          'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
-          'bg-secondary border-border text-muted-foreground hover:text-foreground',
-          (disabled || translating) && 'opacity-50 cursor-not-allowed',
-        )}
-        title="Translate every remaining word in this file now"
-      >
-        <Wand2 className="w-4 h-4 shrink-0" />
-        <span className="hidden sm:inline">Translate rest</span>
-      </button>
 
       {/* Per-column controls — one row per column with all of its toggles */}
       <div className="relative flex items-center gap-1 rounded-lg bg-secondary p-1" title="Per-column controls">
