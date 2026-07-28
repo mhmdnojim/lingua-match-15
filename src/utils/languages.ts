@@ -88,10 +88,15 @@ export function getLanguage(code: string): LanguageDef {
 /** Real languages only — transliterations are never their own column, they render above the word */
 export const MAIN_LANGUAGES = LANGUAGES.filter(l => !l.romanizationOf);
 
-/** Languages that can be picked as a column — each real language followed immediately by its romanization variants */
+/**
+ * Languages that can be picked as a column — each real language followed immediately by its
+ * romanization variants. Every language gets one: predefined (pinyin, romaji…) or a synthesized
+ * "<code>-latin" transliteration, so files with "German Latin" / "French Latin" columns map cleanly.
+ */
 export const PICKABLE_LANGUAGES = MAIN_LANGUAGES.flatMap(lang => {
   const variants = LANGUAGES.filter(l => l.romanizationOf === lang.code);
-  return variants.length ? [lang, ...variants] : [lang];
+  if (variants.length) return [lang, ...variants];
+  return [lang, getLanguage(`${lang.code}-latin`)];
 });
 
 /** Every real language can carry a transliteration column (files may provide one even for Latin scripts) */
