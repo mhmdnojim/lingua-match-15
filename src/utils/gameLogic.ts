@@ -133,14 +133,20 @@ export function sortVocabulary(items: VocabularyItem[], mainLang: string): Vocab
 }
 
 /** Shuffle the whole dataset so the batches themselves contain different groupings */
-export function shuffleVocabulary(items: VocabularyItem[], mainLang: string): VocabularyItem[] {
-  return smartShuffle(items, item => sortKey(item, mainLang));
+export function shuffleVocabulary(
+  items: VocabularyItem[],
+  mainLang: string,
+  rand: RandomFn = Math.random,
+): VocabularyItem[] {
+  return smartShuffle(items, item => sortKey(item, mainLang), rand);
 }
 
 export function createColumnCards(
   items: VocabularyItem[],
   columns: ColumnConfig[],
   shuffle: boolean,
+  /** When set, dealing is deterministic — the same seed always deals the same board */
+  seed?: string,
 ): Record<string, GameCard[]> {
   const result: Record<string, GameCard[]> = {};
 
@@ -158,8 +164,9 @@ export function createColumnCards(
       }))
       .filter(card => card.content.length > 0);
 
+    const rand = seed ? createSeededRandom(`${seed}|${column.lang}`) : Math.random;
     result[column.lang] = shuffle
-      ? smartShuffle(cards, card => card.romanization || card.content)
+      ? smartShuffle(cards, card => card.romanization || card.content, rand)
       : cards;
   });
 
