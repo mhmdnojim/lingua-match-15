@@ -15,6 +15,8 @@ import {
   createColumnCards,
   
   shuffleVocabulary,
+  createSeededRandom,
+  dailySeed,
   calculateAccuracy,
   valueFor,
   romanizationFor,
@@ -101,6 +103,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [currentBatch, setCurrentBatch] = useState(savedProgress.currentBatch);
   const [completedBatches, setCompletedBatches] = useState<number[]>(savedProgress.completedBatches);
   const [shuffleMode, setShuffleMode] = useState(savedProgress.shuffleMode);
+  /** Daily mode: the whole day uses one seeded sequence so progression is reproducible */
+  const [dailyMode, setDailyMode] = useState(savedProgress.dailyMode);
   const [translateScope, setTranslateScope] = useState<'batch' | 'all'>(savedProgress.translateScope);
   /** Asks whether to translate the whole file or batch by batch when a language has no data yet */
   const [scopePrompt, setScopePrompt] = useState<{ count: number; lang: string } | null>(null);
@@ -236,8 +240,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
   // Persist settings
   useEffect(() => {
-    saveProgress({ muteSfx, voiceType, fontSize, columns, shuffleMode, translateScope });
-  }, [muteSfx, voiceType, fontSize, columns, shuffleMode, translateScope]);
+    saveProgress({ muteSfx, voiceType, fontSize, columns, shuffleMode, dailyMode, translateScope });
+  }, [muteSfx, voiceType, fontSize, columns, shuffleMode, dailyMode, translateScope]);
 
   // Remember which dialogs were open
   useEffect(() => {
@@ -252,9 +256,12 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     }
     // Order mode: keep the original file order so batches are fixed and sequential.
     // Shuffle mode: shuffle the whole dataset so batches mix words from anywhere in the file.
-    const ordered = shuffleMode ? shuffleVocabulary(vocabulary, mainLang) : [...vocabulary];
+    // Daily mode seeds the shuffle with today's date, so the sequence is identical
+    // for the rest of the day (and changes automatically tomorrow).
+    const rand = dailyMode ? createSeededRandom(dailySeed(cloudSource, mainLang, 'order')) : Math.random;
+    const ordered = shuffleMode ? shuffleVocabulary(vocabulary, mainLang, rand) : [...vocabulary];
     setBatches(createBatches(ordered, batchSize));
-  }, [vocabulary, shuffleMode, mainLang, batchSize]);
+  }, [vocabulary, shuffleMode, dailyMode, cloudSource, mainLang, batchSize]);
 
   const cancelTranslationRef = useRef(false);
   /** true once the user pressed Stop — blocks automatic translation for every file until resumed */
@@ -555,7 +562,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     (batchIndex: number) => {
       const batch = batches[batchIndex];
       if (!batch) return;
-      setCards(createColumnCards(batch, columns, true));
+      const dealSeed = dailyMode ? dailySeed(cloudSource, mainLang, 'deal', batchIndex) : undefined;
+      setCards(createColumnCards(batch, columns, true, dealSeed));
       setSelectedCards([]);
       setMatchedPairs(0);
       setTime(0);
@@ -564,7 +572,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       setBatchScore(0);
       setGameStarted(true);
     },
-    [batches, columns, shuffleMode],
+    [batches, columns, shuffleMode, dailyMode, cloudSource, mainLang],
   );
 
   /**
@@ -1365,6 +1373,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           columns={columns}
           shuffleMode={shuffleMode}
           onShuffleModeChange={setShuffleMode}
+          dailyMode={dailyMode}
+          onDailyModeChange={setDailyMode}
           onColumnVisibilityChange={handleColumnVisibilityChange}
           onColumnMuteChange={handleColumnMuteChange}
           onColumnRomanizationChange={handleColumnRomanizationChange}
