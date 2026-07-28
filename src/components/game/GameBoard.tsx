@@ -54,6 +54,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   onEditCard,
   onColumnLangChange,
   regeneratingIds = [],
+  hintedIds = [],
 }) => {
 
   const [editingId, setEditingId] = React.useState<string | null>(null);
