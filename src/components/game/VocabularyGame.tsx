@@ -906,9 +906,27 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     setColumns(prev => prev.map(c => (c.lang === lang ? { ...c, muted } : c)));
   }, []);
 
-  const handleColumnRomanizationChange = useCallback((lang: string, showRomanization: boolean) => {
-    setColumns(prev => prev.map(c => (c.lang === lang ? { ...c, showRomanization } : c)));
-  }, []);
+  const handleColumnRomanizationChange = useCallback(
+    (lang: string, showRomanization: boolean) => {
+      setColumns(prev => prev.map(c => (c.lang === lang ? { ...c, showRomanization } : c)));
+
+      // Turning it on: generate the missing romanization/transliteration right away
+      if (!showRomanization) return;
+      const romCode = romanizationCodeFor(lang);
+      if (!romCode || isTranslating) return;
+      const scopeItems = translateScope === 'all' ? vocabulary : batches[currentBatch] || [];
+      const pending = scopeItems.filter(i => !(i.values[romCode] || '').trim());
+      if (pending.length === 0) return;
+      resumeTranslation();
+      translateMissing(
+        scopeItems,
+        [{ lang: romCode, visible: false, muted: true, showRomanization: false }],
+        lang,
+      );
+    },
+    [isTranslating, translateScope, vocabulary, batches, currentBatch, translateMissing, resumeTranslation],
+  );
+
 
   const handleSpeak = useCallback(
     (card: GameCard) => {
