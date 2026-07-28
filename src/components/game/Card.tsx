@@ -13,6 +13,8 @@ interface CardProps {
   columnIndex: number;
   showRomanization?: boolean;
   fontSize?: FontSize;
+  /** hint mode: blink this card without selecting or matching it */
+  isHinted?: boolean;
   onClick: (card: GameCard) => void;
   onSpeak?: (card: GameCard) => void;
 }
