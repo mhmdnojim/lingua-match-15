@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { useToast } from '@/hooks/use-toast';
 import { BookOpen, Loader2 } from 'lucide-react';
@@ -149,6 +150,9 @@ const Auth = () => {
             </svg>
             Continue with Google
           </Button>
+          <p className="text-center text-xs text-muted-foreground -mt-3">
+            Signs you in, or creates your account automatically if you're new.
+          </p>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -158,6 +162,18 @@ const Auth = () => {
               <span className="bg-card px-2 text-muted-foreground">or use email</span>
             </div>
           </div>
+
+          {mode !== 'reset' && (
+            <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="signin">Sign in</TabsTrigger>
+                <TabsTrigger value="signup">Sign up</TabsTrigger>
+              </TabsList>
+              <TabsContent value="signin" />
+              <TabsContent value="signup" />
+            </Tabs>
+          )}
+
 
 
 
