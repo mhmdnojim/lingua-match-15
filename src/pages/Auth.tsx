@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { useToast } from '@/hooks/use-toast';
 import { BookOpen, Loader2 } from 'lucide-react';
 
@@ -159,16 +159,8 @@ const Auth = () => {
             </div>
           </div>
 
-          {mode !== 'reset' && (
-            <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Sign in</TabsTrigger>
-                <TabsTrigger value="signup">Sign up</TabsTrigger>
-              </TabsList>
-              <TabsContent value="signin" />
-              <TabsContent value="signup" />
-            </Tabs>
-          )}
+
+
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
