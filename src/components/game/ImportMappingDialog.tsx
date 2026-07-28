@@ -43,9 +43,13 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
     if (!sheet) return;
     const initialMapping: ColumnMapping = {};
     const initialRoles: Record<string, ColumnRole> = {};
+    const usedLangs = new Set<string>();
     let mainTaken = false;
     sheet.headers.forEach((header, index) => {
-      const lang = sheet.detected[header] || 'ignore';
+      const detectedLang = sheet.detected[header] || 'ignore';
+      // never map two columns to the same language — keep the first one
+      const lang = detectedLang !== 'ignore' && usedLangs.has(detectedLang) ? 'ignore' : detectedLang;
+      if (lang !== 'ignore') usedLangs.add(lang);
       initialMapping[header] = lang;
       if (lang === 'ignore') {
         initialRoles[header] = 'extra';

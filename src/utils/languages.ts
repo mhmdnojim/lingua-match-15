@@ -180,12 +180,16 @@ export function detectLanguageFromHeader(header: string): string | null {
 
   const wantsRomanization = ROMANIZATION_HINT.test(raw);
 
-  /** Resolve a base language to its romanization code when the header asks for one */
+  /**
+   * Resolve a base language to its romanization code when the header asks for one.
+   * Latin-script languages (German, French, Vietnamese…) have no romanization, so a
+   * "German Latin" column is not a second German column — it is ignored.
+   */
   const withRomanization = (code: string | null): string | null => {
     if (!code) return null;
     if (!wantsRomanization) return code;
     if (getLanguage(code).romanizationOf) return code; // already a romanization
-    return romanizationCodeFor(code) ?? code;
+    return romanizationCodeFor(code);
   };
 
   // exact match first
