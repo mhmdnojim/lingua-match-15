@@ -106,28 +106,31 @@ export const Card: React.FC<CardProps> = ({
         card.isError && 'card-shake',
       )}
     >
-      <span
-        className={cn(
-          'text-foreground/70 mb-1 font-medium shrink-0 leading-none w-full text-center truncate',
-          sizes.rom,
-          (!showRomanization || !card.romanization) && 'invisible',
-        )}
-      >
-        {card.romanization || '\u00A0'}
-      </span>
+      {showRomanization && card.romanization && (
+        <span
+          className={cn(
+            'pointer-events-none absolute left-2 right-2 top-1.5 text-foreground/70 font-medium leading-none text-center truncate',
+            sizes.rom,
+          )}
+        >
+          {card.romanization}
+        </span>
+      )}
 
       <span
         ref={boxRef}
         dir={language.rtl ? 'rtl' : 'ltr'}
         style={{ fontSize: `${px}px` }}
         className={cn(
-          'w-full min-h-0 flex-1 flex items-center justify-center text-center font-medium text-foreground leading-[1.15] break-words hyphens-auto overflow-hidden',
+          'w-full h-full flex items-center justify-center text-center font-medium text-foreground leading-[1.15] break-words hyphens-auto overflow-hidden',
+          showRomanization && card.romanization && 'pt-4',
           language.fontClass,
           language.romanizationOf && 'italic',
         )}
       >
         {card.content}
       </span>
+
 
 
 
