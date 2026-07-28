@@ -144,10 +144,10 @@ export const Card: React.FC<CardProps> = ({
             e.stopPropagation();
             onSpeak(card);
           }}
-          className="absolute top-2 right-2 p-1.5 rounded-full bg-foreground/10 hover:bg-foreground/20 opacity-60 hover:opacity-100 transition-all"
+          className="absolute -top-1 -right-1 p-2 rounded-full bg-background/80 backdrop-blur-sm shadow-md ring-1 ring-foreground/20 hover:bg-background hover:scale-110 opacity-90 hover:opacity-100 transition-all z-20"
           aria-label="Speak"
         >
-          <Volume2 className="w-3.5 h-3.5 text-foreground/80" />
+          <Volume2 className="w-4 h-4 text-foreground" />
         </button>
       )}
 
