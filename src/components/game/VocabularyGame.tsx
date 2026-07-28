@@ -965,23 +965,16 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const handleHint = useCallback(
     (card: GameCard) => {
       const vocabId = card.vocabId;
-      const highlighted: GameCard[] = [];
-      setCards(prev => {
-        const next: Record<string, GameCard[]> = {};
-        Object.entries(prev).forEach(([lang, list]) => {
-          next[lang] = list.map(c => {
-            if (c.vocabId === vocabId && !c.isMatched) {
-              const updated = { ...c, isSelected: true };
-              highlighted.push(updated);
-              return updated;
-            }
-            return c;
-          });
+      const ids: string[] = [];
+      Object.values(cardsRef.current).forEach(list => {
+        list.forEach(c => {
+          if (c.vocabId === vocabId && !c.isMatched) ids.push(c.id);
         });
-        return next;
       });
-      setSelectedCards(highlighted);
-      toast({ title: 'Hint used', description: 'Matching cards highlighted! -5 points' });
+      setHintedIds(ids);
+      if (hintTimer.current) window.clearTimeout(hintTimer.current);
+      hintTimer.current = window.setTimeout(() => setHintedIds([]), 2500);
+      toast({ title: 'Hint used', description: 'Matching cards are blinking — pick them yourself. -5 points' });
       setScore(s => Math.max(0, s - 5));
       setBatchScore(s => Math.max(0, s - 5));
     },
