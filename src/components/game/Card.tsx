@@ -110,7 +110,11 @@ export const Card: React.FC<CardProps> = ({
   const style = columnStyle(columnIndex);
   const sizes = FONT_SIZES[fontSize];
   const isScript = Boolean(language.fontClass) || Boolean(language.rtl);
-  const maxPx = isScript ? BASE_PX[fontSize].script : BASE_PX[fontSize].latin;
+  const scale = useViewportScale();
+  const maxPx = Math.max(
+    MIN_PX,
+    Math.round((isScript ? BASE_PX[fontSize].script : BASE_PX[fontSize].latin) * scale),
+  );
 
   const meanings = React.useMemo(() => splitMeanings(card.content), [card.content]);
   const hasMultiple = meanings.length > 1;
@@ -143,7 +147,7 @@ export const Card: React.FC<CardProps> = ({
       ref={cardRef}
       onClick={handleClick}
       className={cn(
-        'relative flex flex-col items-center justify-center h-[100px] w-full overflow-hidden p-3 rounded-lg cursor-pointer transition-all duration-300 z-0',
+        'relative flex flex-col items-center justify-center h-[68px] xs:h-[76px] sm:h-[88px] md:h-[100px] w-full overflow-hidden p-1.5 sm:p-2.5 md:p-3 rounded-lg cursor-pointer transition-all duration-300 z-0',
         background,
         card.isSelected && !card.isMatched && 'z-10',
         card.isMatched && 'card-matched opacity-50 cursor-default',
@@ -153,8 +157,8 @@ export const Card: React.FC<CardProps> = ({
       {showRomanization && card.romanization && (
         <span
           className={cn(
-            'pointer-events-none absolute left-2 right-2 top-1.5 text-foreground/70 font-medium leading-none text-center truncate',
-            sizes.rom,
+            'pointer-events-none absolute left-1.5 right-1.5 top-1 sm:left-2 sm:right-2 sm:top-1.5 text-foreground/70 font-medium leading-none text-center truncate text-[9px] sm:text-[11px]',
+            'md:' + sizes.rom.replace('text-', 'text-'),
           )}
         >
           {card.romanization}
@@ -167,7 +171,7 @@ export const Card: React.FC<CardProps> = ({
         style={{ fontSize: `${px}px` }}
         className={cn(
           'w-full h-full flex items-center justify-center text-center font-medium text-foreground leading-[1.15] break-words hyphens-auto overflow-hidden',
-          showRomanization && card.romanization && 'pt-4',
+          showRomanization && card.romanization && 'pt-2.5 sm:pt-4',
           language.fontClass,
           language.romanizationOf && 'italic',
         )}
