@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered, Languages, Pencil, SlidersHorizontal, ChevronUp, ChevronDown, Columns3, Wand2, Palette } from 'lucide-react';
 import { ColumnConfig } from '@/utils/gameLogic';
 import { getLanguage, columnStyle, COLUMN_COLOR_COUNT } from '@/utils/languages';
-import { THEMES } from '@/utils/themes';
+import { THEMES, nextThemeId, getTheme } from '@/utils/themes';
 
 export type VoiceType = 'free' | 'premium';
 export type FontSize = 'small' | 'medium' | 'large' | 'x-large';
@@ -80,7 +80,6 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   onThemeChange,
 
 }) => {
-  const [themeOpen, setThemeOpen] = React.useState(false);
   const activeTheme = THEMES.find(t => t.id === themeId);
 
   /** Per-column control rows (transliteration / visibility / voice / color) */
@@ -346,52 +345,23 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
       })()}
 
 
-      {/* Theme picker (collapsible) */}
+      {/* Theme — single icon, each tap switches to the next theme */}
       {onThemeChange && (
-        <div className="relative flex items-center gap-1 rounded-lg bg-secondary p-1" title="Color theme">
-          <button
-            onClick={() => setThemeOpen(o => !o)}
-            className={cn(
-              'flex h-6 items-center gap-1 rounded-md px-1.5 transition-colors',
-              themeOpen ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
-            )}
-            title={themeOpen ? 'Hide themes' : 'Show themes'}
-            aria-expanded={themeOpen}
-          >
-            <Palette className="h-4 w-4 shrink-0" />
-            <ChevronUp className={cn('h-3 w-3 shrink-0 transition-transform', themeOpen ? 'rotate-90' : '-rotate-90')} />
-          </button>
+        <button
+          onClick={() => onThemeChange(nextThemeId(themeId))}
+          className="flex items-center gap-1.5 rounded-lg bg-secondary px-2 py-1.5 text-muted-foreground transition-all hover:text-foreground"
+          title={`Theme: ${activeTheme?.name ?? themeId} — tap for ${getTheme(nextThemeId(themeId)).name}`}
+          aria-label={`Theme ${activeTheme?.name ?? themeId}, tap to change`}
+        >
+          <Palette className="h-4 w-4 shrink-0" />
           {activeTheme && (
-            <span className="flex h-6 w-6 overflow-hidden rounded-full border border-primary">
+            <span className="flex h-4 w-4 shrink-0 overflow-hidden rounded-full border border-border">
               {activeTheme.swatch.map((color, i) => (
                 <span key={i} className="h-full flex-1" style={{ backgroundColor: `hsl(${color})` }} />
               ))}
             </span>
           )}
-          <div
-            className={cn(
-              'absolute left-0 top-full z-40 mt-1 flex items-center gap-1 rounded-lg border border-border bg-popover p-1 shadow-lg transition-all duration-200',
-              themeOpen ? 'visible opacity-100' : 'invisible opacity-0',
-            )}
-          >
-            {THEMES.map(theme => (
-              <button
-                key={theme.id}
-                onClick={() => onThemeChange(theme.id)}
-                title={theme.name}
-                aria-label={`${theme.name} theme`}
-                className={cn(
-                  'flex h-6 w-6 shrink-0 overflow-hidden rounded-full border transition-all',
-                  themeId === theme.id ? 'border-primary ring-2 ring-primary/60' : 'border-border hover:opacity-80',
-                )}
-              >
-                {theme.swatch.map((color, i) => (
-                  <span key={i} className="h-full flex-1" style={{ backgroundColor: `hsl(${color})` }} />
-                ))}
-              </button>
-            ))}
-          </div>
-        </div>
+        </button>
       )}
 
 
