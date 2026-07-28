@@ -25,10 +25,42 @@ export interface GameCard {
   isError: boolean;
 }
 
-export function shuffleArray<T>(array: T[]): T[] {
+/** Random source: returns a float in [0, 1). Defaults to Math.random */
+export type RandomFn = () => number;
+
+/** Deterministic PRNG (mulberry32) — same seed always yields the same sequence */
+export function createSeededRandom(seed: string): RandomFn {
+  // xfnv1a string hash
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  let a = h >>> 0;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Local calendar day key (YYYY-MM-DD) used to keep a daily sequence stable */
+export function todayKey(date: Date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/** Seed string for Daily Mode — stable for the whole day and per dataset/scope */
+export function dailySeed(...parts: (string | number)[]): string {
+  return [todayKey(), ...parts].join('|');
+}
+
+export function shuffleArray<T>(array: T[], rand: RandomFn = Math.random): T[] {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rand() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;
@@ -39,8 +71,8 @@ function firstLetter(text: string): string {
 }
 
 /** Shuffle with at most 2 consecutive items sharing the same initial letter */
-export function smartShuffle<T>(array: T[], keyOf: (item: T) => string): T[] {
-  if (array.length <= 2) return shuffleArray(array);
+export function smartShuffle<T>(array: T[], keyOf: (item: T) => string, rand: RandomFn = Math.random): T[] {
+  if (array.length <= 2) return shuffleArray(array, rand);
 
   const groups = new Map<string, T[]>();
   array.forEach(item => {
@@ -48,7 +80,7 @@ export function smartShuffle<T>(array: T[], keyOf: (item: T) => string): T[] {
     if (!groups.has(initial)) groups.set(initial, []);
     groups.get(initial)!.push(item);
   });
-  groups.forEach((items, key) => groups.set(key, shuffleArray(items)));
+  groups.forEach((items, key) => groups.set(key, shuffleArray(items, rand)));
 
   const result: T[] = [];
   const available = new Map(groups);
@@ -65,7 +97,7 @@ export function smartShuffle<T>(array: T[], keyOf: (item: T) => string): T[] {
     }
     if (valid.length === 0) valid = initials;
 
-    const chosen = valid[Math.floor(Math.random() * valid.length)];
+    const chosen = valid[Math.floor(rand() * valid.length)];
     const group = available.get(chosen)!;
     result.push(group.shift()!);
 
@@ -101,14 +133,20 @@ export function sortVocabulary(items: VocabularyItem[], mainLang: string): Vocab
 }
 
 /** Shuffle the whole dataset so the batches themselves contain different groupings */
-export function shuffleVocabulary(items: VocabularyItem[], mainLang: string): VocabularyItem[] {
-  return smartShuffle(items, item => sortKey(item, mainLang));
+export function shuffleVocabulary(
+  items: VocabularyItem[],
+  mainLang: string,
+  rand: RandomFn = Math.random,
+): VocabularyItem[] {
+  return smartShuffle(items, item => sortKey(item, mainLang), rand);
 }
 
 export function createColumnCards(
   items: VocabularyItem[],
   columns: ColumnConfig[],
   shuffle: boolean,
+  /** When set, dealing is deterministic — the same seed always deals the same board */
+  seed?: string,
 ): Record<string, GameCard[]> {
   const result: Record<string, GameCard[]> = {};
 
@@ -126,8 +164,9 @@ export function createColumnCards(
       }))
       .filter(card => card.content.length > 0);
 
+    const rand = seed ? createSeededRandom(`${seed}|${column.lang}`) : Math.random;
     result[column.lang] = shuffle
-      ? smartShuffle(cards, card => card.romanization || card.content)
+      ? smartShuffle(cards, card => card.romanization || card.content, rand)
       : cards;
   });
 

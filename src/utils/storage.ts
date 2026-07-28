@@ -19,6 +19,7 @@ const STORAGE_KEYS = {
   SHUFFLE_MODE: 'vocab-game-shuffle-mode',
   UI_STATE: 'vocab-game-ui-state',
   TRANSLATE_SCOPE: 'vocab-game-translate-scope',
+  DAILY_MODE: 'vocab-game-daily-mode',
 } as const;
 
 export interface GameProgress {
@@ -31,6 +32,8 @@ export interface GameProgress {
   fontSize: FontSize;
   columns: ColumnConfig[] | null;
   shuffleMode: boolean;
+  /** Seeded daily sequence — same order/shuffle all day long */
+  dailyMode: boolean;
   translateScope: TranslateScope;
 }
 
@@ -104,6 +107,9 @@ export function saveProgress(progress: Partial<GameProgress>): void {
     if (progress.shuffleMode !== undefined) {
       localStorage.setItem(STORAGE_KEYS.SHUFFLE_MODE, String(progress.shuffleMode));
     }
+    if (progress.dailyMode !== undefined) {
+      localStorage.setItem(STORAGE_KEYS.DAILY_MODE, String(progress.dailyMode));
+    }
     if (progress.columns !== undefined && progress.columns !== null) {
       localStorage.setItem(STORAGE_KEYS.COLUMNS, JSON.stringify(progress.columns));
     }
@@ -123,6 +129,7 @@ export function loadProgress(): GameProgress {
     fontSize: 'medium',
     columns: null,
     shuffleMode: true,
+    dailyMode: false,
     translateScope: 'batch',
   };
 
@@ -140,6 +147,7 @@ export function loadProgress(): GameProgress {
       fontSize: (localStorage.getItem(STORAGE_KEYS.FONT_SIZE) as FontSize) || 'medium',
       columns: columnsStr ? (JSON.parse(columnsStr) as ColumnConfig[]) : null,
       shuffleMode: (localStorage.getItem(STORAGE_KEYS.SHUFFLE_MODE) ?? 'true') === 'true',
+      dailyMode: (localStorage.getItem(STORAGE_KEYS.DAILY_MODE) ?? 'false') === 'true',
       translateScope: (localStorage.getItem(STORAGE_KEYS.TRANSLATE_SCOPE) as TranslateScope) || 'batch',
     };
   } catch (error) {
