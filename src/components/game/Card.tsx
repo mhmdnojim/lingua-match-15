@@ -33,16 +33,38 @@ const FONT_SIZES: Record<FontSize, { script: string[]; latin: string[]; rom: str
   },
 };
 
-/** Pick a smaller step the longer the word/phrase is so it always fits the card */
-const fitStep = (text: string) => {
-  const len = (text || '').trim().length;
-  if (len <= 8) return 0;
-  if (len <= 16) return 1;
-  if (len <= 28) return 2;
-  if (len <= 48) return 3;
-  return 4;
+/** Base (max) font size in px per size preset */
+const BASE_PX: Record<FontSize, { script: number; latin: number }> = {
+  small: { script: 26, latin: 17 },
+  medium: { script: 34, latin: 21 },
+  large: { script: 44, latin: 26 },
 };
+const MIN_PX = 9;
 
+/** Shrink the text until it fits its fixed-size box */
+const useAutoFit = (text: string, maxPx: number) => {
+  const boxRef = React.useRef<HTMLSpanElement>(null);
+  const [px, setPx] = React.useState(maxPx);
+
+  React.useLayoutEffect(() => {
+    const el = boxRef.current;
+    if (!el) return;
+    let size = maxPx;
+    el.style.fontSize = `${size}px`;
+    let guard = 0;
+    while (
+      guard++ < 60 &&
+      size > MIN_PX &&
+      (el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1)
+    ) {
+      size -= 1;
+      el.style.fontSize = `${size}px`;
+    }
+    setPx(size);
+  }, [text, maxPx]);
+
+  return { boxRef, px };
+};
 
 export const Card: React.FC<CardProps> = ({
   card,
@@ -56,9 +78,8 @@ export const Card: React.FC<CardProps> = ({
   const style = columnStyle(columnIndex);
   const sizes = FONT_SIZES[fontSize];
   const isScript = Boolean(language.fontClass) || Boolean(language.rtl);
-  const step = fitStep(card.content);
-  const contentSize = (isScript ? sizes.script : sizes.latin)[step];
-
+  const maxPx = isScript ? BASE_PX[fontSize].script : BASE_PX[fontSize].latin;
+  const { boxRef, px } = useAutoFit(card.content, maxPx);
 
   const handleClick = () => {
     if (card.isMatched) return;
@@ -78,7 +99,7 @@ export const Card: React.FC<CardProps> = ({
     <div
       onClick={handleClick}
       className={cn(
-        'relative flex flex-col items-center justify-center min-h-[100px] p-3 rounded-lg cursor-pointer transition-all duration-300 z-0',
+        'relative flex flex-col items-center justify-center h-[100px] w-full overflow-hidden p-3 rounded-lg cursor-pointer transition-all duration-300 z-0',
         background,
         card.isSelected && !card.isMatched && 'z-10',
         card.isMatched && 'card-matched opacity-50 cursor-default',
@@ -96,16 +117,18 @@ export const Card: React.FC<CardProps> = ({
       </span>
 
       <span
+        ref={boxRef}
         dir={language.rtl ? 'rtl' : 'ltr'}
+        style={{ fontSize: `${px}px` }}
         className={cn(
-          'w-full flex-1 flex items-center justify-center text-center font-medium text-foreground leading-[1.25] break-words hyphens-auto',
-          contentSize,
+          'w-full min-h-0 flex-1 flex items-center justify-center text-center font-medium text-foreground leading-[1.15] break-words hyphens-auto overflow-hidden',
           language.fontClass,
           language.romanizationOf && 'italic',
         )}
       >
         {card.content}
       </span>
+
 
 
 
