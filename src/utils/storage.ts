@@ -2,7 +2,7 @@ import { ColumnConfig } from './gameLogic';
 import { VocabularyItem } from './excelParser';
 
 export type VoiceType = 'free' | 'premium';
-export type FontSize = 'small' | 'medium' | 'large';
+export type FontSize = 'small' | 'medium' | 'large' | 'x-large';
 /** Translate only the current batch, or the whole uploaded file at once */
 export type TranslateScope = 'batch' | 'all';
 
