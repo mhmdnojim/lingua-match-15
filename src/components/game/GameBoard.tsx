@@ -109,7 +109,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   <SelectTrigger
                     aria-label={`Language for column ${originalIndex + 1}`}
                     className={cn(
-                      'h-8 w-full justify-between gap-1 overflow-hidden border-transparent bg-transparent px-0 text-left text-sm font-medium uppercase tracking-wider [&>span]:truncate hover:border-border focus:ring-2 focus:ring-primary',
+                      'h-7 w-full justify-between gap-1 overflow-hidden border-transparent bg-transparent px-0 text-left text-xs sm:text-sm font-medium uppercase tracking-wider [&>span]:truncate hover:border-border focus:ring-2 focus:ring-primary',
                       style.text,
                     )}
                   >
