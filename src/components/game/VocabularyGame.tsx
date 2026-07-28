@@ -918,7 +918,39 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     [selectedCards],
   );
 
+  /** Languages that already have data (from the file or saved translations) — no AI needed. */
+  const readyLangs = useMemo(() => {
+    const counts = new Map<string, number>();
+    vocabulary.forEach(item => {
+      Object.entries(item.values || {}).forEach(([lang, value]) => {
+        if (value && String(value).trim()) counts.set(lang, (counts.get(lang) ?? 0) + 1);
+      });
+    });
+    return Array.from(counts.keys());
+  }, [vocabulary]);
+
+  /** Change one column's language directly from its board title */
+  const handleColumnLangChange = (index: number, lang: string) => {
+    if (columns[index]?.lang === lang) return;
+    const otherIndex = columns.findIndex(c => c.lang === lang);
+    if (otherIndex !== -1) {
+      const currentLang = columns[index].lang;
+      handleColumnsChange(
+        columns.map((c, i) => {
+          if (i === index) return { ...c, lang, showRomanization: hasRomanization(lang) };
+          if (i === otherIndex) return { ...c, lang: currentLang, showRomanization: hasRomanization(currentLang) };
+          return c;
+        }),
+      );
+      return;
+    }
+    handleColumnsChange(
+      columns.map((c, i) => (i === index ? { ...c, lang, showRomanization: hasRomanization(lang) } : c)),
+    );
+  };
+
   const visibleColumns = useMemo(() => columns.filter(c => c.visible), [columns]);
+
 
 
   /** Every visible column must be picked — even one that is still being generated. */
@@ -1368,6 +1400,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               columns={columns}
               cards={cards}
               loadingLangs={isTranslating ? columns.map(c => c.lang) : []}
+              readyLangs={readyLangs}
 
               fontSize={fontSize}
               onCardClick={handleCardClick}
@@ -1375,7 +1408,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               onHint={handleHint}
               onRegenerateCard={handleRegenerateCard}
               onEditCard={handleCardEdit}
+              onColumnLangChange={handleColumnLangChange}
               regeneratingIds={regeneratingCards}
+
             />
           </>
         )}
