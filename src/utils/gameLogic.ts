@@ -8,6 +8,8 @@ export interface ColumnConfig {
   muted: boolean;
   /** show romanization (pinyin / romaji ...) above the word */
   showRomanization: boolean;
+  /** overrides the default position-based card color (index into COLUMN_STYLES) */
+  colorIndex?: number;
 }
 
 export interface GameCard {

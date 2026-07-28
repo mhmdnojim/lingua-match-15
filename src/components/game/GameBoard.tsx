@@ -93,7 +93,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       {visibleColumns.map(column => {
         const language = getLanguage(column.lang);
         const originalIndex = columns.findIndex(c => c.lang === column.lang);
-        const style = columnStyle(originalIndex);
+        const style = columnStyle(column.colorIndex ?? originalIndex);
         const columnCards = cards[column.lang] || [];
         const isPending = columnCards.length === 0;
 
@@ -205,7 +205,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               <div key={card.id} className="relative group">
                 <Card
                   card={card}
-                  columnIndex={originalIndex}
+                  columnIndex={column.colorIndex ?? originalIndex}
                   showRomanization={column.showRomanization}
                   fontSize={fontSize}
                   onClick={onCardClick}

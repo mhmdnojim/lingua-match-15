@@ -267,10 +267,18 @@ export const COLUMN_STYLES = [
     solid: 'bg-game-pinyin',
     text: 'text-game-pinyin',
   },
+  {
+    card: 'bg-game-selected/70 hover:bg-game-selected/90 hover:shadow-game-selected/30',
+    solid: 'bg-game-selected',
+    text: 'text-game-selected',
+  },
 ];
 
+/** How many colors a column can cycle through */
+export const COLUMN_COLOR_COUNT = COLUMN_STYLES.length;
+
 export function columnStyle(index: number) {
-  return COLUMN_STYLES[index % COLUMN_STYLES.length];
+  return COLUMN_STYLES[((index % COLUMN_STYLES.length) + COLUMN_STYLES.length) % COLUMN_STYLES.length];
 }
 
 /** Code of the romanization pseudo-language attached to a language (synthesized when not predefined) */
