@@ -160,22 +160,6 @@ export const Card: React.FC<CardProps> = ({
         </button>
       )}
 
-      {onSpeak && !card.isMatched && (
-        <button
-          onClick={e => {
-            e.stopPropagation();
-            speakCard();
-          }}
-          className={cn(
-            'absolute -top-1 p-2 rounded-full bg-background/80 backdrop-blur-sm shadow-md ring-1 ring-foreground/20 hover:bg-background hover:scale-110 opacity-90 hover:opacity-100 transition-all z-20',
-            hasMultiple ? 'right-8' : '-right-1',
-          )}
-          aria-label="Speak"
-        >
-          <Volume2 className="w-4 h-4 text-foreground" />
-        </button>
-      )}
-
       {anchor && (
         <MeaningsPanel
           title={`${language.name} — ${meanings.length} meanings`}
