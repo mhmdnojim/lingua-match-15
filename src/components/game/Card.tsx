@@ -88,6 +88,7 @@ export const Card: React.FC<CardProps> = ({
   columnIndex,
   showRomanization = true,
   fontSize = 'medium',
+  isHinted = false,
   onClick,
   onSpeak,
 }) => {
