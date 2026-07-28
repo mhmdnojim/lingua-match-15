@@ -170,6 +170,70 @@ export const THEMES: ThemeDef[] = [
       '--game-glow': '35 70% 55%',
     },
   },
+  {
+    id: 'plum',
+    name: 'Plum Dusk',
+    swatch: ['295 30% 9%', '315 50% 58%', '265 45% 60%', '45 70% 60%'],
+    vars: {
+      '--background': '295 30% 9%',
+      '--foreground': '300 18% 96%',
+      '--card': '295 26% 13%',
+      '--card-foreground': '300 18% 96%',
+      '--popover': '295 26% 13%',
+      '--popover-foreground': '300 18% 96%',
+      '--primary': '315 50% 58%',
+      '--primary-foreground': '295 35% 10%',
+      '--secondary': '295 20% 19%',
+      '--secondary-foreground': '300 18% 96%',
+      '--muted': '295 18% 19%',
+      '--muted-foreground': '300 12% 66%',
+      '--accent': '265 45% 62%',
+      '--accent-foreground': '295 35% 10%',
+      '--border': '295 16% 25%',
+      '--input': '295 18% 19%',
+      '--ring': '315 50% 58%',
+      '--game-chinese': '315 45% 52%',
+      '--game-english': '265 45% 55%',
+      '--game-pinyin': '45 70% 58%',
+      '--game-arabic': '185 45% 45%',
+      '--game-selected': '320 60% 66%',
+      '--game-matched': '150 50% 48%',
+      '--game-error': '0 70% 56%',
+      '--game-glow': '310 70% 66%',
+    },
+  },
+  {
+    id: 'paper',
+    name: 'Paper & Ink (light)',
+    swatch: ['210 20% 97%', '215 45% 40%', '190 40% 40%', '15 60% 52%'],
+    vars: {
+      '--background': '210 20% 97%',
+      '--foreground': '215 30% 14%',
+      '--card': '0 0% 100%',
+      '--card-foreground': '215 30% 14%',
+      '--popover': '0 0% 100%',
+      '--popover-foreground': '215 30% 14%',
+      '--primary': '215 45% 40%',
+      '--primary-foreground': '210 25% 98%',
+      '--secondary': '210 20% 91%',
+      '--secondary-foreground': '215 30% 18%',
+      '--muted': '210 18% 91%',
+      '--muted-foreground': '215 12% 42%',
+      '--accent': '190 40% 42%',
+      '--accent-foreground': '210 25% 98%',
+      '--border': '210 16% 84%',
+      '--input': '210 18% 91%',
+      '--ring': '215 45% 40%',
+      '--game-chinese': '215 45% 45%',
+      '--game-english': '190 40% 38%',
+      '--game-pinyin': '38 60% 45%',
+      '--game-arabic': '15 55% 48%',
+      '--game-selected': '215 60% 55%',
+      '--game-matched': '150 40% 40%',
+      '--game-error': '0 60% 50%',
+      '--game-glow': '210 70% 58%',
+    },
+  },
 ];
 
 export const DEFAULT_THEME_ID = 'forest';
@@ -177,6 +241,12 @@ const THEME_KEY = 'vocab-game-theme';
 
 export function getTheme(id: string): ThemeDef {
   return THEMES.find(t => t.id === id) || THEMES[0];
+}
+
+/** The theme that follows the given one (wraps around) */
+export function nextThemeId(id: string): string {
+  const index = THEMES.findIndex(t => t.id === id);
+  return THEMES[(index + 1 + THEMES.length) % THEMES.length].id;
 }
 
 export function applyTheme(id: string): void {
