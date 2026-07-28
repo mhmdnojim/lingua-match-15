@@ -71,8 +71,8 @@ function firstLetter(text: string): string {
 }
 
 /** Shuffle with at most 2 consecutive items sharing the same initial letter */
-export function smartShuffle<T>(array: T[], keyOf: (item: T) => string): T[] {
-  if (array.length <= 2) return shuffleArray(array);
+export function smartShuffle<T>(array: T[], keyOf: (item: T) => string, rand: RandomFn = Math.random): T[] {
+  if (array.length <= 2) return shuffleArray(array, rand);
 
   const groups = new Map<string, T[]>();
   array.forEach(item => {
@@ -80,7 +80,7 @@ export function smartShuffle<T>(array: T[], keyOf: (item: T) => string): T[] {
     if (!groups.has(initial)) groups.set(initial, []);
     groups.get(initial)!.push(item);
   });
-  groups.forEach((items, key) => groups.set(key, shuffleArray(items)));
+  groups.forEach((items, key) => groups.set(key, shuffleArray(items, rand)));
 
   const result: T[] = [];
   const available = new Map(groups);
