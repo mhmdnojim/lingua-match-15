@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import Card, { FontSize } from './Card';
 import { GameCard, ColumnConfig } from '@/utils/gameLogic';
 import { Select, SelectContent, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getLanguage, columnStyle, MAIN_LANGUAGES, PICKABLE_LANGUAGES } from '@/utils/languages';
+import { getLanguage, columnStyle, MAIN_LANGUAGES, PICKABLE_LANGUAGES, romanizationCodeFor } from '@/utils/languages';
 import { HelpCircle, RefreshCw, Pencil, Check, X } from 'lucide-react';
 
 
