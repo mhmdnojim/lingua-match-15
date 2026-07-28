@@ -81,12 +81,23 @@ export const Card: React.FC<CardProps> = ({
   const sizes = FONT_SIZES[fontSize];
   const isScript = Boolean(language.fontClass) || Boolean(language.rtl);
   const maxPx = isScript ? BASE_PX[fontSize].script : BASE_PX[fontSize].latin;
-  const { boxRef, px } = useAutoFit(card.content, maxPx);
+
+  const meanings = React.useMemo(() => splitMeanings(card.content), [card.content]);
+  const hasMultiple = meanings.length > 1;
+  const { selected, setSelected } = useMeaningSelection(card.vocabId, card.lang, meanings);
+  const displayed = hasMultiple ? joinMeanings(selected) : card.content;
+
+  const cardRef = React.useRef<HTMLDivElement>(null);
+  const [anchor, setAnchor] = React.useState<DOMRect | null>(null);
+
+  const { boxRef, px } = useAutoFit(displayed, maxPx);
+
+  const speakCard = () => onSpeak?.({ ...card, content: displayed });
 
   const handleClick = () => {
     if (card.isMatched) return;
     onClick(card);
-    onSpeak?.(card);
+    speakCard();
   };
 
   const background = card.isMatched
@@ -99,6 +110,7 @@ export const Card: React.FC<CardProps> = ({
 
   return (
     <div
+      ref={cardRef}
       onClick={handleClick}
       className={cn(
         'relative flex flex-col items-center justify-center h-[100px] w-full overflow-hidden p-3 rounded-lg cursor-pointer transition-all duration-300 z-0',
@@ -130,28 +142,53 @@ export const Card: React.FC<CardProps> = ({
           language.romanizationOf && 'italic',
         )}
       >
-        {card.content}
+        {displayed}
       </span>
 
-
-
-
-
-
-
+      {hasMultiple && !card.isMatched && (
+        <button
+          onClick={e => {
+            e.stopPropagation();
+            setAnchor(cardRef.current?.getBoundingClientRect() ?? null);
+          }}
+          className="absolute -top-1 -right-1 flex items-center gap-0.5 rounded-full bg-background/85 px-1.5 py-1 shadow-md ring-1 ring-foreground/20 backdrop-blur-sm transition-all hover:scale-110 hover:bg-background z-20"
+          title={`${meanings.length} meanings — pick which ones to show`}
+          aria-label="Other meanings"
+        >
+          <Layers className="h-4 w-4 text-foreground" />
+          <span className="text-[10px] font-semibold leading-none text-foreground">{meanings.length}</span>
+        </button>
+      )}
 
       {onSpeak && !card.isMatched && (
         <button
           onClick={e => {
             e.stopPropagation();
-            onSpeak(card);
+            speakCard();
           }}
-          className="absolute -top-1 -right-1 p-2 rounded-full bg-background/80 backdrop-blur-sm shadow-md ring-1 ring-foreground/20 hover:bg-background hover:scale-110 opacity-90 hover:opacity-100 transition-all z-20"
+          className={cn(
+            'absolute -top-1 p-2 rounded-full bg-background/80 backdrop-blur-sm shadow-md ring-1 ring-foreground/20 hover:bg-background hover:scale-110 opacity-90 hover:opacity-100 transition-all z-20',
+            hasMultiple ? 'right-8' : '-right-1',
+          )}
           aria-label="Speak"
         >
           <Volume2 className="w-4 h-4 text-foreground" />
         </button>
       )}
+
+      {anchor && (
+        <MeaningsPanel
+          title={`${language.name} — ${meanings.length} meanings`}
+          meanings={meanings}
+          selected={selected}
+          rtl={language.rtl}
+          fontClass={language.fontClass}
+          anchor={anchor}
+          onChange={setSelected}
+          onClose={() => setAnchor(null)}
+        />
+      )}
+
 
       {card.isMatched && (
         <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-success/20">
