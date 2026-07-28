@@ -212,6 +212,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   showRomanization={column.showRomanization}
                   fontSize={column.fontSize ?? fontSize}
                   isHinted={hintedIds.includes(card.id)}
+                  isBusy={regeneratingIds.includes(card.id)}
                   onClick={onCardClick}
                   onSpeak={column.muted ? undefined : onSpeak}
                 />
@@ -222,7 +223,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                       e.stopPropagation();
                       onHint(card);
                     }}
-                    className="absolute -left-2 -bottom-2 p-1 bg-warning text-warning-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:scale-110"
+                    className="absolute -left-2 -bottom-2 grid h-7 w-7 place-items-center rounded-full bg-warning text-warning-foreground ring-2 ring-background shadow-lg opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-all hover:scale-110 z-20"
                     title="Get hint (-5 points)"
                   >
                     <HelpCircle className="w-4 h-4" />
@@ -234,7 +235,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                       e.stopPropagation();
                       startEdit(card);
                     }}
-                    className="absolute -left-2 -top-2 p-1 bg-secondary text-secondary-foreground rounded-full opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shadow-md hover:scale-110"
+                    className="absolute -left-2 -top-2 grid h-7 w-7 place-items-center rounded-full bg-secondary text-secondary-foreground ring-2 ring-background shadow-lg opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-all hover:scale-110 z-20"
                     title={
                       originalIndex === 0
                         ? 'Edit word (retranslates the other columns)'
@@ -251,12 +252,18 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                       onRegenerateCard(card);
                     }}
                     disabled={regeneratingIds.includes(card.id)}
-                    className="absolute -right-2 -bottom-2 p-1 bg-primary text-primary-foreground rounded-full opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shadow-md hover:scale-110 disabled:opacity-100"
+                    className={cn(
+                      'absolute -right-2 -bottom-2 grid h-7 w-7 place-items-center rounded-full bg-primary text-primary-foreground ring-2 ring-background shadow-lg transition-all hover:scale-110 z-20',
+                      regeneratingIds.includes(card.id)
+                        ? 'opacity-100'
+                        : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
+                    )}
                     title="Regenerate translation"
                   >
                     <RefreshCw className={cn('w-4 h-4', regeneratingIds.includes(card.id) && 'animate-spin')} />
                   </button>
                 )}
+
               </div>
               );
             })}
