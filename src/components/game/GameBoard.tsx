@@ -216,7 +216,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                       e.stopPropagation();
                       onHint(card);
                     }}
-                    className="absolute -right-2 -top-2 p-1 bg-warning text-warning-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:scale-110"
+                    className="absolute -left-2 -bottom-2 p-1 bg-warning text-warning-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:scale-110"
                     title="Get hint (-5 points)"
                   >
                     <HelpCircle className="w-4 h-4" />
