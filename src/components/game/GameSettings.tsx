@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered, SlidersHorizontal, ChevronUp, ChevronDown, Columns3, Palette, CalendarClock } from 'lucide-react';
+import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered, SlidersHorizontal, ChevronUp, ChevronDown, Columns3, Palette } from 'lucide-react';
 import { ColumnConfig } from '@/utils/gameLogic';
 import { getLanguage, columnStyle, COLUMN_COLOR_COUNT } from '@/utils/languages';
 import { THEMES, nextThemeId, getTheme } from '@/utils/themes';
@@ -140,26 +140,6 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         <span className="hidden sm:inline text-center w-[3.75rem]">{shuffleMode ? 'Shuffle' : 'Order'}</span>
       </button>
 
-      {/* Daily Mode — seeded sequence, identical all day */}
-      <button
-        onClick={() => onDailyModeChange?.(!dailyMode)}
-        disabled={disabled}
-        className={cn(
-          'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
-          dailyMode
-            ? 'bg-primary border-primary text-primary-foreground'
-            : 'bg-secondary border-border text-muted-foreground hover:text-foreground',
-          disabled && 'opacity-50 cursor-not-allowed',
-        )}
-        title={
-          dailyMode
-            ? "Daily mode on — today's sequence is fixed and repeats until tomorrow"
-            : 'Daily mode off — a new random sequence every time'
-        }
-      >
-        <CalendarClock className="w-4 h-4 shrink-0" />
-        <span className="hidden sm:inline text-center w-[3.75rem]">{dailyMode ? 'Daily' : 'Random'}</span>
-      </button>
 
 
 
