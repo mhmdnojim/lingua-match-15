@@ -999,11 +999,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       hintTimer.current = window.setTimeout(() => setHintedIds([]), 2500);
       toast({ title: 'Hint used', description: 'Matching cards are blinking — pick them yourself. -5 points' });
 
-      setScore(s => Math.max(0, s - 5));
-      setBatchScore(s => Math.max(0, s - 5));
-    },
-    [toast],
+    [toast, columns, vocabulary, speak],
   );
+
 
   const updateCardSelection = (cardId: string, isSelected: boolean) => {
     setCards(prev => {
