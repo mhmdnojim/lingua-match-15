@@ -41,7 +41,30 @@ const BASE_PX: Record<FontSize, { script: number; latin: number }> = {
   medium: { script: 34, latin: 21 },
   large: { script: 44, latin: 26 },
 };
-const MIN_PX = 9;
+const MIN_PX = 8;
+
+/** Scale the max font size with the viewport so phones don't get oversized text */
+const useViewportScale = () => {
+  const read = () => {
+    if (typeof window === 'undefined') return 1;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const byWidth = w < 360 ? 0.62 : w < 480 ? 0.7 : w < 640 ? 0.8 : w < 768 ? 0.88 : w < 1024 ? 0.95 : 1;
+    const byHeight = h < 560 ? 0.8 : h < 700 ? 0.9 : 1;
+    return Math.min(byWidth, byHeight);
+  };
+  const [scale, setScale] = React.useState(read);
+  React.useEffect(() => {
+    const onResize = () => setScale(read());
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+    };
+  }, []);
+  return scale;
+};
 
 /** Shrink the text until it fits its fixed-size box */
 const useAutoFit = (text: string, maxPx: number) => {
@@ -51,22 +74,29 @@ const useAutoFit = (text: string, maxPx: number) => {
   React.useLayoutEffect(() => {
     const el = boxRef.current;
     if (!el) return;
-    let size = maxPx;
-    el.style.fontSize = `${size}px`;
-    let guard = 0;
-    while (
-      guard++ < 60 &&
-      size > MIN_PX &&
-      (el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1)
-    ) {
-      size -= 1;
+    const fit = () => {
+      let size = maxPx;
       el.style.fontSize = `${size}px`;
-    }
-    setPx(size);
+      let guard = 0;
+      while (
+        guard++ < 60 &&
+        size > MIN_PX &&
+        (el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1)
+      ) {
+        size -= 1;
+        el.style.fontSize = `${size}px`;
+      }
+      setPx(size);
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, [text, maxPx]);
 
   return { boxRef, px };
 };
+
 
 export const Card: React.FC<CardProps> = ({
   card,
