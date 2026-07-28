@@ -67,7 +67,22 @@ export const LANGUAGE_MAP: Record<string, LanguageDef> = LANGUAGES.reduce(
 );
 
 export function getLanguage(code: string): LanguageDef {
-  return LANGUAGE_MAP[code] || { code, name: code, native: code, locale: 'en-US', short: code.slice(0, 2).toUpperCase() };
+  const known = LANGUAGE_MAP[code];
+  if (known) return known;
+  // synthesized transliteration variant, e.g. "de-latin" for German
+  const m = /^(.+)-latin$/.exec(code);
+  if (m && LANGUAGE_MAP[m[1]]) {
+    const base = LANGUAGE_MAP[m[1]];
+    return {
+      code,
+      name: `${base.name} transliteration`,
+      native: 'Translit.',
+      locale: 'en-US',
+      romanizationOf: base.code,
+      short: `${base.short}-L`,
+    };
+  }
+  return { code, name: code, native: code, locale: 'en-US', short: code.slice(0, 2).toUpperCase() };
 }
 
 /** Real languages only — transliterations are never their own column, they render above the word */
@@ -79,10 +94,16 @@ export const PICKABLE_LANGUAGES = MAIN_LANGUAGES.flatMap(lang => {
   return variants.length ? [lang, ...variants] : [lang];
 });
 
-/** True when the language has a transliteration/romanization that can show above the word */
+/** Every real language can carry a transliteration column (files may provide one even for Latin scripts) */
+export function supportsRomanization(code: string): boolean {
+  return !getLanguage(code).romanizationOf;
+}
+
+/** True when the language has a built-in romanization shown above the word by default */
 export function hasRomanization(code: string): boolean {
   return LANGUAGES.some(l => l.romanizationOf === code);
 }
+
 
 const HEADER_ALIASES: Record<string, string> = {
   chinese: 'zh',
