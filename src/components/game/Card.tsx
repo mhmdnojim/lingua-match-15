@@ -15,6 +15,8 @@ interface CardProps {
   fontSize?: FontSize;
   /** hint mode: blink this card without selecting or matching it */
   isHinted?: boolean;
+  /** this card's translation is being regenerated right now */
+  isBusy?: boolean;
   onClick: (card: GameCard) => void;
   onSpeak?: (card: GameCard) => void;
 }
