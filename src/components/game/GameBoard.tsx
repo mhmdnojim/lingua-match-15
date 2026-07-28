@@ -5,7 +5,17 @@ import Card, { FontSize } from './Card';
 import { GameCard, ColumnConfig } from '@/utils/gameLogic';
 import { Select, SelectContent, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getLanguage, columnStyle, MAIN_LANGUAGES, PICKABLE_LANGUAGES, romanizationCodeFor } from '@/utils/languages';
-import { HelpCircle, RefreshCw, Pencil, Check, X } from 'lucide-react';
+import { HelpCircle, RefreshCw, Pencil, Check } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 
 
 interface GameBoardProps {
