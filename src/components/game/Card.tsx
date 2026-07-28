@@ -91,6 +91,7 @@ export const Card: React.FC<CardProps> = ({
   showRomanization = true,
   fontSize = 'medium',
   isHinted = false,
+  isBusy = false,
   onClick,
   onSpeak,
 }) => {
@@ -140,6 +141,7 @@ export const Card: React.FC<CardProps> = ({
         card.isMatched && 'card-matched opacity-50 cursor-default',
         card.isError && 'card-shake',
         isHinted && !card.isMatched && 'animate-pulse ring-4 ring-foreground/60 z-10',
+        isBusy && !card.isMatched && 'ring-2 ring-primary/70 shadow-lg z-10',
       )}
     >
       {showRomanization && card.romanization && (
@@ -195,6 +197,10 @@ export const Card: React.FC<CardProps> = ({
         />
       )}
 
+
+      {isBusy && !card.isMatched && (
+        <span className="pointer-events-none absolute inset-0 rounded-lg bg-primary/15 animate-pulse" />
+      )}
 
       {card.isMatched && (
         <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-success/20">
