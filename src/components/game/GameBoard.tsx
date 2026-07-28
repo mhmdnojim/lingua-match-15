@@ -187,7 +187,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 </Select>
               </div>
             ) : (
-              <h3 className={cn('text-center text-sm font-medium mb-2 uppercase tracking-wider', style.text)}>
+              <h3 className={cn('text-center text-sm font-medium mb-0.5 uppercase tracking-wider', style.text)}>
                 {language.name}
               </h3>
             )}
@@ -196,7 +196,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               Array.from({ length: rowCount }).map((_, i) => (
                 <div
                   key={`pending-${column.lang}-${i}`}
-                  className="h-[76px] rounded-xl border border-border bg-muted/30 animate-pulse"
+                  className="h-[56px] sm:h-[72px] md:h-[84px] rounded-xl border border-border bg-muted/30 animate-pulse"
                 />
               ))}
             {columnCards.map(card => {
