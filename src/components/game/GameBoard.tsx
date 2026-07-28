@@ -207,7 +207,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   card={card}
                   columnIndex={column.colorIndex ?? originalIndex}
                   showRomanization={column.showRomanization}
-                  fontSize={fontSize}
+                  fontSize={column.fontSize ?? fontSize}
                   onClick={onCardClick}
                   onSpeak={column.muted ? undefined : onSpeak}
                 />
