@@ -115,35 +115,8 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
       {settingsOpen && (
         <div className="flex flex-wrap items-center justify-start gap-2 rounded-lg border border-border bg-card/60 p-2">
       {extraControls}
-      {/* Language / column setup */}
-      <button
-        onClick={onOpenLanguages}
-        disabled={disabled}
-        className={cn(
-          'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
-          'bg-primary border-primary text-primary-foreground hover:opacity-90',
-          disabled && 'opacity-50 cursor-not-allowed',
-        )}
-        title="Choose the language of each column"
-      >
-        <Languages className="w-4 h-4 shrink-0" />
-        <span className="hidden sm:inline">Languages</span>
-      </button>
 
-      {/* Word editor */}
-      <button
-        onClick={onOpenWordEditor}
-        disabled={disabled}
-        className={cn(
-          'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
-          'bg-secondary border-border text-muted-foreground hover:text-foreground',
-          disabled && 'opacity-50 cursor-not-allowed',
-        )}
-        title="Edit or regenerate translations"
-      >
-        <Pencil className="w-4 h-4 shrink-0" />
-        <span className="hidden sm:inline">Words</span>
-      </button>
+
 
       {/* Shuffle/Order Toggle */}
       <button
