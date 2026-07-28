@@ -147,7 +147,7 @@ export const Card: React.FC<CardProps> = ({
       ref={cardRef}
       onClick={handleClick}
       className={cn(
-        'relative flex flex-col items-center justify-center h-[68px] xs:h-[76px] sm:h-[88px] md:h-[100px] w-full overflow-hidden p-1.5 sm:p-2.5 md:p-3 rounded-lg cursor-pointer transition-all duration-300 z-0',
+        'relative flex flex-col items-center justify-center h-[68px] sm:h-[88px] md:h-[100px] w-full overflow-hidden p-1.5 sm:p-2.5 md:p-3 rounded-lg cursor-pointer transition-all duration-300 z-0',
         background,
         card.isSelected && !card.isMatched && 'z-10',
         card.isMatched && 'card-matched opacity-50 cursor-default',
@@ -158,7 +158,7 @@ export const Card: React.FC<CardProps> = ({
         <span
           className={cn(
             'pointer-events-none absolute left-1.5 right-1.5 top-1 sm:left-2 sm:right-2 sm:top-1.5 text-foreground/70 font-medium leading-none text-center truncate text-[9px] sm:text-[11px]',
-            'md:' + sizes.rom.replace('text-', 'text-'),
+            fontSize === 'large' ? 'md:text-sm' : 'md:text-xs',
           )}
         >
           {card.romanization}
