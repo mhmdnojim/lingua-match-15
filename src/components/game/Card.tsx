@@ -6,7 +6,7 @@ import { splitMeanings, joinMeanings, useMeaningSelection } from '@/utils/meanin
 import MeaningsPanel from './MeaningsPanel';
 import { Layers } from 'lucide-react';
 
-export type FontSize = 'small' | 'medium' | 'large';
+export type FontSize = 'small' | 'medium' | 'large' | 'x-large';
 
 interface CardProps {
   card: GameCard;
@@ -22,6 +22,7 @@ const BASE_PX: Record<FontSize, { script: number; latin: number }> = {
   small: { script: 26, latin: 17 },
   medium: { script: 34, latin: 21 },
   large: { script: 44, latin: 26 },
+  'x-large': { script: 56, latin: 34 },
 };
 const MIN_PX = 8;
 

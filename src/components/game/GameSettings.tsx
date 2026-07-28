@@ -6,7 +6,7 @@ import { getLanguage, columnStyle } from '@/utils/languages';
 import { THEMES } from '@/utils/themes';
 
 export type VoiceType = 'free' | 'premium';
-export type FontSize = 'small' | 'medium' | 'large';
+export type FontSize = 'small' | 'medium' | 'large' | 'x-large';
 
 interface GameSettingsProps {
   columns: ColumnConfig[];
@@ -360,9 +360,9 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
       )}
 
 
-      {/* Font Size — single cycling button: small → medium → large → small */}
+      {/* Font Size — single cycling button: small → medium → large → x-large → small */}
       {onFontSizeChange && (() => {
-        const order: FontSize[] = ['small', 'medium', 'large'];
+        const order: FontSize[] = ['small', 'medium', 'large', 'x-large'];
         const next = order[(order.indexOf(fontSize) + 1) % order.length];
         return (
           <button
@@ -371,7 +371,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
             title={`Font size: ${fontSize} — click for ${next}`}
             aria-label={`Font size ${fontSize}, click for ${next}`}
           >
-            <Type className={fontSize === 'small' ? 'w-3.5 h-3.5' : fontSize === 'medium' ? 'w-4 h-4' : 'w-5 h-5'} />
+            <Type className="w-4 h-4 shrink-0" />
             <span className="text-[10px] uppercase tracking-wide">{fontSize.charAt(0)}</span>
           </button>
         );
