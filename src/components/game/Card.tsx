@@ -137,6 +137,7 @@ export const Card: React.FC<CardProps> = ({
         card.isSelected && !card.isMatched && 'z-10',
         card.isMatched && 'card-matched opacity-50 cursor-default',
         card.isError && 'card-shake',
+        isHinted && !card.isMatched && 'animate-pulse ring-4 ring-foreground/60 z-10',
       )}
     >
       {showRomanization && card.romanization && (
