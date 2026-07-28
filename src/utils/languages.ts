@@ -267,11 +267,13 @@ export function columnStyle(index: number) {
   return COLUMN_STYLES[index % COLUMN_STYLES.length];
 }
 
-/** Code of the romanization pseudo-language attached to a language, if any */
+/** Code of the romanization pseudo-language attached to a language (synthesized when not predefined) */
 export function romanizationCodeFor(code: string): string | null {
   const found = LANGUAGES.find(l => l.romanizationOf === code);
-  return found ? found.code : null;
+  if (found) return found.code;
+  return supportsRomanization(code) ? `${code}-latin` : null;
 }
+
 
 /** Codes that hold the same content under a different label (e.g. the two pinyin variants) */
 const EQUIVALENT_GROUPS: string[][] = [['zh-pinyin', 'zh-TW-pinyin']];
