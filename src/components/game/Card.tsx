@@ -128,7 +128,7 @@ export const Card: React.FC<CardProps> = ({
       ref={cardRef}
       onClick={handleClick}
       className={cn(
-        'relative flex flex-col items-center justify-center h-[68px] sm:h-[88px] md:h-[100px] w-full overflow-hidden p-1.5 sm:p-2.5 md:p-3 rounded-lg cursor-pointer transition-all duration-300 z-0',
+        'relative flex flex-col items-center justify-center h-[56px] sm:h-[72px] md:h-[84px] w-full overflow-hidden p-1 sm:p-2 md:p-2.5 rounded-lg cursor-pointer transition-all duration-300 z-0',
         background,
         card.isSelected && !card.isMatched && 'z-10',
         card.isMatched && 'card-matched opacity-50 cursor-default',

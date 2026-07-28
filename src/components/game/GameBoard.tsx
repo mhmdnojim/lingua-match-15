@@ -83,7 +83,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     <>
     <div
       className={cn(
-        'grid gap-4 md:gap-6',
+        'grid gap-x-2 gap-y-1.5 md:gap-x-4 md:gap-y-2',
         count <= 1 && 'grid-cols-1 max-w-md mx-auto',
         count === 2 && 'grid-cols-2',
         count === 3 && 'grid-cols-3',
@@ -98,10 +98,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         const isPending = columnCards.length === 0;
 
         return (
-          <div key={column.lang} className="flex flex-col gap-3">
+          <div key={column.lang} className="flex flex-col gap-1.5 md:gap-2">
             {onColumnLangChange ? (
-              <div className="mb-2 flex w-full flex-col items-start">
-                <span className="h-4 text-[10px] uppercase tracking-wider text-muted-foreground">
+              <div className="mb-0 flex w-full flex-col items-start">
+                <span className="h-3 text-[9px] leading-3 uppercase tracking-wider text-muted-foreground">
                   {originalIndex === 0 ? 'main' : ''}
                 </span>
                 <Select value={column.lang} onValueChange={value => onColumnLangChange(originalIndex, value)}>
@@ -109,7 +109,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   <SelectTrigger
                     aria-label={`Language for column ${originalIndex + 1}`}
                     className={cn(
-                      'h-8 w-full justify-between gap-1 overflow-hidden border-transparent bg-transparent px-0 text-left text-sm font-medium uppercase tracking-wider [&>span]:truncate hover:border-border focus:ring-2 focus:ring-primary',
+                      'h-7 w-full justify-between gap-1 overflow-hidden border-transparent bg-transparent px-0 text-left text-xs sm:text-sm font-medium uppercase tracking-wider [&>span]:truncate hover:border-border focus:ring-2 focus:ring-primary',
                       style.text,
                     )}
                   >
@@ -187,7 +187,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 </Select>
               </div>
             ) : (
-              <h3 className={cn('text-center text-sm font-medium mb-2 uppercase tracking-wider', style.text)}>
+              <h3 className={cn('text-center text-sm font-medium mb-0.5 uppercase tracking-wider', style.text)}>
                 {language.name}
               </h3>
             )}
@@ -196,7 +196,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               Array.from({ length: rowCount }).map((_, i) => (
                 <div
                   key={`pending-${column.lang}-${i}`}
-                  className="h-[76px] rounded-xl border border-border bg-muted/30 animate-pulse"
+                  className="h-[56px] sm:h-[72px] md:h-[84px] rounded-xl border border-border bg-muted/30 animate-pulse"
                 />
               ))}
             {columnCards.map(card => {

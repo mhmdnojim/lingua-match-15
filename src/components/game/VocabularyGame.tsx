@@ -1250,18 +1250,18 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
 
   return (
-    <div className={cn('min-h-screen bg-background p-4 md:p-6', className)}>
-      <div className="max-w-6xl mx-auto space-y-3">
+    <div className={cn('min-h-screen bg-background p-2 md:p-4', className)}>
+      <div className="max-w-6xl mx-auto space-y-1">
         {/* Collapsible top chrome — folds away so only the cards remain */}
         <div
           className={cn(
             'grid transition-[grid-template-rows,opacity,margin] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]',
-            headerOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 -mb-3 pointer-events-none',
+            headerOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 -mb-1 pointer-events-none',
           )}
         >
           <div className={headerOpen ? 'overflow-visible' : 'overflow-hidden'}>
-            <div className="space-y-3">
-        <header className="flex items-center justify-between mb-2">
+            <div className="space-y-2">
+        <header className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary rounded-lg">
               <BookOpen className="w-5 h-5 text-primary-foreground" />
