@@ -85,6 +85,21 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
         <span>Upload</span>
       </button>
 
+      {onExportFile && selectedFile && (
+        <button
+          onClick={onExportFile}
+          title={`Export "${selectedFile.replace('.xlsx', '')}" to Excel`}
+          aria-label={`Export ${selectedFile} to Excel`}
+          className={cn(
+            'flex items-center justify-center p-2 rounded-lg',
+            'border border-primary text-primary',
+            'hover:bg-primary/10 transition-colors duration-200',
+          )}
+        >
+          <Download className="w-4 h-4" />
+        </button>
+      )}
+
       {onDeleteFile && selectedFile && (
         <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
           <AlertDialogTrigger asChild>
