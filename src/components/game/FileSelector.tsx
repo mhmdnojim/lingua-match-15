@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Upload, FileSpreadsheet, ChevronDown, Trash2 } from 'lucide-react';
+import { Upload, FileSpreadsheet, ChevronDown, Trash2, Download } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +19,7 @@ interface FileSelectorProps {
   onSelectFile: (fileName: string) => void;
   onUploadFiles: (files: File[]) => void;
   onDeleteFile?: (fileName: string) => void;
+  onExportFile?: () => void;
   className?: string;
 }
 
@@ -29,6 +30,7 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
   onSelectFile,
   onUploadFiles,
   onDeleteFile,
+  onExportFile,
 
   className,
 }) => {
