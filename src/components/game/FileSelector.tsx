@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Upload, FileSpreadsheet, ChevronDown, Trash2 } from 'lucide-react';
+import { Upload, FileSpreadsheet, ChevronDown, Trash2, Download } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +19,7 @@ interface FileSelectorProps {
   onSelectFile: (fileName: string) => void;
   onUploadFiles: (files: File[]) => void;
   onDeleteFile?: (fileName: string) => void;
+  onExportFile?: () => void;
   className?: string;
 }
 
@@ -29,6 +30,7 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
   onSelectFile,
   onUploadFiles,
   onDeleteFile,
+  onExportFile,
 
   className,
 }) => {
@@ -82,6 +84,21 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
         <Upload className="w-4 h-4" />
         <span>Upload</span>
       </button>
+
+      {onExportFile && selectedFile && (
+        <button
+          onClick={onExportFile}
+          title={`Export "${selectedFile.replace('.xlsx', '')}" to Excel`}
+          aria-label={`Export ${selectedFile} to Excel`}
+          className={cn(
+            'flex items-center justify-center p-2 rounded-lg',
+            'border border-primary text-primary',
+            'hover:bg-primary/10 transition-colors duration-200',
+          )}
+        >
+          <Download className="w-4 h-4" />
+        </button>
+      )}
 
       {onDeleteFile && selectedFile && (
         <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>

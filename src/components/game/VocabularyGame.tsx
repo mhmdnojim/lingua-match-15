@@ -1416,6 +1416,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               onSelectFile={setSelectedFile}
               onUploadFiles={handleUploadFiles}
               onDeleteFile={handleDeleteFile}
+              onExportFile={handleExportExcel}
             />
           }
         />
