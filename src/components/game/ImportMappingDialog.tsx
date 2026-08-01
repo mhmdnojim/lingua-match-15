@@ -78,7 +78,8 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
   const tooManyColumns = columnCount > 4;
   const atColumnLimit = columnCount >= 4;
   const usedLangs = new Set([...assigned, ...generated.map(g => g.lang)]);
-  const addableLanguages = PICKABLE_LANGUAGES.filter(l => !usedLangs.has(l.code));
+  // Transliterations are a card display option, never a language you can add as a column
+  const addableLanguages = PICKABLE_LANGUAGES.filter(l => !usedLangs.has(l.code) && !l.romanizationOf);
 
 
 
