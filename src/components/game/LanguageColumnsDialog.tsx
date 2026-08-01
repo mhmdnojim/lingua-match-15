@@ -1,10 +1,17 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { ColumnConfig } from '@/utils/gameLogic';
-import { PICKABLE_LANGUAGES, MAIN_LANGUAGES, getLanguage, columnStyle, hasRomanization } from '@/utils/languages';
+import { MAIN_LANGUAGES, getLanguage, columnStyle, hasRomanization } from '@/utils/languages';
 import { cn } from '@/lib/utils';
-import { Plus, Trash2, ArrowRight } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Type } from 'lucide-react';
 
 interface LanguageColumnsDialogProps {
   open: boolean;
@@ -25,14 +32,19 @@ export const LanguageColumnsDialog: React.FC<LanguageColumnsDialogProps> = ({
 
   const setLang = (index: number, lang: string) => {
     if (usedLangs.includes(lang)) return;
-    const next = columns.map((c, i) => (i === index ? { ...c, lang, showRomanization: hasRomanization(lang) } : c));
+    const next = columns.map((c, i) =>
+      i === index ? { ...c, lang, showRomanization: hasRomanization(lang) } : c,
+    );
     onChange(next);
   };
 
   const addColumn = () => {
-    const candidate = PICKABLE_LANGUAGES.find(l => !usedLangs.includes(l.code));
+    const candidate = MAIN_LANGUAGES.find(l => !usedLangs.includes(l.code));
     if (!candidate || columns.length >= MAX_COLUMNS) return;
-    onChange([...columns, { lang: candidate.code, visible: true, muted: false, showRomanization: hasRomanization(candidate.code) }]);
+    onChange([
+      ...columns,
+      { lang: candidate.code, visible: true, muted: false, showRomanization: hasRomanization(candidate.code) },
+    ]);
   };
 
   const removeColumn = (index: number) => {
@@ -47,7 +59,8 @@ export const LanguageColumnsDialog: React.FC<LanguageColumnsDialogProps> = ({
           <DialogTitle>Column languages</DialogTitle>
           <DialogDescription>
             The first column on the left is the main language. Every other column is translated from it —
-            missing translations are generated automatically.
+            missing translations are generated automatically. The <Type className="inline w-3 h-3" /> icon marks
+            languages that have a romanization/transliteration available.
           </DialogDescription>
         </DialogHeader>
 
@@ -55,11 +68,16 @@ export const LanguageColumnsDialog: React.FC<LanguageColumnsDialogProps> = ({
           {columns.map((column, index) => {
             const language = getLanguage(column.lang);
             const style = columnStyle(index);
-            const base = index === 0 ? MAIN_LANGUAGES : PICKABLE_LANGUAGES;
-            const options = base.some(l => l.code === column.lang) ? base : [language, ...base];
+            // Only real languages appear in the list; ensure the current value is represented
+            const options = MAIN_LANGUAGES.some(l => l.code === column.lang)
+              ? MAIN_LANGUAGES
+              : [language, ...MAIN_LANGUAGES];
 
             return (
-              <div key={`${column.lang}-${index}`} className="flex items-center gap-3 rounded-lg border border-border bg-secondary/40 p-3">
+              <div
+                key={`${column.lang}-${index}`}
+                className="flex items-center gap-3 rounded-lg border border-border bg-secondary/40 p-3"
+              >
                 <div className={cn('w-2 h-10 rounded-full', style.solid)} />
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground">
@@ -72,24 +90,35 @@ export const LanguageColumnsDialog: React.FC<LanguageColumnsDialogProps> = ({
                       </span>
                     )}
                   </div>
-                  <select
-                    value={column.lang}
-                    onChange={e => setLang(index, e.target.value)}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    {options.map(option => (
-                      <option key={option.code} value={option.code} disabled={usedLangs.includes(option.code) && option.code !== column.lang}>
-                        {option.name} — {option.native}
-                      </option>
-                    ))}
-                  </select>
+                  <Select value={column.lang} onValueChange={v => setLang(index, v)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {options.map(option => {
+                        const disabled = usedLangs.includes(option.code) && option.code !== column.lang;
+                        const hasRom = hasRomanization(option.code) || !!option.romanizationLabel;
+                        return (
+                          <SelectItem key={option.code} value={option.code} disabled={disabled}>
+                            <span className="flex items-center gap-2">
+                              {hasRom && <Type className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
+                              <span>{option.name}</span>
+                              <span className="text-muted-foreground">— {option.native}</span>
+                            </span>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
                   {language.romanizationLabel && (
                     <label className="flex items-center gap-2 pt-1 text-xs text-muted-foreground">
                       <input
                         type="checkbox"
                         checked={column.showRomanization}
                         onChange={e =>
-                          onChange(columns.map((c, i) => (i === index ? { ...c, showRomanization: e.target.checked } : c)))
+                          onChange(
+                            columns.map((c, i) => (i === index ? { ...c, showRomanization: e.target.checked } : c)),
+                          )
                         }
                       />
                       Show {language.romanizationLabel} above the word
