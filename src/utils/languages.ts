@@ -96,12 +96,13 @@ export const MAIN_LANGUAGES = LANGUAGES.filter(l => !l.romanizationOf);
 export const PICKABLE_LANGUAGES = MAIN_LANGUAGES.flatMap(lang => {
   const variants = LANGUAGES.filter(l => l.romanizationOf === lang.code);
   if (variants.length) return [lang, ...variants];
-  return [lang, getLanguage(`${lang.code}-latin`)];
+  const rom = romanizationCodeFor(lang.code);
+  return rom ? [lang, getLanguage(rom)] : [lang];
 });
 
-/** Every real language can carry a transliteration column (files may provide one even for Latin scripts) */
+/** Every real language can carry a transliteration column — except English, which is already Latin */
 export function supportsRomanization(code: string): boolean {
-  return !getLanguage(code).romanizationOf;
+  return code !== 'en' && !getLanguage(code).romanizationOf;
 }
 
 /** True when the language has a built-in romanization shown above the word by default */
