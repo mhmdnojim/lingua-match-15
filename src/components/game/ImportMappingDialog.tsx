@@ -196,19 +196,11 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
                         )}
                       >
                         <option value="ignore">Ignore this column</option>
-                        {PICKABLE_LANGUAGES.filter(l => !l.romanizationOf).map(l => (
+                        {PICKABLE_LANGUAGES.map(l => (
                           <option key={l.code} value={l.code}>
                             {l.name} — {l.native}
-
                           </option>
                         ))}
-                        <optgroup label="Latin / transliteration columns">
-                          {PICKABLE_LANGUAGES.filter(l => l.romanizationOf).map(l => (
-                            <option key={l.code} value={l.code}>
-                              {l.name}
-                            </option>
-                          ))}
-                        </optgroup>
                       </select>
                       {mismatch && <p className="pt-1 text-xs text-primary">changed from the detected language</p>}
                     </td>
