@@ -66,6 +66,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   onColumnFontSizeChange,
   onOpenLanguages,
   onOpenWordEditor,
+  onOpenVocabularyList,
   muteSfx = false,
   voiceType = 'free',
   premiumUsed = 0,
