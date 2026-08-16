@@ -144,7 +144,10 @@ export function buildVocabulary(sheet: SheetData, mapping: ColumnMapping, mainLa
         const value = String(row[header] ?? '').trim();
         if (value) values[lang] = value;
       });
-      return { id: `vocab-${index}`, values, edited: {} };
+      // App-ready workbooks carry a permanent Word ID — prefer it so edits and
+      // cloud data stay attached to the same word across re-imports.
+      const stableId = String(row['Word ID'] ?? '').trim();
+      return { id: stableId || `vocab-${index}`, values, edited: {} };
     })
     .filter(item => (item.values[mainLang] || '').length > 0);
 }

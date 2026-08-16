@@ -113,7 +113,9 @@ export function readAppReadyWorkbook(workbook: XLSX.WorkBook): FlatSheet | null 
     if (!bucket.labels.includes(label)) {
       bucket.labels.push(label);
       const latin = str(row['Latin']);
-      if (latin && latin !== label) {
+      // Latin-script languages repeat the entry in the Latin column — that is not
+      // a transliteration, so only keep it when it really differs from the text.
+      if (latin && latin !== label && latin !== str(row['Main Entry'])) {
         bucket.latin.push(latin);
         hasLatin.add(language);
       } else {
@@ -133,6 +135,7 @@ export function readAppReadyWorkbook(workbook: XLSX.WorkBook): FlatSheet | null 
     .map(wordId => {
       const info = base.get(wordId)!;
       const row: Record<string, string> = {
+        'Word ID': wordId,
         'Chinese | 中文': info.chinese,
         Pinyin: info.pinyin,
       };
