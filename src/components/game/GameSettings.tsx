@@ -142,7 +142,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         <span className="hidden sm:inline text-center w-[3.75rem]">{shuffleMode ? 'Shuffle' : 'Order'}</span>
       </button>
 
-      {/* Vocabulary list */}
+      {/* Vocabs */}
       {onOpenVocabularyList && (
         <button
           onClick={onOpenVocabularyList}
@@ -155,7 +155,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
           title="Show all words and translations"
         >
           <List className="w-4 h-4 shrink-0" />
-          <span className="hidden sm:inline">List</span>
+          <span className="hidden sm:inline">Vocabs</span>
         </button>
       )}
 
