@@ -144,101 +144,102 @@ export const VocabularyListDialog: React.FC<VocabularyListDialogProps> = ({
         </DialogHeader>
 
         {/* Scrollable list */}
-        <ScrollArea className="flex-1 px-6 py-4">
-          {filteredItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <Search className="w-8 h-8 mb-3 opacity-40" />
-              <p className="text-sm">No words match your search.</p>
-            </div>
-          ) : (
-            <div className="space-y-2.5">
-              {filteredItems.map((item, index) => {
-                const mainValue = valueFor(item, mainColumn?.lang || '');
-                const mainRomanization = mainColumn?.showRomanization
-                  ? romanizationFor(item, mainColumn.lang)
-                  : undefined;
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <ScrollArea className="h-full px-6 py-4">
+            {filteredItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                <Search className="w-8 h-8 mb-3 opacity-40" />
+                <p className="text-sm">No words match your search.</p>
+              </div>
+            ) : (
+              <div className="space-y-2.5 pr-2">
+                {filteredItems.map((item, index) => {
+                  const mainValue = valueFor(item, mainColumn?.lang || '');
+                  const mainRomanization = mainColumn?.showRomanization
+                    ? romanizationFor(item, mainColumn.lang)
+                    : undefined;
 
-                return (
-                  <div
-                    key={item.id}
-                    className={cn(
-                      'group relative flex items-start rounded-2xl border border-border/40 bg-secondary/30 hover:bg-secondary/60 hover:border-border/80 transition-all',
-                      sizes.row,
-                    )}
-                  >
-                    {/* Index + main word badge */}
-                    <div className="flex flex-col items-center gap-1 shrink-0">
-                      <div
-                        className={cn(
-                          'flex items-center justify-center rounded-xl bg-primary/10 text-primary font-bold shrink-0',
-                          sizes.main,
-                        )}
-                      >
-                        {mainValue ? mainValue.charAt(0) : index + 1}
+                  return (
+                    <div
+                      key={item.id}
+                      className={cn(
+                        'group relative flex items-start rounded-2xl border border-border/40 bg-secondary/30 hover:bg-secondary/60 hover:border-border/80 transition-all',
+                        sizes.row,
+                      )}
+                    >
+                      {/* Index + main word badge */}
+                      <div className="flex flex-col items-center gap-1 shrink-0">
+                        <div
+                          className={cn(
+                            'flex items-center justify-center rounded-xl bg-primary/10 text-primary font-bold shrink-0',
+                            sizes.main,
+                          )}
+                        >
+                          {mainValue ? mainValue.charAt(0) : index + 1}
+                        </div>
+                        <span className="text-[10px] text-muted-foreground tabular-nums">
+                          {index + 1}
+                        </span>
                       </div>
-                      <span className="text-[10px] text-muted-foreground tabular-nums">
-                        {index + 1}
-                      </span>
-                    </div>
 
-                    {/* Translations grid */}
-                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2 min-w-0">
-                      {listColumns.map((column, colIndex) => {
-                        const value = valueFor(item, column.lang);
-                        const romanization = column.showRomanization
-                          ? romanizationFor(item, column.lang)
-                          : undefined;
-                        const lang = getLanguage(column.lang);
-                        const isMain = colIndex === 0;
+                      {/* Translations grid */}
+                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2 min-w-0">
+                        {listColumns.map((column, colIndex) => {
+                          const value = valueFor(item, column.lang);
+                          const romanization = column.showRomanization
+                            ? romanizationFor(item, column.lang)
+                            : undefined;
+                          const lang = getLanguage(column.lang);
+                          const isMain = colIndex === 0;
 
-                        return (
-                          <div
-                            key={column.lang}
-                            className={cn(
-                              'flex flex-col min-w-0',
-                              isMain && 'sm:col-span-2 lg:col-span-1',
-                            )}
-                          >
-                            <span className={cn('uppercase tracking-wider text-muted-foreground font-semibold', sizes.label)}>
-                              {lang.name}
-                            </span>
-                            <span
+                          return (
+                            <div
+                              key={column.lang}
                               className={cn(
-                                'font-medium text-foreground truncate',
-                                sizes.value,
-                                isMain && 'text-primary',
+                                'flex flex-col min-w-0',
+                                isMain && 'sm:col-span-2 lg:col-span-1',
                               )}
-                              dir={lang.rtl ? 'rtl' : 'ltr'}
-                              title={value}
                             >
-                              {value || '—'}
-                            </span>
-                            {romanization && (
-                              <span className={cn('text-muted-foreground', sizes.romanization)}>
-                                {romanization}
+                              <span className={cn('uppercase tracking-wider text-muted-foreground font-semibold', sizes.label)}>
+                                {lang.name}
                               </span>
-                            )}
-                          </div>
-                        );
-                      })}
+                              <span
+                                className={cn(
+                                  'font-medium text-foreground truncate',
+                                  sizes.value,
+                                  isMain && 'text-primary',
+                                )}
+                                dir={lang.rtl ? 'rtl' : 'ltr'}
+                                title={value}
+                              >
+                                {value || '—'}
+                              </span>
+                              {romanization && (
+                                <span className={cn('text-muted-foreground', sizes.romanization)}>
+                                  {romanization}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </ScrollArea>
+                  );
+                })}
+              </div>
+            )}
+          </ScrollArea>
+        </div>
 
         {/* Footer */}
-        <div className="shrink-0 p-4 border-t border-border/60 bg-secondary/30 flex items-center justify-between">
+        <div className="shrink-0 p-4 border-t border-border/60 bg-secondary/30 flex items-center justify-center">
           <p className="text-xs text-muted-foreground">
             Showing {filteredItems.length} word{filteredItems.length === 1 ? '' : 's'}
           </p>
-          <Button onClick={() => onOpenChange(false)}>Close</Button>
         </div>
       </DialogContent>
     </Dialog>
   );
-};
+}
 
 export default VocabularyListDialog;
