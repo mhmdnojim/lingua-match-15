@@ -1584,6 +1584,13 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
         />
 
+        <VocabularyListDialog
+          open={vocabularyListOpen}
+          onOpenChange={setVocabularyListOpen}
+          items={vocabulary}
+          columns={columns}
+        />
+
         <AlertDialog open={scopePrompt !== null} onOpenChange={open => !open && setScopePrompt(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
