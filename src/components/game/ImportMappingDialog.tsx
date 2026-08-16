@@ -55,6 +55,11 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
         initialRoles[header] = 'extra';
         return;
       }
+      // transliterations are display data for their base language, never a board column
+      if (getLanguage(lang).romanizationOf) {
+        initialRoles[header] = 'extra';
+        return;
+      }
       if (!mainTaken) {
         initialRoles[header] = 'main';
         mainTaken = true;
