@@ -66,6 +66,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import LanguageColumnsDialog from './LanguageColumnsDialog';
 import WordEditorDialog from './WordEditorDialog';
+import VocabularyListDialog from './VocabularyListDialog';
 import ImportMappingDialog, { MappingRoles } from './ImportMappingDialog';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
