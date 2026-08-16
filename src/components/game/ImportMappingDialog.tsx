@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ColumnMapping, SheetData } from '@/utils/excelParser';
-import { PICKABLE_LANGUAGES, LANGUAGES, getLanguage } from '@/utils/languages';
+import { PICKABLE_LANGUAGES, getLanguage } from '@/utils/languages';
 import { cn } from '@/lib/utils';
 
 export type ColumnRole = 'main' | 'column' | 'extra';
@@ -52,6 +52,11 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
       if (lang !== 'ignore') usedLangs.add(lang);
       initialMapping[header] = lang;
       if (lang === 'ignore') {
+        initialRoles[header] = 'extra';
+        return;
+      }
+      // transliterations are display data for their base language, never a board column
+      if (getLanguage(lang).romanizationOf) {
         initialRoles[header] = 'extra';
         return;
       }
@@ -198,8 +203,7 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
                           </option>
                         ))}
                         <optgroup label="Transliteration columns">
-
-                          {LANGUAGES.filter(l => l.romanizationOf).map(l => (
+                          {PICKABLE_LANGUAGES.filter(l => l.romanizationOf).map(l => (
                             <option key={l.code} value={l.code}>
                               {getLanguage(l.romanizationOf!).name} — {getLanguage(l.romanizationOf!).romanizationLabel ?? 'transliteration'}
                             </option>
