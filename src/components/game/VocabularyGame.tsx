@@ -1393,6 +1393,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onColumnFontSizeChange={handleColumnFontSizeChange}
           onOpenLanguages={() => setLanguagesOpen(true)}
           onOpenWordEditor={() => setWordEditorOpen(true)}
+          onOpenVocabularyList={() => setVocabularyListOpen(true)}
           muteSfx={muteSfx}
           voiceType={voiceType}
           premiumUsed={premiumUsage.used}
