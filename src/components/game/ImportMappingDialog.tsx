@@ -198,8 +198,7 @@ export const ImportMappingDialog: React.FC<ImportMappingDialogProps> = ({ open, 
                           </option>
                         ))}
                         <optgroup label="Transliteration columns">
-
-                          {LANGUAGES.filter(l => l.romanizationOf).map(l => (
+                          {PICKABLE_LANGUAGES.filter(l => l.romanizationOf).map(l => (
                             <option key={l.code} value={l.code}>
                               {getLanguage(l.romanizationOf!).name} — {getLanguage(l.romanizationOf!).romanizationLabel ?? 'transliteration'}
                             </option>
