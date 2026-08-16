@@ -137,6 +137,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
   const [languagesOpen, setLanguagesOpen] = useState(!isSmallScreen && savedUi.languagesOpen);
   const [wordEditorOpen, setWordEditorOpen] = useState(!isSmallScreen && savedUi.wordEditorOpen);
+  const [vocabularyListOpen, setVocabularyListOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(!isSmallScreen && savedUi.settingsOpen);
   /** Top chrome (title, options, stats, progress) — collapsed for distraction-free play */
   const [headerOpen, setHeaderOpen] = useState(savedUi.headerOpen);
