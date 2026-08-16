@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ColumnMapping, SheetData } from '@/utils/excelParser';
-import { PICKABLE_LANGUAGES, LANGUAGES, getLanguage } from '@/utils/languages';
+import { PICKABLE_LANGUAGES, getLanguage } from '@/utils/languages';
 import { cn } from '@/lib/utils';
 
 export type ColumnRole = 'main' | 'column' | 'extra';
