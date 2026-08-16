@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { VocabularyItem } from '@/utils/excelParser';
 import { ColumnConfig, valueFor, romanizationFor } from '@/utils/gameLogic';
 import { getLanguage } from '@/utils/languages';
-import { Search, Type, List } from 'lucide-react';
+import { Search, Type, List, ArrowUpAZ, ArrowDownAZ, ListOrdered } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface VocabularyListDialogProps {
@@ -20,25 +20,23 @@ interface VocabularyListDialogProps {
   columns: ColumnConfig[];
 }
 
-type FontSize = 'small' | 'medium' | 'large';
+type SortMode = 'file' | 'asc' | 'desc';
 
-const FONT_SIZE_CLASSES: Record<FontSize, { row: string; value: string; detail: string }> = {
-  small: {
-    row: 'h-10',
-    value: 'text-xs',
-    detail: 'text-[11px]',
-  },
-  medium: {
-    row: 'h-12',
-    value: 'text-sm',
-    detail: 'text-xs',
-  },
-  large: {
-    row: 'h-14',
-    value: 'text-base',
-    detail: 'text-sm',
-  },
-};
+const SORT_MODES: { mode: SortMode; label: string; Icon: typeof ListOrdered }[] = [
+  { mode: 'file', label: 'File order', Icon: ListOrdered },
+  { mode: 'asc', label: 'A → Z', Icon: ArrowUpAZ },
+  { mode: 'desc', label: 'Z → A', Icon: ArrowDownAZ },
+];
+
+// 6 cycling font steps; after the largest it wraps back to the smallest
+const FONT_STEPS = [
+  { row: 'h-9', value: 'text-[11px]', detail: 'text-[10px]' },
+  { row: 'h-10', value: 'text-xs', detail: 'text-[11px]' },
+  { row: 'h-11', value: 'text-sm', detail: 'text-xs' },
+  { row: 'h-12', value: 'text-base', detail: 'text-sm' },
+  { row: 'h-14', value: 'text-lg', detail: 'text-base' },
+  { row: 'h-16', value: 'text-xl', detail: 'text-lg' },
+];
 
 export const VocabularyListDialog: React.FC<VocabularyListDialogProps> = ({
   open,
@@ -47,7 +45,8 @@ export const VocabularyListDialog: React.FC<VocabularyListDialogProps> = ({
   columns,
 }) => {
   const [query, setQuery] = useState('');
-  const [fontSize, setFontSize] = useState<FontSize>('medium');
+  const [fontStep, setFontStep] = useState(2);
+  const [sortMode, setSortMode] = useState<SortMode>('file');
 
   const visibleColumns = useMemo(() => columns.filter(c => c.visible), [columns]);
   const mainColumn = visibleColumns[0] || columns[0];
@@ -58,18 +57,29 @@ export const VocabularyListDialog: React.FC<VocabularyListDialogProps> = ({
   const listColumns = mainColumn ? [mainColumn, ...otherColumns] : [];
 
   const filteredItems = useMemo(() => {
-    if (!query.trim()) return items;
     const q = query.toLowerCase().trim();
-    return items.filter(item =>
-      listColumns.some(column => {
-        const value = valueFor(item, column.lang).toLowerCase();
-        const romanization = (romanizationFor(item, column.lang) || '').toLowerCase();
-        return value.includes(q) || romanization.includes(q);
-      }),
-    );
-  }, [items, listColumns, query]);
+    const base = !q
+      ? items
+      : items.filter(item =>
+          listColumns.some(column => {
+            const value = valueFor(item, column.lang).toLowerCase();
+            const romanization = (romanizationFor(item, column.lang) || '').toLowerCase();
+            return value.includes(q) || romanization.includes(q);
+          }),
+        );
 
-  const sizes = FONT_SIZE_CLASSES[fontSize];
+    if (sortMode === 'file') return base;
+    const lang = mainColumn?.lang || '';
+    const sorted = [...base].sort((a, b) =>
+      valueFor(a, lang).localeCompare(valueFor(b, lang), undefined, { sensitivity: 'base', numeric: true }),
+    );
+    return sortMode === 'desc' ? sorted.reverse() : sorted;
+  }, [items, listColumns, query, sortMode, mainColumn]);
+
+  const sizes = FONT_STEPS[fontStep];
+  const activeSort = SORT_MODES.find(s => s.mode === sortMode)!;
+  const SortIcon = activeSort.Icon;
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
