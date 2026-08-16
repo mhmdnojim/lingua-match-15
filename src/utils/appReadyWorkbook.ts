@@ -113,9 +113,9 @@ export function readAppReadyWorkbook(workbook: XLSX.WorkBook): FlatSheet | null 
     if (!bucket.labels.includes(label)) {
       bucket.labels.push(label);
       const latin = str(row['Latin']);
-      // Latin-script languages repeat the entry in the Latin column — that is not
-      // a transliteration, so only keep it when it really differs from the text.
-      if (latin && latin !== label && latin !== str(row['Main Entry'])) {
+      // The app-ready format treats every non-English Latin cell as intentional
+      // display data, even when its spelling matches the card label exactly.
+      if (latin && language.trim().toLowerCase() !== 'english') {
         bucket.latin.push(latin);
         hasLatin.add(language);
       } else {
