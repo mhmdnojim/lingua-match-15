@@ -1,5 +1,7 @@
 import * as XLSX from 'xlsx';
 import { detectLanguageFromHeader, getLanguage, romanizationCodeFor } from './languages';
+import { readAppReadyWorkbook } from './appReadyWorkbook';
+
 
 
 export interface VocabularyItem {
