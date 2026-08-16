@@ -22,6 +22,7 @@ interface GameSettingsProps {
   onColumnFontSizeChange?: (lang: string, size: FontSize) => void;
   onOpenLanguages: () => void;
   onOpenWordEditor: () => void;
+  onOpenVocabularyList?: () => void;
   muteSfx?: boolean;
   voiceType?: VoiceType;
   /** Premium voice requests used this month */
