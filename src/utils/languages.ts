@@ -25,7 +25,7 @@ export const LANGUAGES: LanguageDef[] = [
   { code: 'zh-pinyin', name: 'Chinese Pinyin', native: '拼音', locale: 'zh-CN', romanizationOf: 'zh', short: '拼' },
   { code: 'en', name: 'English', native: 'English', locale: 'en-US', short: 'EN' },
   { code: 'ar', name: 'Arabic', native: 'العربية', locale: 'ar-SA', rtl: true, fontClass: 'font-arabic', romanizationLabel: 'Transliteration', short: 'ع' },
-  { code: 'ar-latin', name: 'Arabic transliteration', native: 'Translit.', locale: 'en-US', romanizationOf: 'ar', short: 'AR-L' },
+  { code: 'ar-latin', name: 'Arabic Latin', native: 'Latin', locale: 'en-US', romanizationOf: 'ar', short: 'AR-L' },
   { code: 'es', name: 'Spanish', native: 'Español', locale: 'es-ES', short: 'ES' },
   { code: 'fr', name: 'French', native: 'Français', locale: 'fr-FR', short: 'FR' },
   { code: 'de', name: 'German', native: 'Deutsch', locale: 'de-DE', short: 'DE' },
@@ -50,15 +50,15 @@ export const LANGUAGES: LanguageDef[] = [
   { code: 'kk', name: 'Kazakh', native: 'Қазақша', locale: 'kk-KZ', romanizationLabel: 'Transliteration', short: 'KK' },
   { code: 'tk', name: 'Turkmen', native: 'Türkmençe', locale: 'tk-TM', short: 'TK' },
   { code: 'th', name: 'Thai', native: 'ไทย', locale: 'th-TH', romanizationLabel: 'Transliteration', short: 'TH' },
-  { code: 'ru-latin', name: 'Russian transliteration', native: 'Translit.', locale: 'en-US', romanizationOf: 'ru', short: 'RU-L' },
+  { code: 'ru-latin', name: 'Russian Latin', native: 'Latin', locale: 'en-US', romanizationOf: 'ru', short: 'RU-L' },
   { code: 'ko-romaja', name: 'Korean Romaja', native: 'Romaja', locale: 'en-US', romanizationOf: 'ko', short: 'KO-R' },
-  { code: 'hi-latin', name: 'Hindi transliteration', native: 'Translit.', locale: 'en-US', romanizationOf: 'hi', short: 'HI-L' },
-  { code: 'ur-latin', name: 'Urdu transliteration', native: 'Translit.', locale: 'en-US', romanizationOf: 'ur', short: 'UR-L' },
-  { code: 'fa-latin', name: 'Persian transliteration', native: 'Translit.', locale: 'en-US', romanizationOf: 'fa', short: 'FA-L' },
-  { code: 'he-latin', name: 'Hebrew transliteration', native: 'Translit.', locale: 'en-US', romanizationOf: 'he', short: 'HE-L' },
-  { code: 'th-latin', name: 'Thai transliteration', native: 'Translit.', locale: 'en-US', romanizationOf: 'th', short: 'TH-L' },
-  { code: 'bg-latin', name: 'Bulgarian transliteration', native: 'Translit.', locale: 'en-US', romanizationOf: 'bg', short: 'BG-L' },
-  { code: 'kk-latin', name: 'Kazakh transliteration', native: 'Translit.', locale: 'en-US', romanizationOf: 'kk', short: 'KK-L' },
+  { code: 'hi-latin', name: 'Hindi Latin', native: 'Latin', locale: 'en-US', romanizationOf: 'hi', short: 'HI-L' },
+  { code: 'ur-latin', name: 'Urdu Latin', native: 'Latin', locale: 'en-US', romanizationOf: 'ur', short: 'UR-L' },
+  { code: 'fa-latin', name: 'Persian Latin', native: 'Latin', locale: 'en-US', romanizationOf: 'fa', short: 'FA-L' },
+  { code: 'he-latin', name: 'Hebrew Latin', native: 'Latin', locale: 'en-US', romanizationOf: 'he', short: 'HE-L' },
+  { code: 'th-latin', name: 'Thai Latin', native: 'Latin', locale: 'en-US', romanizationOf: 'th', short: 'TH-L' },
+  { code: 'bg-latin', name: 'Bulgarian Latin', native: 'Latin', locale: 'en-US', romanizationOf: 'bg', short: 'BG-L' },
+  { code: 'kk-latin', name: 'Kazakh Latin', native: 'Latin', locale: 'en-US', romanizationOf: 'kk', short: 'KK-L' },
 ];
 
 export const LANGUAGE_MAP: Record<string, LanguageDef> = LANGUAGES.reduce(
@@ -75,8 +75,8 @@ export function getLanguage(code: string): LanguageDef {
     const base = LANGUAGE_MAP[m[1]];
     return {
       code,
-      name: `${base.name} transliteration`,
-      native: 'Translit.',
+      name: `${base.name} Latin`,
+      native: 'Latin',
       locale: 'en-US',
       romanizationOf: base.code,
       short: `${base.short}-L`,
