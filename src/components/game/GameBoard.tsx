@@ -121,18 +121,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
                   <SelectContent className="max-h-72">
                     {(() => {
-                      // Transliterations are never listed here — they are a display
-                      // option shown above the word on the card itself.
-                      const base = (originalIndex === 0 ? MAIN_LANGUAGES : PICKABLE_LANGUAGES).filter(
-                        l => !l.romanizationOf,
-                      );
+                      // Transliteration variants (Pinyin, Latin, Romaji…) are listed
+                      // alongside their base language so they can be picked as a column.
+                      const base = originalIndex === 0 ? MAIN_LANGUAGES : PICKABLE_LANGUAGES;
                       const currentLang = column.lang;
                       const columnLangs = columns.map(c => c.lang);
 
                       const baseCodes = new Set(base.map(l => l.code));
-                      const missingColumnLangs = columnLangs.filter(
-                        code => !baseCodes.has(code) && !getLanguage(code).romanizationOf,
-                      );
+                      const missingColumnLangs = columnLangs.filter(code => !baseCodes.has(code));
                       const fullList = [...missingColumnLangs.map(getLanguage), ...base];
 
                       const current = fullList.filter(l => l.code === currentLang);
