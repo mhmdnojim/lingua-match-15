@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered, SlidersHorizontal, ChevronUp, ChevronDown, Columns3, Palette } from 'lucide-react';
+import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered, SlidersHorizontal, ChevronUp, ChevronDown, Columns3, Palette, List } from 'lucide-react';
 import { ColumnConfig } from '@/utils/gameLogic';
 import { getLanguage, columnStyle, COLUMN_COLOR_COUNT } from '@/utils/languages';
 import { THEMES, nextThemeId, getTheme } from '@/utils/themes';
@@ -22,6 +22,7 @@ interface GameSettingsProps {
   onColumnFontSizeChange?: (lang: string, size: FontSize) => void;
   onOpenLanguages: () => void;
   onOpenWordEditor: () => void;
+  onOpenVocabularyList?: () => void;
   muteSfx?: boolean;
   voiceType?: VoiceType;
   /** Premium voice requests used this month */
@@ -65,6 +66,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   onColumnFontSizeChange,
   onOpenLanguages,
   onOpenWordEditor,
+  onOpenVocabularyList,
   muteSfx = false,
   voiceType = 'free',
   premiumUsed = 0,
@@ -140,9 +142,22 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         <span className="hidden sm:inline text-center w-[3.75rem]">{shuffleMode ? 'Shuffle' : 'Order'}</span>
       </button>
 
-
-
-
+      {/* Vocabulary list */}
+      {onOpenVocabularyList && (
+        <button
+          onClick={onOpenVocabularyList}
+          disabled={disabled}
+          className={cn(
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
+            'bg-secondary border-border text-muted-foreground hover:text-foreground',
+            disabled && 'opacity-50 cursor-not-allowed',
+          )}
+          title="Show all words and translations"
+        >
+          <List className="w-4 h-4 shrink-0" />
+          <span className="hidden sm:inline">List</span>
+        </button>
+      )}
 
       {/* Per-column controls — one row per column with all of its toggles */}
       <div className="relative flex items-center gap-1 rounded-lg bg-secondary p-1" title="Per-column controls">

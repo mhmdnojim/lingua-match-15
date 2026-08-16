@@ -66,6 +66,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import LanguageColumnsDialog from './LanguageColumnsDialog';
 import WordEditorDialog from './WordEditorDialog';
+import VocabularyListDialog from './VocabularyListDialog';
 import ImportMappingDialog, { MappingRoles } from './ImportMappingDialog';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -136,6 +137,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
   const [languagesOpen, setLanguagesOpen] = useState(!isSmallScreen && savedUi.languagesOpen);
   const [wordEditorOpen, setWordEditorOpen] = useState(!isSmallScreen && savedUi.wordEditorOpen);
+  const [vocabularyListOpen, setVocabularyListOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(!isSmallScreen && savedUi.settingsOpen);
   /** Top chrome (title, options, stats, progress) — collapsed for distraction-free play */
   const [headerOpen, setHeaderOpen] = useState(savedUi.headerOpen);
@@ -1391,6 +1393,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onColumnFontSizeChange={handleColumnFontSizeChange}
           onOpenLanguages={() => setLanguagesOpen(true)}
           onOpenWordEditor={() => setWordEditorOpen(true)}
+          onOpenVocabularyList={() => setVocabularyListOpen(true)}
           muteSfx={muteSfx}
           voiceType={voiceType}
           premiumUsed={premiumUsage.used}
@@ -1579,6 +1582,13 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onRegenerateColumn={handleRegenerateColumn}
           onExportExcel={handleExportExcel}
 
+        />
+
+        <VocabularyListDialog
+          open={vocabularyListOpen}
+          onOpenChange={setVocabularyListOpen}
+          items={vocabulary}
+          columns={columns}
         />
 
         <AlertDialog open={scopePrompt !== null} onOpenChange={open => !open && setScopePrompt(null)}>
