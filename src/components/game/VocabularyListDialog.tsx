@@ -87,7 +87,7 @@ export const VocabularyListDialog: React.FC<VocabularyListDialogProps> = ({
             <div className="space-y-1">
               <DialogTitle className="text-2xl font-semibold tracking-tight flex items-center gap-2">
                 <List className="w-5 h-5 text-primary" />
-                Vocabulary Bank
+                Vocabs
               </DialogTitle>
               <p className="text-sm text-muted-foreground">
                 {filteredItems.length} of {items.length} word{items.length === 1 ? '' : 's'}
@@ -98,7 +98,7 @@ export const VocabularyListDialog: React.FC<VocabularyListDialogProps> = ({
               size="icon"
               onClick={() => onOpenChange(false)}
               className="rounded-full shrink-0"
-              aria-label="Close vocabulary list"
+              aria-label="Close vocabs"
             >
               <X className="w-5 h-5" />
             </Button>
