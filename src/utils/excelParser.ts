@@ -26,14 +26,24 @@ export type ColumnMapping = Record<string, string>;
 
 function readWorkbook(arrayBuffer: ArrayBuffer): SheetData {
   const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+
+  // App-ready workbooks (Sense Map + Reverse Index) are normalized across sheets —
+  // flatten them back to one row per word before the usual header detection runs.
+  const appReady = readAppReadyWorkbook(workbook);
+
   const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json<Record<string, string>>(worksheet, { defval: '' });
+  const rows = appReady
+    ? appReady.rows
+    : XLSX.utils.sheet_to_json<Record<string, string>>(worksheet, { defval: '' });
 
   if (rows.length === 0) {
     return { success: false, error: 'The file is empty', headers: [], rows: [], detected: {} };
   }
 
-  const headers = Object.keys(rows[0]).filter(h => h && !h.startsWith('__EMPTY'));
+  const headers = (appReady ? appReady.headers : Object.keys(rows[0])).filter(
+    h => h && !h.startsWith('__EMPTY') && !/\bexamples?\b/i.test(h) && h.toLowerCase().trim() !== 'word id',
+  );
+
   const detected: Record<string, string | null> = {};
   headers.forEach(h => {
     detected[h] = detectLanguageFromHeader(h);
