@@ -5,16 +5,23 @@ import * as XLSX from 'xlsx';
  *
  * Structure:
  *   <Level>        one row per word, incl. a permanent "Word ID"
- *   Sense Map      Sense ID -> Chinese / Pinyin / English sense
- *   Reverse Index  one row per (Word ID, Sense ID, Language) with Card Label + Latin
+ *   Sense Map      Word ID + Sense ID -> Chinese / Pinyin / English sense
+ *   Reverse Index  one row per (Word ID, Sense ID, Language) with Card Label,
+ *                  Main Entry, Latin, Is Canonical, Playable, Sense Assignment Status
  *   Review Queue / Sources / App Schema — metadata, not consumed by the game
  *
- * The game board wants one flat row per word with one cell per language, so this
- * module flattens the normalized workbook back into that shape:
- *   - Card Label is used for the card text (Main Entry keeps the long definition)
- *   - Playable = Yes entries win; canonical entries are the fallback
- *   - several playable labels for the same language become "a, b" so the existing
- *     multi-meaning panel can offer the alternatives
+ * Semantic model (this is the important part):
+ *   Word  ->  Sense  ->  Language entries
+ *
+ * A playable vocabulary item is a SENSE, not a spreadsheet row and never a
+ * comma-separated fragment. Therefore:
+ *   - one flat row per Sense ID (different senses of 白 become separate items)
+ *   - within a sense, the Is Canonical entry is the card text; the remaining
+ *     language entries follow as alternatives (the meanings panel exposes them,
+ *     the canonical one stays selected by default)
+ *   - entries that are not Playable, not Assigned, or sit on the S00 catch-all
+ *     sense are skipped so review material never enters normal rounds
+ *   - Card Label is the card text; Main Entry keeps the long lexical text
  *   - the Latin column feeds the transliteration shown above the word
  */
 
@@ -37,7 +44,21 @@ function sheetRows(workbook: XLSX.WorkBook, name: string): Record<string, unknow
   return XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' });
 }
 
-/** Flatten an app-ready workbook into headers + one row per word. Returns null when it isn't one. */
+const pick = (row: Record<string, unknown>, test: (key: string) => boolean) => {
+  const key = Object.keys(row).find(k => test(k.toLowerCase().trim()));
+  return key ? str(row[key]) : '';
+};
+
+/** A sense is usable in normal gameplay only when it is a real, reviewed sense */
+const isCatchAllSense = (senseId: string) => /-S0*0$/i.test(senseId);
+
+const isAssigned = (row: Record<string, unknown>) => {
+  const status = pick(row, k => k === 'sense assignment status' || k === 'assignment status');
+  // Missing column = older sheet: treat as assigned, Playable still gates it.
+  return !status || status.toLowerCase() === 'assigned';
+};
+
+/** Flatten an app-ready workbook into headers + one row per SENSE. Returns null when it isn't one. */
 export function readAppReadyWorkbook(workbook: XLSX.WorkBook): FlatSheet | null {
   if (!isAppReadyWorkbook(workbook)) return null;
 
@@ -50,108 +71,133 @@ export function readAppReadyWorkbook(workbook: XLSX.WorkBook): FlatSheet | null 
   );
   const vocab = vocabSheetName ? sheetRows(workbook, vocabSheetName) : [];
 
-  // --- base word list (Word ID -> Chinese / Pinyin) -------------------------
-  const order: string[] = [];
-  const base = new Map<string, { chinese: string; pinyin: string }>();
-
-  const pick = (row: Record<string, unknown>, test: (key: string) => boolean) => {
-    const key = Object.keys(row).find(k => test(k.toLowerCase().trim()));
-    return key ? str(row[key]) : '';
-  };
+  // --- word-level base data (Word ID -> Chinese / Pinyin) and word order ------
+  const wordOrder: string[] = [];
+  const words = new Map<string, { chinese: string; pinyin: string }>();
 
   vocab.forEach(row => {
     const id = pick(row, k => k === 'word id');
-    if (!id) return;
-    order.push(id);
-    base.set(id, {
+    if (!id || words.has(id)) return;
+    wordOrder.push(id);
+    words.set(id, {
       chinese: pick(row, k => k === 'chinese' || k.startsWith('chinese |') || k.startsWith('chinese|')),
       pinyin: pick(row, k => k === 'pinyin'),
     });
   });
 
-  senses.forEach(row => {
-    const id = str(row['Word ID']);
-    if (!id) return;
-    if (!base.has(id)) {
-      order.push(id);
-      base.set(id, { chinese: str(row['Chinese']), pinyin: str(row['Pinyin']) });
-    } else {
-      const entry = base.get(id)!;
-      if (!entry.chinese) entry.chinese = str(row['Chinese']);
-      if (!entry.pinyin) entry.pinyin = str(row['Pinyin']);
+  // --- sense-level base data --------------------------------------------------
+  type Sense = { senseId: string; wordId: string; chinese: string; pinyin: string; gloss: string };
+  const senseOrder: string[] = [];
+  const senseById = new Map<string, Sense>();
+
+  const addSense = (senseId: string, wordId: string, chinese: string, pinyin: string, gloss: string) => {
+    if (!senseId || isCatchAllSense(senseId)) return;
+    const existing = senseById.get(senseId);
+    if (existing) {
+      if (!existing.chinese) existing.chinese = chinese;
+      if (!existing.pinyin) existing.pinyin = pinyin;
+      if (!existing.gloss) existing.gloss = gloss;
+      return;
     }
+    if (!words.has(wordId)) {
+      wordOrder.push(wordId);
+      words.set(wordId, { chinese, pinyin });
+    }
+    senseOrder.push(senseId);
+    senseById.set(senseId, { senseId, wordId, chinese, pinyin, gloss });
+  };
+
+  senses.forEach(row => {
+    const senseId = pick(row, k => k === 'sense id');
+    const wordId = pick(row, k => k === 'word id') || senseId.replace(/-S\d+$/i, '');
+    const word = words.get(wordId);
+    addSense(
+      senseId,
+      wordId,
+      pick(row, k => k === 'chinese' || k.startsWith('chinese |')) || word?.chinese || '',
+      pick(row, k => k === 'pinyin') || word?.pinyin || '',
+      pick(row, k => k === 'english sense' || k === 'sense gloss' || k === 'gloss' || k === 'sense'),
+    );
   });
 
-  if (order.length === 0) return null;
+  // Senses referenced only by the Reverse Index still count.
+  reverse.forEach(row => {
+    const senseId = pick(row, k => k === 'sense id');
+    if (!senseId || senseById.has(senseId)) return;
+    const wordId = pick(row, k => k === 'word id') || senseId.replace(/-S\d+$/i, '');
+    const word = words.get(wordId);
+    addSense(senseId, wordId, word?.chinese || '', word?.pinyin || '', '');
+  });
 
-  // --- per language labels --------------------------------------------------
-  type Bucket = { labels: string[]; latin: string[] };
+  if (senseOrder.length === 0) return null;
+
+  // --- language entries per sense --------------------------------------------
+  type Entry = { label: string; latin: string; canonical: boolean };
   const languages: string[] = [];
   const hasLatin = new Set<string>();
-  // wordId -> language -> tier -> bucket ; tier 0 = playable, 1 = canonical, 2 = rest
-  const byWord = new Map<string, Map<string, Bucket[]>>();
+  const bySense = new Map<string, Map<string, Entry[]>>();
 
   reverse.forEach(row => {
-    const wordId = str(row['Word ID']);
-    const language = str(row['Language']);
-    const label = str(row['Card Label']) || str(row['Main Entry']);
-    if (!wordId || !language || !label || !base.has(wordId)) return;
+    const senseId = pick(row, k => k === 'sense id');
+    const language = pick(row, k => k === 'language');
+    const label = pick(row, k => k === 'card label') || pick(row, k => k === 'main entry');
+    if (!senseId || !language || !label || !senseById.has(senseId)) return;
+
+    // Only reviewed, playable entries feed normal gameplay.
+    if (!yes(row['Playable']) || !isAssigned(row)) return;
 
     if (!languages.includes(language)) languages.push(language);
 
-    const tier = yes(row['Playable']) ? 0 : yes(row['Is Canonical']) ? 1 : 2;
-    let perLang = byWord.get(wordId);
-    if (!perLang) byWord.set(wordId, (perLang = new Map()));
-    let tiers = perLang.get(language);
-    if (!tiers) perLang.set(language, (tiers = [
-      { labels: [], latin: [] },
-      { labels: [], latin: [] },
-      { labels: [], latin: [] },
-    ]));
-
-    const bucket = tiers[tier];
-    if (!bucket.labels.includes(label)) {
-      bucket.labels.push(label);
-      const latin = str(row['Latin']);
-      // The app-ready format treats every non-English Latin cell as intentional
-      // display data, even when its spelling matches the card label exactly.
-      if (latin && language.trim().toLowerCase() !== 'english') {
-        bucket.latin.push(latin);
-        hasLatin.add(language);
-      } else {
-        bucket.latin.push('');
-      }
+    const canonical = yes(row['Is Canonical']);
+    let perLang = bySense.get(senseId);
+    if (!perLang) bySense.set(senseId, (perLang = new Map()));
+    const list = perLang.get(language) ?? [];
+    if (!list.some(e => e.label === label)) {
+      const latin = pick(row, k => k === 'latin');
+      const keepLatin = latin && language.toLowerCase() !== 'english';
+      if (keepLatin) hasLatin.add(language);
+      list.push({ label, latin: keepLatin ? latin : '', canonical });
     }
+    perLang.set(language, list);
   });
 
-  // --- build the flat rows --------------------------------------------------
+  // --- build the flat rows: one per sense --------------------------------------
   const headers = ['Chinese | 中文', 'Pinyin'];
   languages.forEach(language => {
     headers.push(language);
     if (hasLatin.has(language)) headers.push(`${language} Latin`);
   });
 
-  const rows: Record<string, string>[] = order
-    .map(wordId => {
-      const info = base.get(wordId)!;
+  const orderedSenses = senseOrder
+    .map(id => senseById.get(id)!)
+    .sort((a, b) => wordOrder.indexOf(a.wordId) - wordOrder.indexOf(b.wordId) || a.senseId.localeCompare(b.senseId));
+
+  const rows: Record<string, string>[] = orderedSenses
+    .map(sense => {
       const row: Record<string, string> = {
-        'Word ID': wordId,
-        'Chinese | 中文': info.chinese,
-        Pinyin: info.pinyin,
+        // The sense is the semantic identity of a playable item.
+        'Word ID': sense.senseId,
+        'Sense ID': sense.senseId,
+        'Vocab Word ID': sense.wordId,
+        'Chinese | 中文': sense.chinese,
+        Pinyin: sense.pinyin,
       };
-      const perLang = byWord.get(wordId);
+      const perLang = bySense.get(sense.senseId);
       languages.forEach(language => {
-        const tiers = perLang?.get(language);
-        const chosen = tiers?.find(t => t.labels.length > 0);
-        row[language] = chosen ? chosen.labels.join(', ') : '';
+        // Canonical entry first: it becomes the card text, the rest stay as
+        // same-sense alternatives inside the meanings panel.
+        const entries = [...(perLang?.get(language) ?? [])].sort(
+          (a, b) => Number(b.canonical) - Number(a.canonical),
+        );
+        row[language] = entries.map(e => e.label).join(', ');
         if (hasLatin.has(language)) {
-          const latin = (chosen?.latin ?? []).filter(Boolean);
-          row[`${language} Latin`] = latin.length === (chosen?.labels.length ?? 0) ? latin.join(', ') : latin[0] ?? '';
+          const latin = entries.map(e => e.latin);
+          row[`${language} Latin`] = latin.every(Boolean) ? latin.join(', ') : latin.find(Boolean) ?? '';
         }
       });
       return row;
     })
-    .filter(row => row['Chinese | 中文']);
+    .filter(row => row['Chinese | 中文'] || languages.some(l => row[l]));
 
   return rows.length ? { headers, rows } : null;
 }

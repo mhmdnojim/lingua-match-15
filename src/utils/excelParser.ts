@@ -42,9 +42,11 @@ function readWorkbook(arrayBuffer: ArrayBuffer): SheetData {
     return { success: false, error: 'The file is empty', headers: [], rows: [], detected: {} };
   }
 
+  const META = new Set(['word id', 'sense id', 'vocab word id']);
   const headers = (appReady ? appReady.headers : Object.keys(rows[0])).filter(
-    h => h && !h.startsWith('__EMPTY') && !/\bexamples?\b/i.test(h) && h.toLowerCase().trim() !== 'word id',
+    h => h && !h.startsWith('__EMPTY') && !/\bexamples?\b/i.test(h) && !META.has(h.toLowerCase().trim()),
   );
+
 
   const detected: Record<string, string | null> = {};
   headers.forEach(h => {
