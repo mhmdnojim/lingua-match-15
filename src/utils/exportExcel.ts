@@ -31,8 +31,8 @@ export const exportVocabularyToExcel = (
   });
   items.forEach(item => Object.keys(item.values || {}).forEach(push));
 
-  const headers = ['Entry ID', ...langs.map(code => getLanguage(code)?.name ?? code)];
-  const rows = items.map(item => [item.id, ...langs.map(code => item.values?.[code] ?? '')]);
+  const headers = ['Entry ID', 'Part of Speech', ...langs.map(code => getLanguage(code)?.name ?? code)];
+  const rows = items.map(item => [item.id, item.pos ?? '', ...langs.map(code => item.values?.[code] ?? '')]);
 
   const sheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
   sheet['!cols'] = headers.map(() => ({ wch: 24 }));
