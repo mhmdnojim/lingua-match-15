@@ -248,6 +248,12 @@ export function readAppReadyWorkbook(workbook: XLSX.WorkBook): FlatSheet | null 
   const languages: string[] = [];
   const hasLatin = new Set<string>();
   const bySense = new Map<string, Map<string, Entry[]>>();
+  const sensePos = new Map<string, string>();
+  senses.forEach(row => {
+    const senseId = pick(row, k => k === 'sense id');
+    const p = pickPos(row);
+    if (senseId && p && !sensePos.has(senseId)) sensePos.set(senseId, p);
+  });
 
   reverse.forEach(row => {
     const senseId = pick(row, k => k === 'sense id');
@@ -259,8 +265,7 @@ export function readAppReadyWorkbook(workbook: XLSX.WorkBook): FlatSheet | null 
     if (!yes(row['Playable']) || !isAssigned(row)) return;
 
     const rowPos = pickPos(row);
-    const known = base.get(senseId);
-    if (known && !known.pos && rowPos) known.pos = rowPos;
+    if (rowPos && !sensePos.get(senseId)) sensePos.set(senseId, rowPos);
 
     if (!languages.includes(language)) languages.push(language);
 
@@ -297,6 +302,7 @@ export function readAppReadyWorkbook(workbook: XLSX.WorkBook): FlatSheet | null 
         'Vocab Word ID': sense.wordId,
         'Chinese | 中文': sense.chinese,
         Pinyin: sense.pinyin,
+        'Part of Speech': sensePos.get(sense.senseId) ?? '',
       };
       const perLang = bySense.get(sense.senseId);
       languages.forEach(language => {
