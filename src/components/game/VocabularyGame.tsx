@@ -222,6 +222,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const persistVocabulary = useCallback(
     (items: VocabularyItem[], main: string) => {
       saveVocabulary({ items, mainLang: main, source: cloudSource });
+      // Also write back into this file's own saved set so generated translations,
+      // transliterations, meanings and word types survive switching files / reloads.
+      saveVocabularySet({ items, mainLang: main, source: cloudSource });
       if (!userRef.current) return;
       if (cloudTimer.current) window.clearTimeout(cloudTimer.current);
       setCloudStatus('saving');
