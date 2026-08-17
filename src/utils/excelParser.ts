@@ -75,9 +75,26 @@ function readWorkbook(arrayBuffer: ArrayBuffer): SheetData {
   }
 
   const META = new Set(['word id', 'sense id', 'vocab word id']);
-  const headers = (appReady ? appReady.headers : Object.keys(rows[0])).filter(
-    h => h && !h.startsWith('__EMPTY') && !/\bexamples?\b/i.test(h) && !META.has(h.toLowerCase().trim()),
+  const rawHeaders = appReady ? appReady.headers : Object.keys(rows[0]);
+
+  // A part-of-speech column is metadata, not a language — copy it onto a stable
+  // key so buildVocabulary can pick it up, and keep it out of the mapping UI.
+  const posHeader = rawHeaders.find(isPosHeader) || (rows[0][POS_HEADER] !== undefined ? POS_HEADER : undefined);
+  if (posHeader && posHeader !== POS_HEADER) {
+    rows.forEach(row => {
+      row[POS_HEADER] = String(row[posHeader] ?? '');
+    });
+  }
+
+  const headers = rawHeaders.filter(
+    h =>
+      h &&
+      !h.startsWith('__EMPTY') &&
+      !/\bexamples?\b/i.test(h) &&
+      !META.has(h.toLowerCase().trim()) &&
+      !isPosHeader(h),
   );
+
 
 
   const detected: Record<string, string | null> = {};
