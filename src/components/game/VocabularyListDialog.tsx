@@ -11,6 +11,8 @@ import { VocabularyItem } from '@/utils/excelParser';
 import { ColumnConfig, valueFor, romanizationFor } from '@/utils/gameLogic';
 import { getLanguage } from '@/utils/languages';
 import { Search, Type, List, ArrowUpAZ, ArrowDownAZ, ListOrdered } from 'lucide-react';
+import { posAbbrev } from './Card';
+
 import { cn } from '@/lib/utils';
 
 interface VocabularyListDialogProps {
