@@ -198,7 +198,9 @@ export function buildVocabulary(sheet: SheetData, mapping: ColumnMapping, mainLa
       // App-ready workbooks carry a permanent Word ID — prefer it so edits and
       // cloud data stay attached to the same word across re-imports.
       const stableId = String(row['Word ID'] ?? '').trim();
-      return { id: stableId || `vocab-${index}`, values, edited: {} };
+      const pos = normalizePos(String(row[POS_HEADER] ?? ''));
+      return { id: stableId || `vocab-${index}`, values, edited: {}, ...(pos ? { pos } : {}) };
+
     })
     .filter(item => (item.values[mainLang] || '').length > 0);
 }
