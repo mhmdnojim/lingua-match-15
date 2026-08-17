@@ -222,6 +222,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const persistVocabulary = useCallback(
     (items: VocabularyItem[], main: string) => {
       saveVocabulary({ items, mainLang: main, source: cloudSource });
+      // Also write back into this file's own saved set so generated translations,
+      // transliterations, meanings and word types survive switching files / reloads.
+      saveVocabularySet({ items, mainLang: main, source: cloudSource });
       if (!userRef.current) return;
       if (cloudTimer.current) window.clearTimeout(cloudTimer.current);
       setCloudStatus('saving');
@@ -333,6 +336,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
             setVocabulary(prev => {
               const next = prev.map(i => patch.get(i.id) || i);
               saveVocabulary({ items: next, mainLang: source, source: cloudSource });
+              saveVocabularySet({ items: next, mainLang: source, source: cloudSource });
               return next;
             });
           }
@@ -476,12 +480,15 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         const results = await detectPartsOfSpeech(mainLang, words);
         if (cancelled) return;
         const byId = new Map(pending.map((item, i) => [item.id, normalizePos(results[i] || '')]));
-        setVocabulary(prev =>
-          prev.map(item => {
+        setVocabulary(prev => {
+          const next = prev.map(item => {
             const pos = byId.get(item.id);
             return pos && !item.pos ? { ...item, pos } : item;
-          }),
-        );
+          });
+          // Keep detected word types with the file instead of re-detecting every session
+          persistVocabulary(next, mainLang);
+          return next;
+        });
       } catch {
         posFilledRef.current = '';
       }
@@ -598,6 +605,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         setVocabulary(remote.items);
         if (remote.columns.length >= 2) setColumns(remote.columns);
         saveVocabulary({ items: remote.items, mainLang: remote.mainLang, source: cloudSource });
+        saveVocabularySet({ items: remote.items, mainLang: remote.mainLang, source: cloudSource });
         autoTranslatedRef.current = '';
         toast({
           title: 'Restored from your account',
