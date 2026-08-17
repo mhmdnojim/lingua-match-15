@@ -18,11 +18,25 @@ export const exportVocabularyToExcel = (
     ...columns.filter(c => c.lang !== mainLang),
   ];
 
-  const headers = ordered.map(c => getLanguage(c.lang)?.name ?? c.lang);
-  const rows = items.map(item => ordered.map(c => item.values?.[c.lang] ?? ''));
+  // Keep every language stored on the words — including romanization / Latin
+  // pseudo-columns and languages that are currently hidden.
+  const langs: string[] = [];
+  const push = (code: string) => {
+    if (code && !langs.includes(code)) langs.push(code);
+  };
+  ordered.forEach(c => {
+    push(c.lang);
+    const rom = romanizationCodeFor(c.lang);
+    if (rom && items.some(i => (i.values?.[rom] || '').trim())) push(rom);
+  });
+  items.forEach(item => Object.keys(item.values || {}).forEach(push));
+
+  const headers = ['Entry ID', ...langs.map(code => getLanguage(code)?.name ?? code)];
+  const rows = items.map(item => [item.id, ...langs.map(code => item.values?.[code] ?? '')]);
 
   const sheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
   sheet['!cols'] = headers.map(() => ({ wch: 24 }));
+
 
   const book = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(book, sheet, 'Vocabulary');
