@@ -51,6 +51,10 @@ const pick = (row: Record<string, unknown>, test: (key: string) => boolean) => {
 };
 
 /** A sense is usable in normal gameplay only when it is a real, reviewed sense */
+/** Grammatical class column, however the workbook spells it */
+const pickPos = (row: Record<string, unknown>) =>
+  pick(row, k => k === 'pos' || k === 'part of speech' || k === 'word type' || k === 'word class' || k === '词性');
+
 const isCatchAllSense = (senseId: string) => /-S0*0$/i.test(senseId);
 
 const isAssigned = (row: Record<string, unknown>) => {
@@ -71,7 +75,7 @@ function readAppVocabularySheet(workbook: XLSX.WorkBook): FlatSheet | null {
   if (entries.length === 0) return null;
 
   // Chinese / Pinyin for every sense come from the Sense Map.
-  type Base = { chinese: string; pinyin: string; wordId: string };
+  type Base = { chinese: string; pinyin: string; wordId: string; pos: string };
   const base = new Map<string, Base>();
   const senseOrder: string[] = [];
   sheetRows(workbook, 'Sense Map').forEach(row => {
@@ -82,6 +86,7 @@ function readAppVocabularySheet(workbook: XLSX.WorkBook): FlatSheet | null {
       chinese: pick(row, k => k === 'chinese' || k.startsWith('chinese |')),
       pinyin: pick(row, k => k === 'pinyin'),
       wordId: pick(row, k => k === 'word id') || senseId.replace(/-S\d+$/i, ''),
+      pos: pickPos(row),
     });
   });
 
@@ -103,8 +108,13 @@ function readAppVocabularySheet(workbook: XLSX.WorkBook): FlatSheet | null {
         chinese: pick(row, k => k === 'chinese'),
         pinyin: pick(row, k => k === 'pinyin'),
         wordId: pick(row, k => k === 'word id') || senseId.replace(/-S\d+$/i, ''),
+        pos: pickPos(row),
       });
     }
+
+    const rowPos = pickPos(row);
+    const known = base.get(senseId);
+    if (known && !known.pos && rowPos) known.pos = rowPos;
 
     if (!languages.includes(language)) languages.push(language);
     let perLang = bySense.get(senseId);
@@ -135,6 +145,7 @@ function readAppVocabularySheet(workbook: XLSX.WorkBook): FlatSheet | null {
         'Vocab Word ID': info.wordId,
         'Chinese | 中文': info.chinese,
         Pinyin: info.pinyin,
+        'Part of Speech': info.pos,
       };
       const perLang = bySense.get(senseId);
       languages.forEach(language => {
@@ -237,6 +248,12 @@ export function readAppReadyWorkbook(workbook: XLSX.WorkBook): FlatSheet | null 
   const languages: string[] = [];
   const hasLatin = new Set<string>();
   const bySense = new Map<string, Map<string, Entry[]>>();
+  const sensePos = new Map<string, string>();
+  senses.forEach(row => {
+    const senseId = pick(row, k => k === 'sense id');
+    const p = pickPos(row);
+    if (senseId && p && !sensePos.has(senseId)) sensePos.set(senseId, p);
+  });
 
   reverse.forEach(row => {
     const senseId = pick(row, k => k === 'sense id');
@@ -246,6 +263,9 @@ export function readAppReadyWorkbook(workbook: XLSX.WorkBook): FlatSheet | null 
 
     // Only reviewed, playable entries feed normal gameplay.
     if (!yes(row['Playable']) || !isAssigned(row)) return;
+
+    const rowPos = pickPos(row);
+    if (rowPos && !sensePos.get(senseId)) sensePos.set(senseId, rowPos);
 
     if (!languages.includes(language)) languages.push(language);
 
@@ -282,6 +302,7 @@ export function readAppReadyWorkbook(workbook: XLSX.WorkBook): FlatSheet | null 
         'Vocab Word ID': sense.wordId,
         'Chinese | 中文': sense.chinese,
         Pinyin: sense.pinyin,
+        'Part of Speech': sensePos.get(sense.senseId) ?? '',
       };
       const perLang = bySense.get(sense.senseId);
       languages.forEach(language => {

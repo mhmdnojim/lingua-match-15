@@ -20,6 +20,8 @@ export interface GameCard {
   lang: string;
   content: string;
   romanization?: string;
+  /** grammatical class of the underlying word (noun, verb, …) */
+  pos?: string;
   isSelected: boolean;
   isMatched: boolean;
   isError: boolean;
@@ -158,6 +160,7 @@ export function createColumnCards(
         lang: column.lang,
         content: valueFor(item, column.lang),
         romanization: romanizationFor(item, column.lang),
+        pos: item.pos,
         isSelected: false,
         isMatched: false,
         isError: false,

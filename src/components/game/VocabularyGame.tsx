@@ -8,6 +8,7 @@ import {
   fetchExcelFromUrl,
   parseExcelFile,
   createBatches,
+  normalizePos,
 } from '@/utils/excelParser';
 import {
   GameCard,
@@ -40,7 +41,7 @@ import {
 } from '@/utils/storage';
 import { getLanguage, romanizationCodeFor, hasRomanization, equivalentLanguages } from '@/utils/languages';
 import { exportVocabularyToExcel } from '@/utils/exportExcel';
-import { translateWords } from '@/utils/translate';
+import { translateWords, detectPartsOfSpeech } from '@/utils/translate';
 import { fetchCloudSet, saveCloudSet, deleteCloudSet, filledCount } from '@/utils/cloudVocabulary';
 import { useAudio } from '@/hooks/useAudio';
 import { usePremiumVoiceUsage } from '@/hooks/usePremiumVoiceUsage';
@@ -453,6 +454,43 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     });
     return list;
   }, [columns]);
+
+  // Fill in the grammatical class (noun / verb / …) for the words on screen
+  // whenever the imported file didn't provide one.
+  const posFilledRef = useRef<string>('');
+  useEffect(() => {
+    const batch = batches[currentBatch];
+    if (!batch || !cloudReady || translationHalted || !mainLang) return;
+
+    const pending = batch.filter(item => !item.pos && (item.values[mainLang] || '').trim());
+    if (pending.length === 0) return;
+
+    const key = `${mainLang}|${pending.map(i => i.id).join(',')}`;
+    if (posFilledRef.current === key) return;
+    posFilledRef.current = key;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const words = pending.map(item => item.values[mainLang]);
+        const results = await detectPartsOfSpeech(mainLang, words);
+        if (cancelled) return;
+        const byId = new Map(pending.map((item, i) => [item.id, normalizePos(results[i] || '')]));
+        setVocabulary(prev =>
+          prev.map(item => {
+            const pos = byId.get(item.id);
+            return pos && !item.pos ? { ...item, pos } : item;
+          }),
+        );
+      } catch {
+        posFilledRef.current = '';
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [batches, currentBatch, mainLang, cloudReady, translationHalted]);
 
   // Auto-fill the batch the user just reached: any *visible* column with missing words
   // is generated on arrival. Whole-file runs still need an explicit action.

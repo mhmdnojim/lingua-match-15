@@ -11,6 +11,8 @@ import { VocabularyItem } from '@/utils/excelParser';
 import { ColumnConfig, valueFor, romanizationFor } from '@/utils/gameLogic';
 import { getLanguage } from '@/utils/languages';
 import { Search, Type, List, ArrowUpAZ, ArrowDownAZ, ListOrdered } from 'lucide-react';
+import { posAbbrev } from './Card';
+
 import { cn } from '@/lib/utils';
 
 interface VocabularyListDialogProps {
@@ -169,9 +171,18 @@ export const VocabularyListDialog: React.FC<VocabularyListDialogProps> = ({
                     )}
                   >
                     <span className="font-mono text-[10px] tabular-nums text-muted-foreground">{index + 1}</span>
-                    <span className={cn('truncate pr-3 font-semibold text-primary', sizes.value)} title={mainValue}>
-                      {mainValue || '—'}
+                    <span className={cn('flex min-w-0 items-center gap-1.5 truncate pr-3 font-semibold text-primary', sizes.value)} title={mainValue}>
+                      <span className="truncate">{mainValue || '—'}</span>
+                      {!!posAbbrev(item.pos) && (
+                        <span
+                          className="shrink-0 rounded-full bg-secondary px-1.5 py-[1px] font-mono text-[9px] font-semibold uppercase text-muted-foreground"
+                          title={item.pos}
+                        >
+                          {posAbbrev(item.pos)}
+                        </span>
+                      )}
                     </span>
+
                     <div className={cn('flex min-w-0 items-center gap-3 overflow-hidden border-l border-border/50 pl-4 text-foreground', sizes.detail)}>
                       {translations.length > 0 ? translations.map(({ lang, text }) => (
                         <span key={lang.code} className="min-w-0 truncate" dir={lang.rtl ? 'rtl' : 'ltr'} title={`${lang.name}: ${text}`}>
