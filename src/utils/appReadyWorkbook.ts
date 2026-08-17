@@ -59,9 +59,109 @@ const isAssigned = (row: Record<string, unknown>) => {
   return !status || status.toLowerCase() === 'assigned';
 };
 
+/**
+ * Contract 5.0: "App Vocabulary" is the authoritative sheet.
+ * One Entry ID = one lexical entry. Entries are never merged back together by
+ * Word ID; they are only aligned by Sense ID so the same meaning across
+ * languages lands on the same playable line (far / distant / remote stay
+ * separate lines because they carry separate Sense IDs).
+ */
+function readAppVocabularySheet(workbook: XLSX.WorkBook): FlatSheet | null {
+  const entries = sheetRows(workbook, 'App Vocabulary');
+  if (entries.length === 0) return null;
+
+  // Chinese / Pinyin for every sense come from the Sense Map.
+  type Base = { chinese: string; pinyin: string; wordId: string };
+  const base = new Map<string, Base>();
+  const senseOrder: string[] = [];
+  sheetRows(workbook, 'Sense Map').forEach(row => {
+    const senseId = pick(row, k => k === 'sense id');
+    if (!senseId || isCatchAllSense(senseId) || !isAssigned(row) || base.has(senseId)) return;
+    senseOrder.push(senseId);
+    base.set(senseId, {
+      chinese: pick(row, k => k === 'chinese' || k.startsWith('chinese |')),
+      pinyin: pick(row, k => k === 'pinyin'),
+      wordId: pick(row, k => k === 'word id') || senseId.replace(/-S\d+$/i, ''),
+    });
+  });
+
+  type Entry = { label: string; latin: string; canonical: boolean };
+  const languages: string[] = [];
+  const hasLatin = new Set<string>();
+  const bySense = new Map<string, Map<string, Entry[]>>();
+
+  entries.forEach(row => {
+    const senseId = pick(row, k => k === 'sense id');
+    const language = pick(row, k => k === 'language');
+    const label = pick(row, k => k === 'card label') || pick(row, k => k === 'main entry');
+    if (!senseId || !language || !label) return;
+    if (isCatchAllSense(senseId) || !isAssigned(row)) return;
+
+    if (!base.has(senseId)) {
+      senseOrder.push(senseId);
+      base.set(senseId, {
+        chinese: pick(row, k => k === 'chinese'),
+        pinyin: pick(row, k => k === 'pinyin'),
+        wordId: pick(row, k => k === 'word id') || senseId.replace(/-S\d+$/i, ''),
+      });
+    }
+
+    if (!languages.includes(language)) languages.push(language);
+    let perLang = bySense.get(senseId);
+    if (!perLang) bySense.set(senseId, (perLang = new Map()));
+    const list = perLang.get(language) ?? [];
+    if (!list.some(e => e.label === label)) {
+      const latin = pick(row, k => k === 'latin');
+      const keepLatin = !!latin && latin !== label && language.toLowerCase() !== 'english';
+      if (keepLatin) hasLatin.add(language);
+      list.push({ label, latin: keepLatin ? latin : '', canonical: yes(row['Is Canonical']) });
+    }
+    perLang.set(language, list);
+  });
+
+  const headers = ['Chinese | 中文', 'Pinyin'];
+  languages.forEach(language => {
+    headers.push(language);
+    if (hasLatin.has(language)) headers.push(`${language} Latin`);
+  });
+
+  const rows: Record<string, string>[] = senseOrder
+    .filter(senseId => bySense.has(senseId))
+    .map(senseId => {
+      const info = base.get(senseId)!;
+      const row: Record<string, string> = {
+        'Word ID': senseId,
+        'Sense ID': senseId,
+        'Vocab Word ID': info.wordId,
+        'Chinese | 中文': info.chinese,
+        Pinyin: info.pinyin,
+      };
+      const perLang = bySense.get(senseId);
+      languages.forEach(language => {
+        const list = [...(perLang?.get(language) ?? [])].sort(
+          (a, b) => Number(b.canonical) - Number(a.canonical),
+        );
+        row[language] = list.map(e => e.label).join(', ');
+        if (hasLatin.has(language)) {
+          const latin = list.map(e => e.latin);
+          row[`${language} Latin`] = latin.every(Boolean) ? latin.join(', ') : latin.find(Boolean) ?? '';
+        }
+      });
+      return row;
+    })
+    .filter(row => row['Chinese | 中文'] || languages.some(l => row[l]));
+
+  return rows.length ? { headers, rows } : null;
+}
+
 /** Flatten an app-ready workbook into headers + one row per SENSE. Returns null when it isn't one. */
 export function readAppReadyWorkbook(workbook: XLSX.WorkBook): FlatSheet | null {
   if (!isAppReadyWorkbook(workbook)) return null;
+
+  // Contract 5.0 workbooks: App Vocabulary wins over the legacy Reverse Index.
+  const appVocabulary = readAppVocabularySheet(workbook);
+  if (appVocabulary) return appVocabulary;
+
 
   const reverse = sheetRows(workbook, 'Reverse Index');
   if (reverse.length === 0) return null;
