@@ -46,3 +46,21 @@ export async function translateWords({
 
   return words.map((_, i) => String(translations[i] ?? '').trim());
 }
+
+/**
+ * Ask the model for the grammatical class (noun / verb / adjective / …) of each
+ * word. Reuses the translation function with a strict instruction.
+ */
+export async function detectPartsOfSpeech(lang: string, words: string[]): Promise<string[]> {
+  if (words.length === 0) return [];
+  const name = getLanguage(lang).name;
+  return translateWords({
+    sourceLang: lang,
+    targetLang: lang,
+    words,
+    instruction:
+      `Do NOT translate. For each ${name} word return ONLY its part of speech in English, ` +
+      `one of: noun, verb, adjective, adverb, pronoun, preposition, conjunction, interjection, ` +
+      `numeral, determiner, particle, measure word, phrase. Return exactly one label per input word.`,
+  });
+}
