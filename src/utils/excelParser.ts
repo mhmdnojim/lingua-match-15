@@ -10,7 +10,39 @@ export interface VocabularyItem {
   values: Record<string, string>;
   /** language codes that were manually edited by the user */
   edited?: Record<string, boolean>;
+  /** grammatical class of the word: noun, verb, adjective, … */
+  pos?: string;
 }
+
+/** Column header that carries the grammatical class rather than a language */
+export const POS_HEADER = 'Part of Speech';
+export const isPosHeader = (header: string) =>
+  /^(pos|part[\s_-]*of[\s_-]*speech|word[\s_-]*(type|class)|grammar|grammatical[\s_-]*class|词性|詞性)$/i.test(
+    header.trim(),
+  );
+
+/** Normalize free-form POS text to a short, readable label */
+export function normalizePos(raw: string): string {
+  const value = String(raw ?? '').trim().toLowerCase().replace(/[.\s]+$/, '');
+  if (!value) return '';
+  const map: Record<string, string> = {
+    n: 'noun', noun: 'noun', nouns: 'noun',
+    v: 'verb', verb: 'verb', vi: 'verb', vt: 'verb',
+    adj: 'adjective', a: 'adjective', adjective: 'adjective',
+    adv: 'adverb', adverb: 'adverb',
+    pron: 'pronoun', pronoun: 'pronoun',
+    prep: 'preposition', preposition: 'preposition',
+    conj: 'conjunction', conjunction: 'conjunction',
+    interj: 'interjection', int: 'interjection', interjection: 'interjection',
+    num: 'numeral', numeral: 'numeral', number: 'numeral',
+    det: 'determiner', determiner: 'determiner', art: 'article', article: 'article',
+    part: 'particle', particle: 'particle',
+    mw: 'measure word', classifier: 'measure word', 'measure word': 'measure word',
+    phrase: 'phrase', idiom: 'idiom', name: 'proper noun', 'proper noun': 'proper noun',
+  };
+  return map[value] ?? value;
+}
+
 
 export interface SheetData {
   success: boolean;
