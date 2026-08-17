@@ -479,12 +479,15 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         const results = await detectPartsOfSpeech(mainLang, words);
         if (cancelled) return;
         const byId = new Map(pending.map((item, i) => [item.id, normalizePos(results[i] || '')]));
-        setVocabulary(prev =>
-          prev.map(item => {
+        setVocabulary(prev => {
+          const next = prev.map(item => {
             const pos = byId.get(item.id);
             return pos && !item.pos ? { ...item, pos } : item;
-          }),
-        );
+          });
+          // Keep detected word types with the file instead of re-detecting every session
+          persistVocabulary(next, mainLang);
+          return next;
+        });
       } catch {
         posFilledRef.current = '';
       }
