@@ -336,6 +336,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
             setVocabulary(prev => {
               const next = prev.map(i => patch.get(i.id) || i);
               saveVocabulary({ items: next, mainLang: source, source: cloudSource });
+              saveVocabularySet({ items: next, mainLang: source, source: cloudSource });
               return next;
             });
           }
@@ -604,6 +605,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         setVocabulary(remote.items);
         if (remote.columns.length >= 2) setColumns(remote.columns);
         saveVocabulary({ items: remote.items, mainLang: remote.mainLang, source: cloudSource });
+        saveVocabularySet({ items: remote.items, mainLang: remote.mainLang, source: cloudSource });
         autoTranslatedRef.current = '';
         toast({
           title: 'Restored from your account',
