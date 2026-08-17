@@ -454,30 +454,43 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     return list;
   }, [columns]);
 
-  // Auto-translate the current batch when a configured column has no data yet
+  // Auto-fill the batch the user just reached: any *visible* column with missing words
+  // is generated on arrival. Whole-file runs still need an explicit action.
   const autoTranslatedRef = useRef<string>('');
   useEffect(() => {
     const batch = batches[currentBatch];
-    if (!batch || isTranslating || !cloudReady || translationHalted || !autoTranslateOn) return;
+    if (!batch || isTranslating || !cloudReady || translationHalted) return;
 
     // In "whole file" mode every word is translated at once, not just this round
-    const scopeItems = translateScope === 'all' ? vocabulary : batch;
+    const wholeFile = translateScope === 'all' && autoTranslateOn;
+    const scopeItems = wholeFile ? vocabulary : batch;
     if (scopeItems.length === 0) return;
 
+    // Only columns the user can actually see get auto-filled (plus their romanizations)
+    const autoColumns = wholeFile
+      ? translationColumns
+      : translationColumns.filter(c => {
+          const owner = columns.find(x => x.lang === c.lang);
+          if (owner) return owner.visible;
+          // hidden romanization pseudo-column: follow the column it belongs to
+          return columns.some(x => x.showRomanization && romanizationCodeFor(x.lang) === c.lang && x.visible);
+        });
+    if (autoColumns.length < 2) return;
+
     const missing = scopeItems.some(item =>
-      translationColumns.some(c => !(item.values[c.lang] || '').trim()),
+      autoColumns.some(c => !(item.values[c.lang] || '').trim()),
     );
 
-    const key =
-      translateScope === 'all'
-        ? `all-${translationColumns.map(c => c.lang).join(',')}-${vocabulary.length}`
-        : `${currentBatch}-${translationColumns.map(c => c.lang).join(',')}-${batch.map(i => i.id).join(',')}`;
+    const key = wholeFile
+      ? `all-${autoColumns.map(c => c.lang).join(',')}-${vocabulary.length}`
+      : `${currentBatch}-${autoColumns.map(c => c.lang).join(',')}-${batch.map(i => i.id).join(',')}`;
     if (!missing || autoTranslatedRef.current === key) return;
 
     autoTranslatedRef.current = key;
-    translateMissing(scopeItems, translationColumns, mainLang);
+    translateMissing(scopeItems, autoColumns, mainLang);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [batches, currentBatch, translationColumns, mainLang, cloudReady, translateScope, vocabulary, translationHalted, autoTranslateOn]);
+  }, [batches, currentBatch, translationColumns, columns, mainLang, cloudReady, translateScope, vocabulary, translationHalted, autoTranslateOn]);
+
 
   /** Translate every word still missing a translation in the whole file */
   /** Words still missing at least one of the active column languages */
