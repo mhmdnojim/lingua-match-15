@@ -8,6 +8,7 @@ import {
   fetchExcelFromUrl,
   parseExcelFile,
   createBatches,
+  normalizePos,
 } from '@/utils/excelParser';
 import {
   GameCard,
