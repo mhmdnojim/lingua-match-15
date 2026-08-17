@@ -6,6 +6,19 @@ import { splitMeanings, joinMeanings, useMeaningSelection } from '@/utils/meanin
 import MeaningsPanel from './MeaningsPanel';
 import { Layers } from 'lucide-react';
 
+/** Compact tag for a grammatical class, e.g. adjective -> adj. */
+export const posAbbrev = (pos?: string): string => {
+  const value = (pos || '').trim().toLowerCase();
+  if (!value) return '';
+  const map: Record<string, string> = {
+    noun: 'n.', 'proper noun': 'prop.n.', verb: 'v.', adjective: 'adj.', adverb: 'adv.',
+    pronoun: 'pron.', preposition: 'prep.', conjunction: 'conj.', interjection: 'interj.',
+    numeral: 'num.', determiner: 'det.', article: 'art.', particle: 'part.',
+    'measure word': 'mw.', phrase: 'phr.', idiom: 'idiom',
+  };
+  return map[value] ?? (value.length <= 5 ? value : `${value.slice(0, 4)}.`);
+};
+
 export type FontSize = 'small' | 'medium' | 'large' | 'x-large';
 
 interface CardProps {
@@ -168,6 +181,15 @@ export const Card: React.FC<CardProps> = ({
       >
         {displayed}
       </span>
+
+      {!!posAbbrev(card.pos) && !card.isMatched && (
+        <span
+          className="pointer-events-none absolute bottom-0.5 left-1 rounded-full bg-background/70 px-1.5 py-[1px] font-mono text-[9px] font-semibold leading-none text-foreground/80 ring-1 ring-foreground/15 sm:text-[10px]"
+          title={card.pos}
+        >
+          {posAbbrev(card.pos)}
+        </span>
+      )}
 
       {hasMultiple && !card.isMatched && (
         <button
