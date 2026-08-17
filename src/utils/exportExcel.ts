@@ -1,7 +1,7 @@
 import * as XLSX from 'xlsx';
 import { VocabularyItem } from './excelParser';
 import { ColumnConfig } from './gameLogic';
-import { getLanguage } from './languages';
+import { getLanguage, romanizationCodeFor } from './languages';
 
 /**
  * Export the full vocabulary list (all batches, including AI-generated columns)
