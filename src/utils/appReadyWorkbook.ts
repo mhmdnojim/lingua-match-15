@@ -35,6 +35,7 @@ const str = (v: unknown) => String(v ?? '').trim();
 
 export function isAppReadyWorkbook(workbook: XLSX.WorkBook): boolean {
   const names = workbook.SheetNames;
+  if (names.includes('App Vocabulary')) return true;
   return names.includes('Reverse Index') && (names.includes('Sense Map') || names.includes('App Schema'));
 }
 
