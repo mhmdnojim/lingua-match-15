@@ -1595,7 +1595,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               </div>
             </div>
 
-            {/* Batch navigation: first · previous · position · next · last */}
+            {/* Batch navigation: first · previous · batch info · matched · next · last */}
             <div className="flex items-center justify-center gap-1.5 py-1">
               <Button
                 size="icon"
@@ -1619,8 +1619,11 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
+              <span className="min-w-[7rem] text-center text-xs font-semibold tabular-nums text-muted-foreground px-2">
+                Batch {currentBatch + 1} / {batches.length}
+              </span>
               <span className="min-w-[4.5rem] text-center text-xs font-semibold tabular-nums text-muted-foreground">
-                {currentBatch + 1} / {batches.length}
+                {matchedPairs} / {batches[currentBatch]?.length || 0} matched
               </span>
               <Button
                 size="icon"
