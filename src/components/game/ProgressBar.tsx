@@ -80,10 +80,6 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
 
   return (
     <div className={cn('w-full', className)}>
-      <div className="flex justify-end text-sm text-muted-foreground mb-1">
-        <span>{matched} / {total} matched</span>
-      </div>
-
       {/* Draggable progress bar */}
       <div
         ref={barRef}
