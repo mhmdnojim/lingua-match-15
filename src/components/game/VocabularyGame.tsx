@@ -14,7 +14,10 @@ import {
   GameCard,
   ColumnConfig,
   createColumnCards,
-  
+  createBatchesByLexeme,
+  groupByLexeme,
+  buildGroupCard,
+  activeSenseIds,
   shuffleVocabulary,
   createSeededRandom,
   dailySeed,
@@ -23,6 +26,8 @@ import {
   romanizationFor,
 
 } from '@/utils/gameLogic';
+import { getMeaningSelection } from '@/utils/meanings';
+
 import {
   saveProgress,
   loadProgress,
