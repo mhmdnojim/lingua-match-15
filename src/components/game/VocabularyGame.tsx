@@ -657,39 +657,38 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     const batch = batches[currentBatch];
     if (!batch) return;
     const byId = new Map(batch.map(i => [i.id, i]));
+    const groups = groupByLexeme(batch, mainLang);
     setCards(prev => {
       let changed = false;
       const next: Record<string, GameCard[]> = {};
       Object.entries(prev).forEach(([lang, list]) => {
         const updated = list.map(card => {
-          const item = byId.get(card.vocabId);
-          if (!item) return card;
-          const content = valueFor(item, lang);
-          const romanization = romanizationFor(item, lang);
-          if (content === card.content && romanization === card.romanization) return card;
+          const group = (card.senseIds ?? [card.vocabId]).map(id => byId.get(id)).filter(Boolean) as typeof batch;
+          if (group.length === 0) return card;
+          const rebuilt = buildGroupCard(group, lang);
+          if (!rebuilt) return card;
+          if (
+            rebuilt.content === card.content &&
+            rebuilt.romanization === card.romanization &&
+            JSON.stringify(rebuilt.options) === JSON.stringify(card.options)
+          ) {
+            return card;
+          }
           changed = true;
-          return { ...card, content: content || card.content, romanization };
+          return { ...card, content: rebuilt.content, romanization: rebuilt.romanization, options: rebuilt.options, pos: rebuilt.pos };
         });
-        const present = new Set(updated.map(c => c.vocabId));
-        batch.forEach(item => {
-          if (present.has(item.id)) return;
-          const content = valueFor(item, lang);
-          if (!content) return;
+        const present = new Set(updated.flatMap(c => c.senseIds ?? [c.vocabId]));
+        groups.forEach(group => {
+          if (group.some(item => present.has(item.id))) return;
+          const card = buildGroupCard(group, lang);
+          if (!card) return;
           changed = true;
-          updated.push({
-            id: `${lang}-${item.id}`,
-            vocabId: item.id,
-            lang,
-            content,
-            romanization: romanizationFor(item, lang),
-            isSelected: false,
-            isMatched: false,
-            isError: false,
-          });
+          updated.push(card);
         });
         next[lang] = updated;
       });
       return changed ? next : prev;
+
     });
   }, [batches, currentBatch]);
 
