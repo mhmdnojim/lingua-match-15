@@ -204,15 +204,42 @@ export function buildVocabulary(sheet: SheetData, mapping: ColumnMapping, mainLa
         const value = String(row[header] ?? '').trim();
         if (value) values[lang] = value;
       });
-      // App-ready workbooks carry a permanent Word ID — prefer it so edits and
-      // cloud data stay attached to the same word across re-imports.
-      const stableId = String(row['Word ID'] ?? '').trim();
-      const pos = normalizePos(String(row[POS_HEADER] ?? ''));
-      return { id: stableId || `vocab-${index}`, values, edited: {}, ...(pos ? { pos } : {}) };
 
+      // Semantic workbooks ship the exact expressions per language (canonical +
+      // file-declared alternatives). They are never derived from punctuation.
+      let declared: Record<string, LexicalEntry[]> | undefined;
+      const raw = String(row[ENTRIES_COLUMN] ?? '');
+      if (raw) {
+        try {
+          const byHeader = JSON.parse(raw) as Record<string, LexicalEntry[]>;
+          declared = {};
+          entries.forEach(([header, lang]) => {
+            const list = byHeader[header];
+            if (list?.length) declared![lang] = list;
+          });
+          if (Object.keys(declared).length === 0) declared = undefined;
+        } catch {
+          declared = undefined;
+        }
+      }
+
+      // Sense ID (when present) is the permanent identity of the line, so edits
+      // and cloud data stay attached to the same sense across re-imports.
+      const stableId = String(row['Sense ID'] ?? row['Word ID'] ?? '').trim();
+      const sourceWordId = String(row['Vocab Word ID'] ?? '').trim();
+      const pos = normalizePos(String(row[POS_HEADER] ?? ''));
+      return {
+        id: stableId || `vocab-${index}`,
+        values,
+        edited: {},
+        ...(pos ? { pos } : {}),
+        ...(declared ? { entries: declared } : {}),
+        ...(sourceWordId ? { sourceWordId } : {}),
+      };
     })
     .filter(item => (item.values[mainLang] || '').length > 0);
 }
+
 
 export function createBatches(items: VocabularyItem[], batchSize: number = 5): VocabularyItem[][] {
   const batches: VocabularyItem[][] = [];
