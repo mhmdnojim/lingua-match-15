@@ -1644,6 +1644,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               >
                 <ChevronsRight className="h-4 w-4" />
               </Button>
+              <span className="min-w-[4.5rem] text-center text-xs font-semibold tabular-nums text-muted-foreground ml-2">
+                {matchedPairs} / {batches[currentBatch]?.length || 0} matched
+              </span>
             </div>
 
             <GameBoard
