@@ -1152,8 +1152,16 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
 
     setAttempts(a => a + 1);
-    const vocabIds = selectedCards.map(c => c.vocabId);
-    const isMatch = vocabIds.every(id => id === vocabIds[0]);
+    // Semantic correctness is decided only by Sense ID: every picked expression
+    // must resolve to one sense the whole selection shares.
+    const senseSets = selectedCards.map(card => {
+      const texts = card.options?.length
+        ? getMeaningSelection(card.vocabId, card.lang, card.options.map(o => o.text))
+        : undefined;
+      return activeSenseIds(card, texts);
+    });
+    const isMatch = senseSets.length > 0 && senseSets[0].some(id => senseSets.every(set => set.includes(id)));
+
 
     const mapAll = (updater: (card: GameCard) => GameCard) => {
       setCards(prev => {
