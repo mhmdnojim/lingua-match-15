@@ -14,11 +14,24 @@ export interface ColumnConfig {
   fontSize?: 'small' | 'medium' | 'large' | 'x-large';
 }
 
+/** One selectable expression on a card, always tied to the exact sense it belongs to */
+export interface CardOption {
+  text: string;
+  /** transliteration of THIS exact expression */
+  latin?: string;
+  /** Sense ID this expression belongs to — the semantic identity */
+  senseId: string;
+  canonical?: boolean;
+  disambiguation?: string;
+}
+
 export interface GameCard {
   /** unique card-instance id — UI state only, never semantic identity */
   id: string;
-  /** Sense ID: the only key that decides whether two cards match */
+  /** primary Sense ID of the card (first sense of the grouped headword) */
   vocabId: string;
+  /** every Sense ID this card can stand for — matching uses these, never the text */
+  senseIds: string[];
   lang: string;
   content: string;
   romanization?: string;
@@ -26,10 +39,13 @@ export interface GameCard {
   pos?: string;
   /** file-declared expressions of this sense in this language (canonical first) */
   entries?: LexicalEntry[];
+  /** every expression available on this card, each carrying its own Sense ID */
+  options?: CardOption[];
   isSelected: boolean;
   isMatched: boolean;
   isError: boolean;
 }
+
 
 
 /** Random source: returns a float in [0, 1). Defaults to Math.random */
@@ -148,31 +164,119 @@ export function shuffleVocabulary(
   return smartShuffle(items, item => sortKey(item, mainLang), rand);
 }
 
+/**
+ * Headword (lexeme) identity for a language — language-independent grouping layer.
+ * Built from the exact lexical entry of that language (never from Word ID, never
+ * from the Card Label), so any language can become the main column and still show
+ * one card per headword.
+ */
+export function lexemeKey(item: VocabularyItem, lang: string): string {
+  const declared = item.entries?.[lang];
+  const canonical = declared?.find(e => e.canonical) ?? declared?.[0];
+  const raw = (canonical?.mainEntry || canonical?.text || valueFor(item, lang) || '').trim();
+  return raw ? `${lang}:${raw.toLowerCase()}` : '';
+}
+
+/** Group senses that share the same main-language headword, keeping file order */
+export function groupByLexeme(items: VocabularyItem[], mainLang: string): VocabularyItem[][] {
+  const order: string[] = [];
+  const groups = new Map<string, VocabularyItem[]>();
+  items.forEach(item => {
+    const key = lexemeKey(item, mainLang) || `#${item.id}`;
+    if (!groups.has(key)) {
+      groups.set(key, []);
+      order.push(key);
+    }
+    groups.get(key)!.push(item);
+  });
+  return order.map(key => groups.get(key)!);
+}
+
+/** Batch by headword so a grouped main word is never split across two batches */
+export function createBatchesByLexeme(
+  items: VocabularyItem[],
+  mainLang: string,
+  batchSize: number,
+): VocabularyItem[][] {
+  const groups = groupByLexeme(items, mainLang);
+  const batches: VocabularyItem[][] = [];
+  for (let i = 0; i < groups.length; i += batchSize) {
+    batches.push(groups.slice(i, i + batchSize).flat());
+  }
+  return batches;
+}
+
+/**
+ * Every expression available for a headword in one language. Alternatives are only
+ * ever file-declared; a plain value becomes its single canonical expression.
+ */
+export function buildCardOptions(group: VocabularyItem[], lang: string): CardOption[] {
+  const options: CardOption[] = [];
+  const seen = new Set<string>();
+  group.forEach(item => {
+    const declared = item.entries?.[lang];
+    const fallback = valueFor(item, lang);
+    const list: LexicalEntry[] = declared?.length
+      ? declared
+      : fallback
+        ? [{ text: fallback, canonical: true }]
+        : [];
+    list.forEach(entry => {
+      const text = (entry.text || '').trim();
+      if (!text) return;
+      const key = `${item.id}|${text}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      options.push({
+        text,
+        latin: entry.latin || romanizationFor(item, lang),
+        senseId: item.id,
+        canonical: entry.canonical,
+        disambiguation: entry.disambiguation,
+      });
+    });
+  });
+  return options;
+}
+
+/** Build one card for a headword group in one language (null when it has no expression) */
+export function buildGroupCard(group: VocabularyItem[], lang: string): GameCard | null {
+  const options = buildCardOptions(group, lang);
+  if (options.length === 0) return null;
+  const primary = options.find(o => o.canonical) ?? options[0];
+  const first = group[0];
+  return {
+    id: `${lang}-${first.id}`,
+    vocabId: primary.senseId,
+    senseIds: group.map(i => i.id),
+    lang,
+    content: primary.text,
+    romanization: primary.latin,
+    pos: group.find(i => i.pos)?.pos,
+    entries: first.entries?.[lang],
+    options,
+    isSelected: false,
+    isMatched: false,
+    isError: false,
+  };
+}
+
 export function createColumnCards(
   items: VocabularyItem[],
   columns: ColumnConfig[],
   shuffle: boolean,
   /** When set, dealing is deterministic — the same seed always deals the same board */
   seed?: string,
+  /** headword grouping is anchored on the main language column */
+  mainLang?: string,
 ): Record<string, GameCard[]> {
   const result: Record<string, GameCard[]> = {};
+  const groups = groupByLexeme(items, mainLang ?? columns[0]?.lang ?? '');
 
   columns.forEach(column => {
-    const cards: GameCard[] = items
-      .map(item => ({
-        id: `${column.lang}-${item.id}`,
-        vocabId: item.id,
-        lang: column.lang,
-        content: valueFor(item, column.lang),
-        romanization: romanizationFor(item, column.lang),
-        pos: item.pos,
-        entries: item.entries?.[column.lang],
-        isSelected: false,
-        isMatched: false,
-        isError: false,
-      }))
-      .filter(card => card.content.length > 0);
-
+    const cards = groups
+      .map(group => buildGroupCard(group, column.lang))
+      .filter((card): card is GameCard => card !== null);
 
     const rand = seed ? createSeededRandom(`${seed}|${column.lang}`) : Math.random;
     result[column.lang] = shuffle
@@ -182,6 +286,17 @@ export function createColumnCards(
 
   return result;
 }
+
+/** Sense IDs a card can currently stand for, given the expressions the player picked */
+export function activeSenseIds(card: GameCard, selectedTexts?: string[]): string[] {
+  if (!card.options?.length) return card.senseIds ?? [card.vocabId];
+  const picked = selectedTexts?.length
+    ? card.options.filter(o => selectedTexts.includes(o.text))
+    : [];
+  const used = picked.length ? picked : card.options;
+  return Array.from(new Set(used.map(o => o.senseId)));
+}
+
 
 export function languageLabel(lang: string): string {
   const def = getLanguage(lang);

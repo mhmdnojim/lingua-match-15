@@ -14,7 +14,10 @@ import {
   GameCard,
   ColumnConfig,
   createColumnCards,
-  
+  createBatchesByLexeme,
+  groupByLexeme,
+  buildGroupCard,
+  activeSenseIds,
   shuffleVocabulary,
   createSeededRandom,
   dailySeed,
@@ -23,6 +26,8 @@ import {
   romanizationFor,
 
 } from '@/utils/gameLogic';
+import { getMeaningSelection } from '@/utils/meanings';
+
 import {
   saveProgress,
   loadProgress,
@@ -266,7 +271,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     // for the rest of the day (and changes automatically tomorrow).
     const rand = dailyMode ? createSeededRandom(dailySeed(cloudSource, mainLang, 'order')) : Math.random;
     const ordered = shuffleMode ? shuffleVocabulary(vocabulary, mainLang, rand) : [...vocabulary];
-    setBatches(createBatches(ordered, batchSize));
+    setBatches(createBatchesByLexeme(ordered, mainLang, batchSize));
   }, [vocabulary, shuffleMode, dailyMode, cloudSource, mainLang, batchSize]);
 
   const cancelTranslationRef = useRef(false);
@@ -624,7 +629,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       const batch = batches[batchIndex];
       if (!batch) return;
       const dealSeed = dailyMode ? dailySeed(cloudSource, mainLang, 'deal', batchIndex) : undefined;
-      setCards(createColumnCards(batch, columns, true, dealSeed));
+      setCards(createColumnCards(batch, columns, true, dealSeed, mainLang));
       setSelectedCards([]);
       setMatchedPairs(0);
       setTime(0);
@@ -657,39 +662,38 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     const batch = batches[currentBatch];
     if (!batch) return;
     const byId = new Map(batch.map(i => [i.id, i]));
+    const groups = groupByLexeme(batch, mainLang);
     setCards(prev => {
       let changed = false;
       const next: Record<string, GameCard[]> = {};
       Object.entries(prev).forEach(([lang, list]) => {
         const updated = list.map(card => {
-          const item = byId.get(card.vocabId);
-          if (!item) return card;
-          const content = valueFor(item, lang);
-          const romanization = romanizationFor(item, lang);
-          if (content === card.content && romanization === card.romanization) return card;
+          const group = (card.senseIds ?? [card.vocabId]).map(id => byId.get(id)).filter(Boolean) as typeof batch;
+          if (group.length === 0) return card;
+          const rebuilt = buildGroupCard(group, lang);
+          if (!rebuilt) return card;
+          if (
+            rebuilt.content === card.content &&
+            rebuilt.romanization === card.romanization &&
+            JSON.stringify(rebuilt.options) === JSON.stringify(card.options)
+          ) {
+            return card;
+          }
           changed = true;
-          return { ...card, content: content || card.content, romanization };
+          return { ...card, content: rebuilt.content, romanization: rebuilt.romanization, options: rebuilt.options, pos: rebuilt.pos };
         });
-        const present = new Set(updated.map(c => c.vocabId));
-        batch.forEach(item => {
-          if (present.has(item.id)) return;
-          const content = valueFor(item, lang);
-          if (!content) return;
+        const present = new Set(updated.flatMap(c => c.senseIds ?? [c.vocabId]));
+        groups.forEach(group => {
+          if (group.some(item => present.has(item.id))) return;
+          const card = buildGroupCard(group, lang);
+          if (!card) return;
           changed = true;
-          updated.push({
-            id: `${lang}-${item.id}`,
-            vocabId: item.id,
-            lang,
-            content,
-            romanization: romanizationFor(item, lang),
-            isSelected: false,
-            isMatched: false,
-            isError: false,
-          });
+          updated.push(card);
         });
         next[lang] = updated;
       });
       return changed ? next : prev;
+
     });
   }, [batches, currentBatch]);
 
@@ -1130,6 +1134,13 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
   const visibleColumns = useMemo(() => columns.filter(c => c.visible), [columns]);
 
+  /** Pairs on the board = one card per main-language headword (grouped senses count once) */
+  const pairsInBatch = useMemo(
+    () => cards[columns[0]?.lang ?? mainLang]?.length || batches[currentBatch]?.length || 0,
+    [cards, columns, mainLang, batches, currentBatch],
+  );
+
+
 
 
   /** Every visible column must be picked — even one that is still being generated. */
@@ -1148,8 +1159,16 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
 
     setAttempts(a => a + 1);
-    const vocabIds = selectedCards.map(c => c.vocabId);
-    const isMatch = vocabIds.every(id => id === vocabIds[0]);
+    // Semantic correctness is decided only by Sense ID: every picked expression
+    // must resolve to one sense the whole selection shares.
+    const senseSets = selectedCards.map(card => {
+      const texts = card.options?.length
+        ? getMeaningSelection(card.vocabId, card.lang, card.options.map(o => o.text))
+        : undefined;
+      return activeSenseIds(card, texts);
+    });
+    const isMatch = senseSets.length > 0 && senseSets[0].some(id => senseSets.every(set => set.includes(id)));
+
 
     const mapAll = (updater: (card: GameCard) => GameCard) => {
       setCards(prev => {
@@ -1170,7 +1189,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       mapAll(c => (selectedCards.some(s => s.id === c.id) ? { ...c, isMatched: true, isSelected: false } : c));
       setSelectedCards([]);
 
-      if (matchedPairs + 1 === batches[currentBatch]?.length) {
+      if (matchedPairs + 1 === pairsInBatch) {
         setTimeout(() => {
           playCelebration();
           setShowCelebration(true);
@@ -1589,7 +1608,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
                   completedBatches={completedBatches}
                   onSelectBatch={handleSelectBatch}
                   matched={matchedPairs}
-                  total={batches[currentBatch]?.length || 0}
+                  total={pairsInBatch}
                   className="max-w-xl mx-auto"
                 />
               </div>
@@ -1645,7 +1664,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
                 <ChevronsRight className="h-4 w-4" />
               </Button>
               <span className="min-w-[4.5rem] text-center text-xs font-semibold tabular-nums text-muted-foreground ml-2">
-                {matchedPairs} / {batches[currentBatch]?.length || 0} matched
+                {matchedPairs} / {pairsInBatch} matched
               </span>
             </div>
 
