@@ -175,14 +175,14 @@ export const Card: React.FC<CardProps> = ({
         isBusy && !card.isMatched && 'ring-2 ring-primary/70 shadow-lg z-10',
       )}
     >
-      {showRomanization && card.romanization && (
+      {showRomanization && romanization && (
         <span
           className={cn(
             'pointer-events-none absolute left-1.5 right-1.5 top-1 sm:left-2 sm:right-2 sm:top-1.5 text-foreground/70 font-medium leading-none text-center truncate text-[9px] sm:text-[11px]',
             fontSize === 'large' ? 'md:text-sm' : 'md:text-xs',
           )}
         >
-          {card.romanization}
+          {romanization}
         </span>
       )}
 
@@ -192,13 +192,24 @@ export const Card: React.FC<CardProps> = ({
         style={{ fontSize: `${px}px` }}
         className={cn(
           'w-full h-full flex items-center justify-center text-center font-medium text-foreground leading-[1.15] break-words hyphens-auto overflow-hidden',
-          showRomanization && card.romanization && 'pt-2.5 sm:pt-4',
+          showRomanization && romanization && 'pt-2.5 sm:pt-4',
+          disambiguation && 'pb-2.5 sm:pb-3.5',
           language.fontClass,
           language.romanizationOf && 'italic',
         )}
       >
         {displayed}
       </span>
+
+      {disambiguation && !card.isMatched && (
+        <span
+          className="pointer-events-none absolute bottom-0.5 left-1/2 -translate-x-1/2 max-w-[85%] truncate text-center text-[9px] italic leading-none text-foreground/65 sm:text-[10px]"
+          title={disambiguation}
+        >
+          {disambiguation}
+        </span>
+      )}
+
 
       {!!posAbbrev(card.pos) && !card.isMatched && (
         <span
