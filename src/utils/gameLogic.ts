@@ -166,11 +166,13 @@ export function createColumnCards(
         content: valueFor(item, column.lang),
         romanization: romanizationFor(item, column.lang),
         pos: item.pos,
+        entries: item.entries?.[column.lang],
         isSelected: false,
         isMatched: false,
         isError: false,
       }))
       .filter(card => card.content.length > 0);
+
 
     const rand = seed ? createSeededRandom(`${seed}|${column.lang}`) : Math.random;
     result[column.lang] = shuffle
