@@ -14,11 +14,24 @@ export interface ColumnConfig {
   fontSize?: 'small' | 'medium' | 'large' | 'x-large';
 }
 
+/** One selectable expression on a card, always tied to the exact sense it belongs to */
+export interface CardOption {
+  text: string;
+  /** transliteration of THIS exact expression */
+  latin?: string;
+  /** Sense ID this expression belongs to — the semantic identity */
+  senseId: string;
+  canonical?: boolean;
+  disambiguation?: string;
+}
+
 export interface GameCard {
   /** unique card-instance id — UI state only, never semantic identity */
   id: string;
-  /** Sense ID: the only key that decides whether two cards match */
+  /** primary Sense ID of the card (first sense of the grouped headword) */
   vocabId: string;
+  /** every Sense ID this card can stand for — matching uses these, never the text */
+  senseIds: string[];
   lang: string;
   content: string;
   romanization?: string;
@@ -26,10 +39,13 @@ export interface GameCard {
   pos?: string;
   /** file-declared expressions of this sense in this language (canonical first) */
   entries?: LexicalEntry[];
+  /** every expression available on this card, each carrying its own Sense ID */
+  options?: CardOption[];
   isSelected: boolean;
   isMatched: boolean;
   isError: boolean;
 }
+
 
 
 /** Random source: returns a float in [0, 1). Defaults to Math.random */
