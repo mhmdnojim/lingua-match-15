@@ -1,4 +1,4 @@
-import { VocabularyItem } from './excelParser';
+import { VocabularyItem, LexicalEntry } from './excelParser';
 import { getLanguage, romanizationCodeFor } from './languages';
 
 export interface ColumnConfig {
@@ -15,17 +15,22 @@ export interface ColumnConfig {
 }
 
 export interface GameCard {
+  /** unique card-instance id — UI state only, never semantic identity */
   id: string;
+  /** Sense ID: the only key that decides whether two cards match */
   vocabId: string;
   lang: string;
   content: string;
   romanization?: string;
   /** grammatical class of the underlying word (noun, verb, …) */
   pos?: string;
+  /** file-declared expressions of this sense in this language (canonical first) */
+  entries?: LexicalEntry[];
   isSelected: boolean;
   isMatched: boolean;
   isError: boolean;
 }
+
 
 /** Random source: returns a float in [0, 1). Defaults to Math.random */
 export type RandomFn = () => number;
