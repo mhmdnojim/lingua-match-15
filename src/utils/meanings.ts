@@ -51,6 +51,14 @@ export function selectionKey(vocabId: string, lang: string): string {
   return `${vocabId}|${lang}`;
 }
 
+/** Expressions currently checked for a card (outside React) — first one by default */
+export function getMeaningSelection(vocabId: string, lang: string, meanings: string[]): string[] {
+  if (meanings.length <= 1) return meanings;
+  const kept = (store[selectionKey(vocabId, lang)] ?? []).filter(m => meanings.includes(m));
+  return kept.length ? kept : meanings.slice(0, 1);
+}
+
+
 export function setMeaningSelection(vocabId: string, lang: string, meanings: string[]) {
   const key = selectionKey(vocabId, lang);
   store = { ...store, [key]: meanings };
