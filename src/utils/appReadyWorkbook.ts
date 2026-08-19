@@ -138,44 +138,62 @@ function readWideMatrixWorkbook(workbook: XLSX.WorkBook): FlatSheet | null {
   const rows: Record<string, string>[] = [];
   vocab.forEach(row => {
     const senseId = pick(row, k => k === 'sense id');
+    // -S00 = sense unassigned: never part of ordinary gameplay.
     if (!senseId || isCatchAllSense(senseId)) return;
+    if (!isAssigned(row)) return;
     const playable = pick(row, k => k === 'playable');
     if (playable && !yes(playable)) return;
 
     const out: Record<string, string> = {
-      // one Sense ID = one vocabulary line, and its permanent identity
+      // Sense ID is the semantic identity of a playable line and its matching key.
       'Word ID': senseId,
       'Sense ID': senseId,
+      // Word ID stays available as source provenance only — never a matching key.
       'Vocab Word ID': pick(row, k => k === 'word id'),
       'Part of Speech': pickPos(row),
     };
 
+    const entriesByHeader: Record<string, SheetEntry[]> = {};
+
     langHeaders.forEach(header => {
-      const isLatin = / Latin$/i.test(header);
-      const base = isLatin ? header.replace(/ Latin$/i, '') : header;
-      const language = base === 'Pinyin' ? 'Chinese' : base;
+      if (/ Latin$/i.test(header)) return;
+      const language = header === 'Pinyin' ? 'Chinese' : header;
       const key = `${senseId}|${language}`;
-      const alts = alternatives.get(key) ?? [];
+      const latinHeader = langHeaders.find(h => h.toLowerCase() === `${header.toLowerCase()} latin`);
 
-      let primary = str(row[header]);
-      if (!isLatin) {
-        const override = labels.get(key);
-        if (override) {
-          primary = override.disambiguation
-            ? `${override.label} (${override.disambiguation})`
-            : override.label;
-        }
-      }
+      const mainEntry = str(row[header]);
+      if (!mainEntry) return;
+      const override = labels.get(key);
 
-      const extra = isLatin ? alts.map(a => a.latin) : alts.map(a => a.text);
-      const values = [primary, ...extra].filter(Boolean);
-      // Latin stays aligned with its language: only emit it when complete.
-      out[header] = isLatin && !primary ? '' : values.join(', ');
+      const canonical: SheetEntry = {
+        text: override?.label || mainEntry,
+        mainEntry,
+        latin: latinHeader ? str(row[latinHeader]) : '',
+        canonical: true,
+        disambiguation: override?.disambiguation || '',
+      };
+      // Alternatives come from the Alternatives sheet only, each with its own
+      // transliteration; their order in the sheet is preserved.
+      const alts = (alternatives.get(key) ?? []).map(a => ({
+        text: a.text,
+        mainEntry: a.text,
+        latin: a.latin,
+        canonical: false,
+      }));
+
+      entriesByHeader[header] = [canonical, ...alts];
+      // The visible card text is the canonical expression; Main Entry is kept
+      // intact inside the entry data and alternatives are never merged in.
+      out[header] = canonical.text;
+      if (latinHeader) out[latinHeader] = canonical.latin ?? '';
     });
+
+    out[ENTRIES_COLUMN] = encodeEntries(entriesByHeader);
 
     // A line must carry at least one language value to be playable.
     if (langHeaders.some(h => !/ Latin$/i.test(h) && out[h])) rows.push(out);
   });
+
 
   if (rows.length === 0) return null;
   return { headers: langHeaders, rows };
