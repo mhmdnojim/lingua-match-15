@@ -1595,7 +1595,59 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               </div>
             </div>
 
+            {/* Batch navigation: first · previous · position · next · last */}
+            <div className="flex items-center justify-center gap-1.5 py-1">
+              <Button
+                size="icon"
+                variant="outline"
+                className="h-8 w-8 shrink-0"
+                aria-label="First batch"
+                title="First batch"
+                disabled={currentBatch === 0}
+                onClick={() => handleSelectBatch(0)}
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="outline"
+                className="h-8 w-8 shrink-0"
+                aria-label="Previous batch"
+                title="Previous batch"
+                disabled={currentBatch === 0}
+                onClick={() => handleSelectBatch(currentBatch - 1)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="min-w-[4.5rem] text-center text-xs font-semibold tabular-nums text-muted-foreground">
+                {currentBatch + 1} / {batches.length}
+              </span>
+              <Button
+                size="icon"
+                variant="outline"
+                className="h-8 w-8 shrink-0"
+                aria-label="Next batch"
+                title="Next batch"
+                disabled={currentBatch >= batches.length - 1}
+                onClick={() => handleSelectBatch(currentBatch + 1)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="outline"
+                className="h-8 w-8 shrink-0"
+                aria-label="Last batch"
+                title="Last batch"
+                disabled={currentBatch >= batches.length - 1}
+                onClick={() => handleSelectBatch(batches.length - 1)}
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
+
             <GameBoard
+
               columns={columns}
               cards={cards}
               loadingLangs={isTranslating ? columns.map(c => c.lang) : []}
