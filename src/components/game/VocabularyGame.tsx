@@ -1134,6 +1134,13 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
   const visibleColumns = useMemo(() => columns.filter(c => c.visible), [columns]);
 
+  /** Pairs on the board = one card per main-language headword (grouped senses count once) */
+  const pairsInBatch = useMemo(
+    () => cards[columns[0]?.lang ?? mainLang]?.length || batches[currentBatch]?.length || 0,
+    [cards, columns, mainLang, batches, currentBatch],
+  );
+
+
 
 
   /** Every visible column must be picked — even one that is still being generated. */
@@ -1182,7 +1189,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       mapAll(c => (selectedCards.some(s => s.id === c.id) ? { ...c, isMatched: true, isSelected: false } : c));
       setSelectedCards([]);
 
-      if (matchedPairs + 1 === batches[currentBatch]?.length) {
+      if (matchedPairs + 1 === pairsInBatch) {
         setTimeout(() => {
           playCelebration();
           setShowCelebration(true);
@@ -1601,7 +1608,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
                   completedBatches={completedBatches}
                   onSelectBatch={handleSelectBatch}
                   matched={matchedPairs}
-                  total={batches[currentBatch]?.length || 0}
+                  total={pairsInBatch}
                   className="max-w-xl mx-auto"
                 />
               </div>
@@ -1657,7 +1664,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
                 <ChevronsRight className="h-4 w-4" />
               </Button>
               <span className="min-w-[4.5rem] text-center text-xs font-semibold tabular-nums text-muted-foreground ml-2">
-                {matchedPairs} / {batches[currentBatch]?.length || 0} matched
+                {matchedPairs} / {pairsInBatch} matched
               </span>
             </div>
 
