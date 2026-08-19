@@ -39,6 +39,126 @@ export function isAppReadyWorkbook(workbook: XLSX.WorkBook): boolean {
   return names.includes('Reverse Index') && (names.includes('Sense Map') || names.includes('App Schema'));
 }
 
+/**
+ * Schema 7.x "Ultra-Lean Wide Matrix":
+ *   App Vocabulary  one row per Sense ID, one column per language (+ "<Lang> Latin")
+ *   Card Labels     Sense ID + Language -> Card Label (+ Disambiguation)
+ *   Alternatives    Sense ID + Language -> Alternative Entry (+ Latin)
+ *
+ * Sense ID — never Word ID — is the identity of a playable line, so two senses of
+ * the same word stay two separate lines and never merge their translations.
+ */
+const WIDE_META = new Set([
+  'sense id',
+  'word id',
+  'entry id',
+  'playable',
+  'verified',
+  'coverage status',
+  'worst confidence',
+  'review languages',
+  'notes',
+  'source',
+]);
+
+function readWideMatrixWorkbook(workbook: XLSX.WorkBook): FlatSheet | null {
+  const vocab = sheetRows(workbook, 'App Vocabulary');
+  if (vocab.length === 0) return null;
+
+  const rawHeaders = Object.keys(vocab[0]);
+  // Long-format (schema 5.x) sheets carry a Language column — not this reader's job.
+  if (rawHeaders.some(h => h.toLowerCase().trim() === 'language')) return null;
+
+  const langHeaders = rawHeaders.filter(h => {
+    const key = h.toLowerCase().trim();
+    return (
+      h &&
+      !h.startsWith('__EMPTY') &&
+      !WIDE_META.has(key) &&
+      !/disambiguation$/.test(key) &&
+      !/card label$/.test(key)
+    );
+  });
+  if (langHeaders.length === 0) return null;
+
+  // Card Labels override the matrix text for a given sense + language.
+  type Label = { label: string; disambiguation: string };
+  const labels = new Map<string, Label>();
+  sheetRows(workbook, 'Card Labels').forEach(row => {
+    const senseId = pick(row, k => k === 'sense id');
+    const language = pick(row, k => k === 'language');
+    const label = pick(row, k => k === 'card label');
+    if (!senseId || !language || !label) return;
+    labels.set(`${senseId}|${language}`, {
+      label,
+      disambiguation: pick(row, k => k === 'disambiguation'),
+    });
+  });
+
+  // Alternatives are other legitimate expressions of the SAME sense.
+  const alternatives = new Map<string, { text: string; latin: string }[]>();
+  sheetRows(workbook, 'Alternatives').forEach(row => {
+    const senseId = pick(row, k => k === 'sense id');
+    const language = pick(row, k => k === 'language');
+    const text = pick(row, k => k === 'alternative entry' || k === 'alternative');
+    if (!senseId || !language || !text) return;
+    const key = `${senseId}|${language}`;
+    const list = alternatives.get(key) ?? [];
+    if (!list.some(e => e.text === text)) list.push({ text, latin: pick(row, k => k === 'latin') });
+    alternatives.set(key, list);
+  });
+
+  const latinOf = (header: string) => `${header} Latin`;
+  const hasLatinColumn = new Set(langHeaders.filter(h => langHeaders.includes(latinOf(h))));
+
+  const rows: Record<string, string>[] = [];
+  vocab.forEach(row => {
+    const senseId = pick(row, k => k === 'sense id');
+    if (!senseId || isCatchAllSense(senseId)) return;
+    const playable = pick(row, k => k === 'playable');
+    if (playable && !yes(playable)) return;
+
+    const out: Record<string, string> = {
+      // one Sense ID = one vocabulary line, and its permanent identity
+      'Word ID': senseId,
+      'Sense ID': senseId,
+      'Vocab Word ID': pick(row, k => k === 'word id'),
+      'Part of Speech': pickPos(row),
+    };
+
+    langHeaders.forEach(header => {
+      const isLatin = / Latin$/i.test(header);
+      const base = isLatin ? header.replace(/ Latin$/i, '') : header;
+      const language = base === 'Pinyin' ? 'Chinese' : base;
+      const key = `${senseId}|${language}`;
+      const alts = alternatives.get(key) ?? [];
+
+      let primary = str(row[header]);
+      if (!isLatin) {
+        const override = labels.get(key);
+        if (override) {
+          primary = override.disambiguation
+            ? `${override.label} (${override.disambiguation})`
+            : override.label;
+        }
+      }
+
+      const extra = isLatin ? alts.map(a => a.latin) : alts.map(a => a.text);
+      const values = [primary, ...extra].filter(Boolean);
+      // Latin stays aligned with its language: only emit it when complete.
+      out[header] = isLatin && !primary ? '' : values.join(', ');
+    });
+
+    // A line must carry at least one language value to be playable.
+    if (langHeaders.some(h => !/ Latin$/i.test(h) && out[h])) rows.push(out);
+  });
+
+  if (rows.length === 0) return null;
+  void hasLatinColumn;
+  return { headers: langHeaders, rows };
+}
+
+
 function sheetRows(workbook: XLSX.WorkBook, name: string): Record<string, unknown>[] {
   const sheet = workbook.Sheets[name];
   if (!sheet) return [];
