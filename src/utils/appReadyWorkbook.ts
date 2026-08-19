@@ -30,8 +30,35 @@ export interface FlatSheet {
   rows: Record<string, string>[];
 }
 
+/**
+ * One exact lexical expression of a (Sense ID, language) pair.
+ * Alternatives are ONLY the ones the workbook declares — never inferred from
+ * punctuation, identical text, Word ID or spreadsheet proximity.
+ */
+export interface SheetEntry {
+  /** what the card shows for this expression (Card Label, else Main Entry) */
+  text: string;
+  /** the underlying lexical entry — never overwritten by the Card Label */
+  mainEntry?: string;
+  /** transliteration of THIS exact expression */
+  latin?: string;
+  /** preferred/default expression for this language + sense */
+  canonical?: boolean;
+  /** file-supplied distinction for ambiguous visible forms (ability / container) */
+  disambiguation?: string;
+}
+
+/** Sidecar column carrying entry-level data through the flat-sheet pipeline */
+export const ENTRIES_COLUMN = '__entries';
+
+const encodeEntries = (byHeader: Record<string, SheetEntry[]>) => {
+  const clean = Object.fromEntries(Object.entries(byHeader).filter(([, list]) => list.length > 0));
+  return Object.keys(clean).length ? JSON.stringify(clean) : '';
+};
+
 const yes = (v: unknown) => String(v ?? '').trim().toLowerCase() === 'yes';
 const str = (v: unknown) => String(v ?? '').trim();
+
 
 export function isAppReadyWorkbook(workbook: XLSX.WorkBook): boolean {
   const names = workbook.SheetNames;
