@@ -117,10 +117,27 @@ export const Card: React.FC<CardProps> = ({
     Math.round((isScript ? BASE_PX[fontSize].script : BASE_PX[fontSize].latin) * scale),
   );
 
-  const meanings = React.useMemo(() => splitMeanings(card.content), [card.content]);
+  // Alternatives come from the file when the workbook declares them; only plain
+  // spreadsheets fall back to splitting a multi-meaning cell by punctuation.
+  const declared = card.entries;
+  const meanings = React.useMemo(
+    () => (declared?.length ? declared.map(e => e.text) : splitMeanings(card.content)),
+    [declared, card.content],
+  );
   const hasMultiple = meanings.length > 1;
   const { selected, setSelected } = useMeaningSelection(card.vocabId, card.lang, meanings);
   const displayed = hasMultiple ? joinMeanings(selected) : card.content;
+
+  // Transliteration belongs to the exact expression shown, not to the sense.
+  const romanization = React.useMemo(() => {
+    if (!declared?.length) return card.romanization;
+    const shown = declared.filter(e => selected.includes(e.text));
+    const latin = (shown.length ? shown : declared.slice(0, 1)).map(e => e.latin).filter(Boolean);
+    return latin.length ? latin.join(', ') : undefined;
+  }, [declared, selected, card.romanization]);
+
+  // File-supplied only — the app never invents a distinction.
+  const disambiguation = declared?.find(e => selected.includes(e.text))?.disambiguation || '';
 
   const cardRef = React.useRef<HTMLDivElement>(null);
   const [anchor, setAnchor] = React.useState<DOMRect | null>(null);
@@ -128,6 +145,7 @@ export const Card: React.FC<CardProps> = ({
   const { boxRef, px } = useAutoFit(displayed, maxPx);
 
   const speakCard = () => onSpeak?.({ ...card, content: displayed });
+
 
   const handleClick = () => {
     if (card.isMatched) return;
