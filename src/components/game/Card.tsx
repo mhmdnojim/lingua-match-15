@@ -119,11 +119,21 @@ export const Card: React.FC<CardProps> = ({
 
   // Alternatives come from the file when the workbook declares them; only plain
   // spreadsheets fall back to splitting a multi-meaning cell by punctuation.
-  const declared = card.entries;
+  // An edited/regenerated value replaces the canonical expression, never the
+  // file-declared alternatives.
+  const declared = React.useMemo(() => {
+    const list = card.entries;
+    if (!list?.length) return undefined;
+    const canonicalIndex = Math.max(0, list.findIndex(e => e.canonical));
+    return list[canonicalIndex].text === card.content
+      ? list
+      : list.map((e, i) => (i === canonicalIndex ? { ...e, text: card.content } : e));
+  }, [card.entries, card.content]);
   const meanings = React.useMemo(
     () => (declared?.length ? declared.map(e => e.text) : splitMeanings(card.content)),
     [declared, card.content],
   );
+
   const hasMultiple = meanings.length > 1;
   const { selected, setSelected } = useMeaningSelection(card.vocabId, card.lang, meanings);
   const displayed = hasMultiple ? joinMeanings(selected) : card.content;
