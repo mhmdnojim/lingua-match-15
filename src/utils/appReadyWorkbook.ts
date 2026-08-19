@@ -251,7 +251,7 @@ function readAppVocabularySheet(workbook: XLSX.WorkBook): FlatSheet | null {
     });
   });
 
-  type Entry = { label: string; latin: string; canonical: boolean };
+  type Entry = { label: string; mainEntry: string; disambiguation: string; latin: string; canonical: boolean };
   const languages: string[] = [];
   const hasLatin = new Set<string>();
   const bySense = new Map<string, Map<string, Entry[]>>();
@@ -259,9 +259,12 @@ function readAppVocabularySheet(workbook: XLSX.WorkBook): FlatSheet | null {
   entries.forEach(row => {
     const senseId = pick(row, k => k === 'sense id');
     const language = pick(row, k => k === 'language');
-    const label = pick(row, k => k === 'card label') || pick(row, k => k === 'main entry');
+    const mainEntry = pick(row, k => k === 'main entry');
+    const label = pick(row, k => k === 'card label') || mainEntry;
     if (!senseId || !language || !label) return;
     if (isCatchAllSense(senseId) || !isAssigned(row)) return;
+    const playable = pick(row, k => k === 'playable');
+    if (playable && !yes(playable)) return;
 
     if (!base.has(senseId)) {
       senseOrder.push(senseId);
@@ -285,7 +288,13 @@ function readAppVocabularySheet(workbook: XLSX.WorkBook): FlatSheet | null {
       const latin = pick(row, k => k === 'latin');
       const keepLatin = !!latin && latin !== label && language.toLowerCase() !== 'english';
       if (keepLatin) hasLatin.add(language);
-      list.push({ label, latin: keepLatin ? latin : '', canonical: yes(row['Is Canonical']) });
+      list.push({
+        label,
+        mainEntry: mainEntry || label,
+        disambiguation: pick(row, k => k === 'disambiguation'),
+        latin: keepLatin ? latin : '',
+        canonical: yes(row['Is Canonical']),
+      });
     }
     perLang.set(language, list);
   });
@@ -308,20 +317,29 @@ function readAppVocabularySheet(workbook: XLSX.WorkBook): FlatSheet | null {
         Pinyin: info.pinyin,
         'Part of Speech': info.pos,
       };
+      const entriesByHeader: Record<string, SheetEntry[]> = {};
       const perLang = bySense.get(senseId);
       languages.forEach(language => {
+        // Canonical first: it is the default expression, not the only valid one.
         const list = [...(perLang?.get(language) ?? [])].sort(
           (a, b) => Number(b.canonical) - Number(a.canonical),
         );
-        row[language] = list.map(e => e.label).join(', ');
-        if (hasLatin.has(language)) {
-          const latin = list.map(e => e.latin);
-          row[`${language} Latin`] = latin.every(Boolean) ? latin.join(', ') : latin.find(Boolean) ?? '';
-        }
+        if (list.length === 0) return;
+        entriesByHeader[language] = list.map(e => ({
+          text: e.label,
+          mainEntry: e.mainEntry,
+          latin: e.latin,
+          canonical: e.canonical,
+          disambiguation: e.disambiguation,
+        }));
+        row[language] = list[0].label;
+        if (hasLatin.has(language)) row[`${language} Latin`] = list[0].latin;
       });
+      row[ENTRIES_COLUMN] = encodeEntries(entriesByHeader);
       return row;
     })
     .filter(row => row['Chinese | 中文'] || languages.some(l => row[l]));
+
 
   return rows.length ? { headers, rows } : null;
 }
