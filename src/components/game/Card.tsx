@@ -117,10 +117,37 @@ export const Card: React.FC<CardProps> = ({
     Math.round((isScript ? BASE_PX[fontSize].script : BASE_PX[fontSize].latin) * scale),
   );
 
-  const meanings = React.useMemo(() => splitMeanings(card.content), [card.content]);
+  // Alternatives come from the file when the workbook declares them; only plain
+  // spreadsheets fall back to splitting a multi-meaning cell by punctuation.
+  // An edited/regenerated value replaces the canonical expression, never the
+  // file-declared alternatives.
+  const declared = React.useMemo(() => {
+    const list = card.entries;
+    if (!list?.length) return undefined;
+    const canonicalIndex = Math.max(0, list.findIndex(e => e.canonical));
+    return list[canonicalIndex].text === card.content
+      ? list
+      : list.map((e, i) => (i === canonicalIndex ? { ...e, text: card.content } : e));
+  }, [card.entries, card.content]);
+  const meanings = React.useMemo(
+    () => (declared?.length ? declared.map(e => e.text) : splitMeanings(card.content)),
+    [declared, card.content],
+  );
+
   const hasMultiple = meanings.length > 1;
   const { selected, setSelected } = useMeaningSelection(card.vocabId, card.lang, meanings);
   const displayed = hasMultiple ? joinMeanings(selected) : card.content;
+
+  // Transliteration belongs to the exact expression shown, not to the sense.
+  const romanization = React.useMemo(() => {
+    if (!declared?.length) return card.romanization;
+    const shown = declared.filter(e => selected.includes(e.text));
+    const latin = (shown.length ? shown : declared.slice(0, 1)).map(e => e.latin).filter(Boolean);
+    return latin.length ? latin.join(', ') : undefined;
+  }, [declared, selected, card.romanization]);
+
+  // File-supplied only — the app never invents a distinction.
+  const disambiguation = declared?.find(e => selected.includes(e.text))?.disambiguation || '';
 
   const cardRef = React.useRef<HTMLDivElement>(null);
   const [anchor, setAnchor] = React.useState<DOMRect | null>(null);
@@ -128,6 +155,7 @@ export const Card: React.FC<CardProps> = ({
   const { boxRef, px } = useAutoFit(displayed, maxPx);
 
   const speakCard = () => onSpeak?.({ ...card, content: displayed });
+
 
   const handleClick = () => {
     if (card.isMatched) return;
@@ -157,14 +185,14 @@ export const Card: React.FC<CardProps> = ({
         isBusy && !card.isMatched && 'ring-2 ring-primary/70 shadow-lg z-10',
       )}
     >
-      {showRomanization && card.romanization && (
+      {showRomanization && romanization && (
         <span
           className={cn(
             'pointer-events-none absolute left-1.5 right-1.5 top-1 sm:left-2 sm:right-2 sm:top-1.5 text-foreground/70 font-medium leading-none text-center truncate text-[9px] sm:text-[11px]',
             fontSize === 'large' ? 'md:text-sm' : 'md:text-xs',
           )}
         >
-          {card.romanization}
+          {romanization}
         </span>
       )}
 
@@ -174,13 +202,24 @@ export const Card: React.FC<CardProps> = ({
         style={{ fontSize: `${px}px` }}
         className={cn(
           'w-full h-full flex items-center justify-center text-center font-medium text-foreground leading-[1.15] break-words hyphens-auto overflow-hidden',
-          showRomanization && card.romanization && 'pt-2.5 sm:pt-4',
+          showRomanization && romanization && 'pt-2.5 sm:pt-4',
+          disambiguation && 'pb-2.5 sm:pb-3.5',
           language.fontClass,
           language.romanizationOf && 'italic',
         )}
       >
         {displayed}
       </span>
+
+      {disambiguation && !card.isMatched && (
+        <span
+          className="pointer-events-none absolute bottom-0.5 left-1/2 -translate-x-1/2 max-w-[85%] truncate text-center text-[9px] italic leading-none text-foreground/65 sm:text-[10px]"
+          title={disambiguation}
+        >
+          {disambiguation}
+        </span>
+      )}
+
 
       {!!posAbbrev(card.pos) && !card.isMatched && (
         <span
