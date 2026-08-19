@@ -108,9 +108,6 @@ function readWideMatrixWorkbook(workbook: XLSX.WorkBook): FlatSheet | null {
     alternatives.set(key, list);
   });
 
-  const latinOf = (header: string) => `${header} Latin`;
-  const hasLatinColumn = new Set(langHeaders.filter(h => langHeaders.includes(latinOf(h))));
-
   const rows: Record<string, string>[] = [];
   vocab.forEach(row => {
     const senseId = pick(row, k => k === 'sense id');
@@ -154,7 +151,6 @@ function readWideMatrixWorkbook(workbook: XLSX.WorkBook): FlatSheet | null {
   });
 
   if (rows.length === 0) return null;
-  void hasLatinColumn;
   return { headers: langHeaders, rows };
 }
 
@@ -288,6 +284,10 @@ function readAppVocabularySheet(workbook: XLSX.WorkBook): FlatSheet | null {
 /** Flatten an app-ready workbook into headers + one row per SENSE. Returns null when it isn't one. */
 export function readAppReadyWorkbook(workbook: XLSX.WorkBook): FlatSheet | null {
   if (!isAppReadyWorkbook(workbook)) return null;
+
+  // Schema 7.x wide matrix wins when present.
+  const wide = readWideMatrixWorkbook(workbook);
+  if (wide) return wide;
 
   // Contract 5.0 workbooks: App Vocabulary wins over the legacy Reverse Index.
   const appVocabulary = readAppVocabularySheet(workbook);
