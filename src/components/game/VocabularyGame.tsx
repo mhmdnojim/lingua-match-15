@@ -1622,9 +1622,6 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               <span className="min-w-[7rem] text-center text-xs font-semibold tabular-nums text-muted-foreground px-2">
                 Batch {currentBatch + 1} / {batches.length}
               </span>
-              <span className="min-w-[4.5rem] text-center text-xs font-semibold tabular-nums text-muted-foreground">
-                {matchedPairs} / {batches[currentBatch]?.length || 0} matched
-              </span>
               <Button
                 size="icon"
                 variant="outline"
