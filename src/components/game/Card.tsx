@@ -122,13 +122,15 @@ export const Card: React.FC<CardProps> = ({
   // An edited/regenerated value replaces the canonical expression, never the
   // file-declared alternatives.
   const declared = React.useMemo(() => {
-    const list = card.entries;
+    const list = card.options?.length
+      ? card.options
+      : card.entries?.map(e => ({ ...e, senseId: card.vocabId }));
     if (!list?.length) return undefined;
     const canonicalIndex = Math.max(0, list.findIndex(e => e.canonical));
     return list[canonicalIndex].text === card.content
       ? list
       : list.map((e, i) => (i === canonicalIndex ? { ...e, text: card.content } : e));
-  }, [card.entries, card.content]);
+  }, [card.options, card.entries, card.content, card.vocabId]);
   const meanings = React.useMemo(
     () => (declared?.length ? declared.map(e => e.text) : splitMeanings(card.content)),
     [declared, card.content],
@@ -148,6 +150,7 @@ export const Card: React.FC<CardProps> = ({
 
   // File-supplied only — the app never invents a distinction.
   const disambiguation = declared?.find(e => selected.includes(e.text))?.disambiguation || '';
+
 
   const cardRef = React.useRef<HTMLDivElement>(null);
   const [anchor, setAnchor] = React.useState<DOMRect | null>(null);
