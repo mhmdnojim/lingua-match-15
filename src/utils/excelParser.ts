@@ -1,10 +1,14 @@
 import * as XLSX from 'xlsx';
 import { detectLanguageFromHeader, getLanguage, romanizationCodeFor } from './languages';
-import { readAppReadyWorkbook } from './appReadyWorkbook';
+import { readAppReadyWorkbook, ENTRIES_COLUMN, SheetEntry } from './appReadyWorkbook';
 
 
+
+/** One exact lexical expression for a (sense, language) pair, as declared by the file */
+export type LexicalEntry = SheetEntry;
 
 export interface VocabularyItem {
+  /** Sense ID for semantic workbooks — the only key that decides matching */
   id: string;
   /** language code -> word/translation */
   values: Record<string, string>;
@@ -12,7 +16,12 @@ export interface VocabularyItem {
   edited?: Record<string, boolean>;
   /** grammatical class of the word: noun, verb, adjective, … */
   pos?: string;
+  /** file-declared expressions per language code (canonical first, then alternatives) */
+  entries?: Record<string, LexicalEntry[]>;
+  /** original source vocabulary item — provenance only, never a matching key */
+  sourceWordId?: string;
 }
+
 
 /** Column header that carries the grammatical class rather than a language */
 export const POS_HEADER = 'Part of Speech';
