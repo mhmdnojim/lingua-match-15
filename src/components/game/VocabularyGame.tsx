@@ -271,7 +271,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     // for the rest of the day (and changes automatically tomorrow).
     const rand = dailyMode ? createSeededRandom(dailySeed(cloudSource, mainLang, 'order')) : Math.random;
     const ordered = shuffleMode ? shuffleVocabulary(vocabulary, mainLang, rand) : [...vocabulary];
-    setBatches(createBatches(ordered, batchSize));
+    setBatches(createBatchesByLexeme(ordered, mainLang, batchSize));
   }, [vocabulary, shuffleMode, dailyMode, cloudSource, mainLang, batchSize]);
 
   const cancelTranslationRef = useRef(false);
@@ -629,7 +629,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       const batch = batches[batchIndex];
       if (!batch) return;
       const dealSeed = dailyMode ? dailySeed(cloudSource, mainLang, 'deal', batchIndex) : undefined;
-      setCards(createColumnCards(batch, columns, true, dealSeed));
+      setCards(createColumnCards(batch, columns, true, dealSeed, mainLang));
       setSelectedCards([]);
       setMatchedPairs(0);
       setTime(0);
