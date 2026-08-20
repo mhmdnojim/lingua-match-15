@@ -44,6 +44,8 @@ export interface UiState {
   settingsOpen: boolean;
   /** Whether the top chrome (title, options, stats, progress) is expanded */
   headerOpen: boolean;
+  /** Whether the batch navigation row (first/prev/next/last) is visible */
+  navOpen: boolean;
 }
 
 const DEFAULT_UI_STATE: UiState = {
@@ -51,7 +53,9 @@ const DEFAULT_UI_STATE: UiState = {
   wordEditorOpen: false,
   settingsOpen: false,
   headerOpen: true,
+  navOpen: true,
 };
+
 
 export function saveUiState(state: Partial<UiState>): void {
   try {
