@@ -1369,9 +1369,51 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   };
 
 
+  /** Single fold control: hidden → menu → menu + options → hidden */
+  const foldStage = !headerOpen ? 0 : settingsOpen ? 2 : 1;
+  const cycleFold = () => {
+    if (foldStage === 0) {
+      setHeaderOpen(true);
+      setSettingsOpen(false);
+    } else if (foldStage === 1) {
+      setSettingsOpen(true);
+    } else {
+      setSettingsOpen(false);
+      setHeaderOpen(false);
+    }
+  };
+
   return (
     <div className={cn('min-h-screen bg-background p-2 md:p-4', className)}>
       <div className="max-w-6xl mx-auto space-y-1">
+        {/* Single fold handle at the very top — cycles menu / options / hidden */}
+        <div className="flex justify-center">
+          <button
+            onClick={cycleFold}
+            aria-expanded={headerOpen}
+            aria-label={foldStage === 0 ? 'Show the menu' : foldStage === 1 ? 'Show the options' : 'Hide everything'}
+            title={foldStage === 0 ? 'Show the menu' : foldStage === 1 ? 'Show the options' : 'Fold everything away'}
+            className={cn(
+              'group flex items-center gap-2 rounded-full border border-border/60 bg-card/60 px-3 py-1',
+              'text-[11px] font-medium text-muted-foreground backdrop-blur-sm shadow-sm',
+              'transition-all duration-300 hover:text-foreground hover:border-primary/50 hover:shadow-md',
+            )}
+          >
+            <span className="h-1 w-6 rounded-full bg-border transition-colors duration-300 group-hover:bg-primary/60" />
+            <SlidersHorizontal className="w-3.5 h-3.5 shrink-0" />
+            <ChevronDown
+              className={cn(
+                'w-3.5 h-3.5 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]',
+                foldStage > 0 && 'rotate-180',
+              )}
+            />
+            <span className={cn('transition-all duration-300', foldStage === 2 && 'sr-only')}>
+              {foldStage === 0 ? 'Menu' : 'Options'}
+            </span>
+            <span className="h-1 w-6 rounded-full bg-border transition-colors duration-300 group-hover:bg-primary/60" />
+          </button>
+        </div>
+
         {/* Collapsible top chrome — folds away so only the cards remain */}
         <div
           className={cn(
@@ -1381,6 +1423,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
         >
           <div className={headerOpen ? 'overflow-visible' : 'overflow-hidden'}>
             <div className="space-y-2">
+
         <header className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary rounded-lg">
@@ -1389,22 +1432,6 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
             <div>
               <h1 className="text-lg font-bold text-foreground">Vocabulary Match</h1>
             </div>
-            <button
-              onClick={() => setSettingsOpen(!settingsOpen)}
-              disabled={isLoading}
-              className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
-                settingsOpen
-                  ? 'bg-primary border-primary text-primary-foreground'
-                  : 'bg-secondary border-border text-muted-foreground hover:text-foreground',
-                isLoading && 'opacity-50 cursor-not-allowed',
-              )}
-              title={settingsOpen ? 'Hide options' : 'Show options'}
-            >
-              <SlidersHorizontal className="w-4 h-4 shrink-0" />
-              <span className="hidden sm:inline">Options</span>
-              <ChevronUp className={cn('w-3.5 h-3.5 transition-transform', !settingsOpen && 'rotate-180')} />
-            </button>
             <StatsPanel
               score={score}
               time={time}
@@ -1505,30 +1532,6 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           </div>
         </div>
 
-        {/* Gentle fold handle */}
-        <div className="flex justify-center">
-          <button
-            onClick={() => setHeaderOpen(open => !open)}
-            aria-expanded={headerOpen}
-            aria-label={headerOpen ? 'Hide the menu and focus on the cards' : 'Show the menu'}
-            title={headerOpen ? 'Fold the menu away' : 'Unfold the menu'}
-            className={cn(
-              'group flex items-center gap-2 rounded-full border border-border/60 bg-card/60 px-3 py-1',
-              'text-[11px] font-medium text-muted-foreground backdrop-blur-sm shadow-sm',
-              'transition-all duration-300 hover:text-foreground hover:border-primary/50 hover:shadow-md',
-            )}
-          >
-            <span className="h-1 w-6 rounded-full bg-border transition-colors duration-300 group-hover:bg-primary/60" />
-            <ChevronDown
-              className={cn(
-                'w-3.5 h-3.5 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]',
-                headerOpen && 'rotate-180',
-              )}
-            />
-            <span className={cn('transition-all duration-300', headerOpen && 'sr-only')}>Menu</span>
-            <span className="h-1 w-6 rounded-full bg-border transition-colors duration-300 group-hover:bg-primary/60" />
-          </button>
-        </div>
 
         {isTranslating && (
           <div className="max-w-xl mx-auto rounded-lg border border-border bg-card p-3 space-y-2">
