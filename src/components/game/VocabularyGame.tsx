@@ -1548,30 +1548,6 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           </div>
         </div>
 
-        {/* Gentle fold handle */}
-        <div className="flex justify-center">
-          <button
-            onClick={() => setHeaderOpen(open => !open)}
-            aria-expanded={headerOpen}
-            aria-label={headerOpen ? 'Hide the menu and focus on the cards' : 'Show the menu'}
-            title={headerOpen ? 'Fold the menu away' : 'Unfold the menu'}
-            className={cn(
-              'group flex items-center gap-2 rounded-full border border-border/60 bg-card/60 px-3 py-1',
-              'text-[11px] font-medium text-muted-foreground backdrop-blur-sm shadow-sm',
-              'transition-all duration-300 hover:text-foreground hover:border-primary/50 hover:shadow-md',
-            )}
-          >
-            <span className="h-1 w-6 rounded-full bg-border transition-colors duration-300 group-hover:bg-primary/60" />
-            <ChevronDown
-              className={cn(
-                'w-3.5 h-3.5 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]',
-                headerOpen && 'rotate-180',
-              )}
-            />
-            <span className={cn('transition-all duration-300', headerOpen && 'sr-only')}>Menu</span>
-            <span className="h-1 w-6 rounded-full bg-border transition-colors duration-300 group-hover:bg-primary/60" />
-          </button>
-        </div>
 
         {isTranslating && (
           <div className="max-w-xl mx-auto rounded-lg border border-border bg-card p-3 space-y-2">
