@@ -259,8 +259,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
   // Remember which dialogs were open
   useEffect(() => {
-    saveUiState({ languagesOpen, wordEditorOpen, settingsOpen, headerOpen });
-  }, [languagesOpen, wordEditorOpen, settingsOpen, headerOpen]);
+    saveUiState({ languagesOpen, wordEditorOpen, settingsOpen, headerOpen, navOpen });
+  }, [languagesOpen, wordEditorOpen, settingsOpen, headerOpen, navOpen]);
+
 
   // Rebuild batches whenever vocabulary / ordering / main language changes
   useEffect(() => {
