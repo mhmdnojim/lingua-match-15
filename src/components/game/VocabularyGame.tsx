@@ -1628,7 +1628,15 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
             </div>
 
             {/* Batch navigation: first · previous · batch info · matched · next · last */}
+            <div
+              className={cn(
+                'grid transition-[grid-template-rows,opacity] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]',
+                navOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none',
+              )}
+            >
+              <div className="overflow-hidden">
             <div className="flex items-center justify-center gap-1.5 py-1">
+
               <Button
                 size="icon"
                 variant="outline"
