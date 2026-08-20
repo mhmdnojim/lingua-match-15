@@ -1688,6 +1688,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
                 {matchedPairs} / {pairsInBatch} matched
               </span>
             </div>
+              </div>
+            </div>
+
 
             <GameBoard
 
