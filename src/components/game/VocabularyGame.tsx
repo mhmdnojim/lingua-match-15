@@ -1400,8 +1400,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           <button
             onClick={cycleFold}
             aria-expanded={headerOpen}
-            aria-label={foldStage === 0 ? 'Show the menu' : foldStage === 1 ? 'Show the options' : 'Hide everything'}
-            title={foldStage === 0 ? 'Show the menu' : foldStage === 1 ? 'Show the options' : 'Fold everything away'}
+            aria-label={foldLabels[foldStage]}
+            title={foldLabels[foldStage]}
             className={cn(
               'group flex items-center gap-2 rounded-full border border-border/60 bg-card/60 px-3 py-1',
               'text-[11px] font-medium text-muted-foreground backdrop-blur-sm shadow-sm',
@@ -1416,9 +1416,10 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
                 foldStage > 0 && 'rotate-180',
               )}
             />
-            <span className={cn('transition-all duration-300', foldStage === 2 && 'sr-only')}>
-              {foldStage === 0 ? 'Menu' : 'Options'}
+            <span className={cn('transition-all duration-300', foldStage === 3 && 'sr-only')}>
+              {foldStage === 0 ? 'Batches' : foldStage === 1 ? 'Menu' : 'Options'}
             </span>
+
             <span className="h-1 w-6 rounded-full bg-border transition-colors duration-300 group-hover:bg-primary/60" />
           </button>
         </div>
