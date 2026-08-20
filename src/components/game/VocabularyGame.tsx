@@ -1373,19 +1373,24 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   };
 
 
-  /** Single fold control: hidden → menu → menu + options → hidden */
-  const foldStage = !headerOpen ? 0 : settingsOpen ? 2 : 1;
+  /** Single fold control: all hidden → batch nav → + menu → + options → all hidden */
+  const foldStage = !navOpen && !headerOpen ? 0 : !headerOpen ? 1 : settingsOpen ? 3 : 2;
+  const foldLabels = ['Show the batch controls', 'Show the menu', 'Show the options', 'Hide everything'];
   const cycleFold = () => {
     if (foldStage === 0) {
+      setNavOpen(true);
+    } else if (foldStage === 1) {
       setHeaderOpen(true);
       setSettingsOpen(false);
-    } else if (foldStage === 1) {
+    } else if (foldStage === 2) {
       setSettingsOpen(true);
     } else {
       setSettingsOpen(false);
       setHeaderOpen(false);
+      setNavOpen(false);
     }
   };
+
 
   return (
     <div className={cn('min-h-screen bg-background p-2 md:p-4', className)}>
