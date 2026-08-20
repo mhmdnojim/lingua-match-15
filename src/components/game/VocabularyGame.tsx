@@ -147,6 +147,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [settingsOpen, setSettingsOpen] = useState(!isSmallScreen && savedUi.settingsOpen);
   /** Top chrome (title, options, stats, progress) — collapsed for distraction-free play */
   const [headerOpen, setHeaderOpen] = useState(savedUi.headerOpen);
+  /** Batch navigation row (first/prev/next/last) — deepest fold level hides it too */
+  const [navOpen, setNavOpen] = useState(savedUi.navOpen);
+
 
   const [pendingSheet, setPendingSheet] = useState<SheetData | null>(null);
   const [pendingQueue, setPendingQueue] = useState<SheetData[]>([]);
