@@ -1134,9 +1134,46 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     return Array.from(counts.keys());
   }, [vocabulary]);
 
+  /** Base name of a level set: "HSK_MAIN_EN · HSK3.xlsx" -> "HSK_MAIN_EN" */
+  const familyOf = (source: string) => source.replace(/\.(xlsx|xls)$/i, '').split(' · ')[0];
+  const levelOf = (source: string) => source.replace(/\.(xlsx|xls)$/i, '').split(' · ')[1] || '';
+
+  /**
+   * A per-MAIN-language workbook is built around one main language, so picking a
+   * different MAIN switches to that language's imported set (same level when it
+   * exists) instead of leaving the board without words.
+   */
+  const setForMainLang = (lang: string): string | null => {
+    const current = selectedFile || '';
+    const level = levelOf(current);
+    const matches = library
+      .filter(source => source !== current)
+      .map(source => ({ source, set: loadVocabularySet(source) }))
+      .filter(entry => entry.set?.mainLang === lang);
+    if (matches.length === 0) return null;
+    const sameLevel = level && matches.find(m => levelOf(m.source) === level);
+    return (sameLevel ?? matches[0]).source;
+  };
+
   /** Change one column's language directly from its board title */
   const handleColumnLangChange = (index: number, lang: string) => {
     if (columns[index]?.lang === lang) return;
+
+    // Switching the MAIN column to a language this file is not built around:
+    // load the workbook that is, when it has already been imported.
+    if (index === 0 && !readyLangs.includes(lang)) {
+      const target = setForMainLang(lang);
+      if (target) {
+        setSelectedFile(target);
+        toast({
+          title: `Switched to ${getLanguage(lang).native}`,
+          description: `Loaded “${target.replace(/\.(xlsx|xls)$/i, '')}” — its main column is ${getLanguage(lang).name}.`,
+        });
+        return;
+      }
+    }
+
+
     const otherIndex = columns.findIndex(c => c.lang === lang);
     if (otherIndex !== -1) {
       const currentLang = columns[index].lang;
