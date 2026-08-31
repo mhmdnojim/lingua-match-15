@@ -6,8 +6,8 @@ import {
   ColumnMapping,
   buildVocabulary,
   fetchExcelFromUrl,
-  parseExcelFile,
   parseExcelLevels,
+
 
   createBatches,
   normalizePos,
