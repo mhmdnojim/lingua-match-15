@@ -62,13 +62,32 @@ export interface SheetData {
   detected: Record<string, string | null>;
   /** original file name, used as the vocabulary set name */
   fileName?: string;
+  /** language the workbook is built around (per-MAIN-language workbooks) */
+  mainLang?: string;
+  /** every level sheet the workbook contains */
+  levels?: string[];
+  /** the level sheet this data came from */
+  level?: string;
 }
 
 /** header -> language code, or 'ignore' */
 export type ColumnMapping = Record<string, string>;
 
-function readWorkbook(arrayBuffer: ArrayBuffer): SheetData {
-  const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+function readBook(workbook: XLSX.WorkBook, sheetName?: string): SheetData {
+  // Per-MAIN-language workbooks (HSK_MAIN_XX.xlsx) are read natively: the MAIN
+  // block becomes the first column and each level sheet is its own set.
+  const main = readMainLanguageWorkbook(workbook, sheetName);
+  if (main) {
+    return {
+      success: true,
+      headers: main.headers,
+      rows: main.rows,
+      detected: main.detected,
+      mainLang: main.mainLang,
+      levels: main.levels,
+      level: main.level,
+    };
+  }
 
   // App-ready workbooks (Sense Map + Reverse Index) are normalized across sheets —
   // flatten them back to one row per word before the usual header detection runs.
@@ -78,6 +97,7 @@ function readWorkbook(arrayBuffer: ArrayBuffer): SheetData {
   const rows = appReady
     ? appReady.rows
     : XLSX.utils.sheet_to_json<Record<string, string>>(worksheet, { defval: '' });
+
 
   if (rows.length === 0) {
     return { success: false, error: 'The file is empty', headers: [], rows: [], detected: {} };
