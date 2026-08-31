@@ -1134,9 +1134,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     return Array.from(counts.keys());
   }, [vocabulary]);
 
-  /** Base name of a level set: "HSK_MAIN_EN · HSK3.xlsx" -> "HSK_MAIN_EN" */
-  const familyOf = (source: string) => source.replace(/\.(xlsx|xls)$/i, '').split(' · ')[0];
+  /** Level part of a set name: "HSK_MAIN_EN · HSK3.xlsx" -> "HSK3" */
   const levelOf = (source: string) => source.replace(/\.(xlsx|xls)$/i, '').split(' · ')[1] || '';
+
 
   /**
    * A per-MAIN-language workbook is built around one main language, so picking a
