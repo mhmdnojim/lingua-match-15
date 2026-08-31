@@ -791,13 +791,18 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const applyOrderToRest = (sheets: SheetData[], langs: string[], roles?: MappingRoles) => {
     const imported: string[] = [];
     sheets.forEach(sheet => {
-      const mapping = mappingByPosition(sheet, langs);
-      if (applyMapping(sheet, mapping, sheet.fileName, roles)) imported.push(sheet.fileName || 'upload');
+      // Workbooks that name their own languages keep their own mapping; the
+      // rest reuse the confirmed order, matched by column position.
+      const mapping = sheet.mainLang
+        ? Object.fromEntries(sheet.headers.map(h => [h, sheet.detected[h] || 'ignore']))
+        : mappingByPosition(sheet, langs);
+      if (applyMapping(sheet, mapping, sheet.fileName, roles, false)) imported.push(sheet.fileName || 'upload');
     });
     if (imported.length > 0) {
-      toast({ title: `${imported.length} more file(s) imported`, description: imported.join(', ') });
+      toast({ title: `${imported.length} more set(s) imported`, description: imported.join(', ') });
     }
   };
+
 
   const handleUploadFiles = async (files: File[]) => {
     resumeTranslation();
