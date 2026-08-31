@@ -1,6 +1,8 @@
 import * as XLSX from 'xlsx';
 import { detectLanguageFromHeader, getLanguage, romanizationCodeFor } from './languages';
 import { readAppReadyWorkbook, ENTRIES_COLUMN, SheetEntry } from './appReadyWorkbook';
+import { mainLanguageSheetNames, readMainLanguageWorkbook } from './mainLanguageWorkbook';
+
 
 
 
@@ -62,13 +64,32 @@ export interface SheetData {
   detected: Record<string, string | null>;
   /** original file name, used as the vocabulary set name */
   fileName?: string;
+  /** language the workbook is built around (per-MAIN-language workbooks) */
+  mainLang?: string;
+  /** every level sheet the workbook contains */
+  levels?: string[];
+  /** the level sheet this data came from */
+  level?: string;
 }
 
 /** header -> language code, or 'ignore' */
 export type ColumnMapping = Record<string, string>;
 
-function readWorkbook(arrayBuffer: ArrayBuffer): SheetData {
-  const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+function readBook(workbook: XLSX.WorkBook, sheetName?: string): SheetData {
+  // Per-MAIN-language workbooks (HSK_MAIN_XX.xlsx) are read natively: the MAIN
+  // block becomes the first column and each level sheet is its own set.
+  const main = readMainLanguageWorkbook(workbook, sheetName);
+  if (main) {
+    return {
+      success: true,
+      headers: main.headers,
+      rows: main.rows,
+      detected: main.detected,
+      mainLang: main.mainLang,
+      levels: main.levels,
+      level: main.level,
+    };
+  }
 
   // App-ready workbooks (Sense Map + Reverse Index) are normalized across sheets —
   // flatten them back to one row per word before the usual header detection runs.
@@ -78,6 +99,7 @@ function readWorkbook(arrayBuffer: ArrayBuffer): SheetData {
   const rows = appReady
     ? appReady.rows
     : XLSX.utils.sheet_to_json<Record<string, string>>(worksheet, { defval: '' });
+
 
   if (rows.length === 0) {
     return { success: false, error: 'The file is empty', headers: [], rows: [], detected: {} };
@@ -135,17 +157,40 @@ function readWorkbook(arrayBuffer: ArrayBuffer): SheetData {
   return { success: true, headers, rows, detected };
 }
 
+const failure = (error: string): SheetData => ({
+  success: false,
+  error,
+  headers: [],
+  rows: [],
+  detected: {},
+});
+
 export async function parseExcelFile(file: File): Promise<SheetData> {
   try {
-    return { ...readWorkbook(await file.arrayBuffer()), fileName: file.name };
+    const book = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+    return { ...readBook(book), fileName: file.name };
   } catch (error) {
-    return {
-      success: false,
-      error: `Failed to parse file: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      headers: [],
-      rows: [],
-      detected: {},
-    };
+    return failure(`Failed to parse file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * A per-MAIN-language workbook holds one level per sheet — import each level as
+ * its own vocabulary set so the picker can offer HSK1…HSK6. Ordinary workbooks
+ * return a single sheet, unchanged.
+ */
+export async function parseExcelLevels(file: File): Promise<SheetData[]> {
+  try {
+    const book = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+    const levels = mainLanguageSheetNames(book);
+    if (levels.length <= 1) return [{ ...readBook(book), fileName: file.name }];
+
+    const base = file.name.replace(/\.(xlsx|xls)$/i, '');
+    return levels
+      .map(level => ({ ...readBook(book, level), fileName: `${base} · ${level}.xlsx` }))
+      .filter(sheet => sheet.success);
+  } catch (error) {
+    return [failure(`Failed to parse file: ${error instanceof Error ? error.message : 'Unknown error'}`)];
   }
 }
 
@@ -153,7 +198,8 @@ export async function fetchExcelFromUrl(url: string): Promise<SheetData> {
   try {
     const response = await fetch(url);
     if (!response.ok) throw new Error(response.statusText);
-    return readWorkbook(await response.arrayBuffer());
+    return readBook(XLSX.read(await response.arrayBuffer(), { type: 'array' }));
+
   } catch (error) {
     return {
       success: false,

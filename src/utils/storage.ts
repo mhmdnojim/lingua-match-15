@@ -209,16 +209,35 @@ export function listLocalSources(): string[] {
 }
 
 export function saveVocabularySet(data: StoredVocabulary): void {
-  try {
-    localStorage.setItem(setKey(data.source), JSON.stringify(data));
+  const register = () => {
     const list = listLocalSources();
     if (!list.includes(data.source)) {
       localStorage.setItem(LIBRARY_KEY, JSON.stringify([...list, data.source]));
     }
+  };
+
+  try {
+    localStorage.setItem(setKey(data.source), JSON.stringify(data));
+    register();
+    return;
+  } catch {
+    // Large multi-level workbooks blow the ~5 MB browser budget. The declared
+    // expression lists are the heaviest part and can be rebuilt on re-import,
+    // so drop them before giving up on saving the set at all.
+  }
+
+  try {
+    const slim: StoredVocabulary = {
+      ...data,
+      items: data.items.map(({ entries, ...item }) => item),
+    };
+    localStorage.setItem(setKey(data.source), JSON.stringify(slim));
+    register();
   } catch (error) {
     console.warn('Failed to save vocabulary set:', error);
   }
 }
+
 
 export function loadVocabularySet(source: string): StoredVocabulary | null {
   try {

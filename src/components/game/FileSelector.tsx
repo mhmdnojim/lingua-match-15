@@ -37,6 +37,25 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
+  const strip = (name: string) => name.replace(/\.(xlsx|xls)$/i, '');
+  const familyOf = (name: string) => strip(name).split(' · ')[0];
+  const levelOf = (name: string) => strip(name).split(' · ')[1] || '';
+
+  // Level sheets of one workbook (HSK1…HSK6) collapse into a single entry in the
+  // picker; the level itself is chosen from the chips below it.
+  const families: { name: string; files: string[] }[] = [];
+  availableFiles.forEach(file => {
+    const key = familyOf(file);
+    const found = families.find(f => f.name === key);
+    if (found) found.files.push(file);
+    else families.push({ name: key, files: [file] });
+  });
+
+  const currentFamily = selectedFile ? families.find(f => f.files.includes(selectedFile)) : undefined;
+  const levels = currentFamily && currentFamily.files.length > 1 && levelOf(currentFamily.files[0])
+    ? currentFamily.files
+    : [];
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
@@ -49,13 +68,20 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
     fileInputRef.current?.click();
   };
 
+  const handleFamilyChange = (name: string) => {
+    const family = families.find(f => f.name === name);
+    if (!family) return;
+    const level = selectedFile ? levelOf(selectedFile) : '';
+    onSelectFile(family.files.find(f => levelOf(f) === level) || family.files[0]);
+  };
+
   return (
-    <div className={cn('flex items-center gap-3', className)}>
+    <div className={cn('flex flex-wrap items-center gap-3', className)}>
       <div className="relative">
         <FileSpreadsheet className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
         <select
-          value={selectedFile || ''}
-          onChange={(e) => onSelectFile(e.target.value)}
+          value={currentFamily?.name || ''}
+          onChange={(e) => handleFamilyChange(e.target.value)}
           className={cn(
             'appearance-none bg-secondary border border-border rounded-lg pl-9 pr-8 py-2',
             'text-foreground focus:outline-none focus:ring-2 focus:ring-warning',
@@ -63,14 +89,35 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
           )}
         >
           <option value="" disabled>Select vocabulary...</option>
-          {availableFiles.map((file) => (
-            <option key={file} value={file}>
-              {file.replace('.xlsx', '')}
+          {families.map((family) => (
+            <option key={family.name} value={family.name}>
+              {family.name}
             </option>
           ))}
         </select>
         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
       </div>
+
+      {levels.length > 0 && (
+        <div className="flex items-center gap-1" role="group" aria-label="Level">
+          {levels.map((file) => (
+            <button
+              key={file}
+              onClick={() => onSelectFile(file)}
+              aria-pressed={file === selectedFile}
+              className={cn(
+                'px-2.5 py-1.5 rounded-md text-xs font-semibold border transition-colors duration-200',
+                file === selectedFile
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'border-border text-muted-foreground hover:bg-secondary',
+              )}
+            >
+              {levelOf(file)}
+            </button>
+          ))}
+        </div>
+      )}
+
 
       <button
         onClick={handleUploadClick}

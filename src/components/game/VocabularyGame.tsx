@@ -6,7 +6,9 @@ import {
   ColumnMapping,
   buildVocabulary,
   fetchExcelFromUrl,
-  parseExcelFile,
+  parseExcelLevels,
+
+
   createBatches,
   normalizePos,
 } from '@/utils/excelParser';
@@ -732,11 +734,27 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     if (stored && stored.items.length > 0) {
       setVocabulary(stored.items);
       saveVocabulary(stored);
+      // The set carries its own main language — make it the first column so the
+      // board never shows a MAIN column this file has no words for.
+      if (stored.mainLang) {
+        setColumns(prev => {
+          if (prev[0]?.lang === stored.mainLang) return prev;
+          const rest = prev.filter(c => c.lang !== stored.mainLang);
+          const existing = prev.find(c => c.lang === stored.mainLang);
+          const next = [
+            existing ?? { lang: stored.mainLang, visible: true, muted: false, showRomanization: false },
+            ...rest,
+          ].slice(0, 4);
+          saveProgress({ columns: next });
+          return next;
+        });
+      }
       setCurrentBatch(0);
       setCompletedBatches([]);
       autoTranslatedRef.current = '';
       return;
     }
+
     loadVocabulary(selectedFile);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFile]);
@@ -789,13 +807,18 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const applyOrderToRest = (sheets: SheetData[], langs: string[], roles?: MappingRoles) => {
     const imported: string[] = [];
     sheets.forEach(sheet => {
-      const mapping = mappingByPosition(sheet, langs);
-      if (applyMapping(sheet, mapping, sheet.fileName, roles)) imported.push(sheet.fileName || 'upload');
+      // Workbooks that name their own languages keep their own mapping; the
+      // rest reuse the confirmed order, matched by column position.
+      const mapping = sheet.mainLang
+        ? Object.fromEntries(sheet.headers.map(h => [h, sheet.detected[h] || 'ignore']))
+        : mappingByPosition(sheet, langs);
+      if (applyMapping(sheet, mapping, sheet.fileName, roles, false)) imported.push(sheet.fileName || 'upload');
     });
     if (imported.length > 0) {
-      toast({ title: `${imported.length} more file(s) imported`, description: imported.join(', ') });
+      toast({ title: `${imported.length} more set(s) imported`, description: imported.join(', ') });
     }
   };
+
 
   const handleUploadFiles = async (files: File[]) => {
     resumeTranslation();
@@ -804,15 +827,18 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     const sheets: SheetData[] = [];
 
     for (const file of files) {
-      const result = await parseExcelFile(file);
-      if (!result.success) {
-        toast({ title: `Could not read ${file.name}`, description: result.error, variant: 'destructive' });
+      // A per-MAIN-language workbook yields one sheet per level (HSK1…HSK6).
+      const results = await parseExcelLevels(file);
+      const failed = results.find(r => !r.success);
+      if (failed && results.every(r => !r.success)) {
+        toast({ title: `Could not read ${file.name}`, description: failed.error, variant: 'destructive' });
         continue;
       }
-      sheets.push({ ...result, fileName: file.name } as SheetData);
+      results.filter(r => r.success).forEach(r => sheets.push(r));
     }
     setIsLoading(false);
     if (sheets.length === 0) return;
+
 
 
     const [first, ...rest] = sheets;
@@ -855,6 +881,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     mapping: ColumnMapping,
     sourceName?: string,
     roles?: MappingRoles,
+    activate = true,
   ): boolean => {
     const mappedLangs = Object.entries(mapping)
       .filter(([, lang]) => lang && lang !== 'ignore')
@@ -868,7 +895,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       }),
     );
     const columnLangsFromFile = mappedLangs.filter(l => !fileRomanizations.has(l));
-    const newMain = roles?.mainLang || columnLangsFromFile[0] || mappedLangs[0];
+    // A per-MAIN-language workbook decides its own main column — the file is
+    // built around it, so a mapping choice can never override it.
+    const newMain = sheet.mainLang || roles?.mainLang || columnLangsFromFile[0] || mappedLangs[0];
 
     // Keep configured columns, put the file's main language first, then existing extras
     const chosen = roles?.columnLangs?.length ? roles.columnLangs : columnLangsFromFile;
@@ -909,6 +938,10 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       );
     }
 
+    // Levels imported alongside the first one stay in the library without
+    // stealing the board from the level the user just confirmed.
+    if (!activate) return true;
+
     skipInitialLoadRef.current = true;
     setSelectedFile(source);
     setColumns(nextColumns);
@@ -929,6 +962,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     });
     return true;
   };
+
 
   /** Romanization columns (pinyin, romaji...) only make sense for their own script — hide them otherwise */
   const romanizationMainRef = useRef<string>('');
@@ -1116,9 +1150,46 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     return Array.from(counts.keys());
   }, [vocabulary]);
 
+  /** Level part of a set name: "HSK_MAIN_EN · HSK3.xlsx" -> "HSK3" */
+  const levelOf = (source: string) => source.replace(/\.(xlsx|xls)$/i, '').split(' · ')[1] || '';
+
+
+  /**
+   * A per-MAIN-language workbook is built around one main language, so picking a
+   * different MAIN switches to that language's imported set (same level when it
+   * exists) instead of leaving the board without words.
+   */
+  const setForMainLang = (lang: string): string | null => {
+    const current = selectedFile || '';
+    const level = levelOf(current);
+    const matches = library
+      .filter(source => source !== current)
+      .map(source => ({ source, set: loadVocabularySet(source) }))
+      .filter(entry => entry.set?.mainLang === lang);
+    if (matches.length === 0) return null;
+    const sameLevel = level && matches.find(m => levelOf(m.source) === level);
+    return (sameLevel ?? matches[0]).source;
+  };
+
   /** Change one column's language directly from its board title */
   const handleColumnLangChange = (index: number, lang: string) => {
     if (columns[index]?.lang === lang) return;
+
+    // Switching the MAIN column to a language this file is not built around:
+    // load the workbook that is, when it has already been imported.
+    if (index === 0 && !readyLangs.includes(lang)) {
+      const target = setForMainLang(lang);
+      if (target) {
+        setSelectedFile(target);
+        toast({
+          title: `Switched to ${getLanguage(lang).native}`,
+          description: `Loaded “${target.replace(/\.(xlsx|xls)$/i, '')}” — its main column is ${getLanguage(lang).name}.`,
+        });
+        return;
+      }
+    }
+
+
     const otherIndex = columns.findIndex(c => c.lang === lang);
     if (otherIndex !== -1) {
       const currentLang = columns[index].lang;
