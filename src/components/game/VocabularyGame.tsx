@@ -804,15 +804,18 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     const sheets: SheetData[] = [];
 
     for (const file of files) {
-      const result = await parseExcelFile(file);
-      if (!result.success) {
-        toast({ title: `Could not read ${file.name}`, description: result.error, variant: 'destructive' });
+      // A per-MAIN-language workbook yields one sheet per level (HSK1…HSK6).
+      const results = await parseExcelLevels(file);
+      const failed = results.find(r => !r.success);
+      if (failed && results.every(r => !r.success)) {
+        toast({ title: `Could not read ${file.name}`, description: failed.error, variant: 'destructive' });
         continue;
       }
-      sheets.push({ ...result, fileName: file.name } as SheetData);
+      results.filter(r => r.success).forEach(r => sheets.push(r));
     }
     setIsLoading(false);
     if (sheets.length === 0) return;
+
 
 
     const [first, ...rest] = sheets;
