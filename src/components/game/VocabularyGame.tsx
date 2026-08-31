@@ -860,6 +860,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     mapping: ColumnMapping,
     sourceName?: string,
     roles?: MappingRoles,
+    activate = true,
   ): boolean => {
     const mappedLangs = Object.entries(mapping)
       .filter(([, lang]) => lang && lang !== 'ignore')
@@ -873,7 +874,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       }),
     );
     const columnLangsFromFile = mappedLangs.filter(l => !fileRomanizations.has(l));
-    const newMain = roles?.mainLang || columnLangsFromFile[0] || mappedLangs[0];
+    // A per-MAIN-language workbook decides its own main column — the file is
+    // built around it, so a mapping choice can never override it.
+    const newMain = sheet.mainLang || roles?.mainLang || columnLangsFromFile[0] || mappedLangs[0];
 
     // Keep configured columns, put the file's main language first, then existing extras
     const chosen = roles?.columnLangs?.length ? roles.columnLangs : columnLangsFromFile;
@@ -914,6 +917,10 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       );
     }
 
+    // Levels imported alongside the first one stay in the library without
+    // stealing the board from the level the user just confirmed.
+    if (!activate) return true;
+
     skipInitialLoadRef.current = true;
     setSelectedFile(source);
     setColumns(nextColumns);
@@ -934,6 +941,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     });
     return true;
   };
+
 
   /** Romanization columns (pinyin, romaji...) only make sense for their own script — hide them otherwise */
   const romanizationMainRef = useRef<string>('');
