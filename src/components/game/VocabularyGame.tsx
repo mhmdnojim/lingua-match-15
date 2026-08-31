@@ -734,11 +734,27 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     if (stored && stored.items.length > 0) {
       setVocabulary(stored.items);
       saveVocabulary(stored);
+      // The set carries its own main language — make it the first column so the
+      // board never shows a MAIN column this file has no words for.
+      if (stored.mainLang) {
+        setColumns(prev => {
+          if (prev[0]?.lang === stored.mainLang) return prev;
+          const rest = prev.filter(c => c.lang !== stored.mainLang);
+          const existing = prev.find(c => c.lang === stored.mainLang);
+          const next = [
+            existing ?? { lang: stored.mainLang, visible: true, muted: false, showRomanization: false },
+            ...rest,
+          ].slice(0, 4);
+          saveProgress({ columns: next });
+          return next;
+        });
+      }
       setCurrentBatch(0);
       setCompletedBatches([]);
       autoTranslatedRef.current = '';
       return;
     }
+
     loadVocabulary(selectedFile);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFile]);
