@@ -40,6 +40,7 @@ import {
   deleteVocabularySet,
   loadVocabularySet,
   listLocalSources,
+  hydrateVocabularySets,
   saveUiState,
   loadUiState,
   DEFAULT_COLUMNS,
