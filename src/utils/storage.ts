@@ -199,6 +199,75 @@ export function clearProgress(): void {
 const LIBRARY_KEY = 'vocab-game-library';
 const setKey = (source: string) => `vocab-game-set:${source}`;
 
+/* IndexedDB store — whole multi-level workbooks (HSK1…HSK6) far exceed the
+ * ~5 MB localStorage budget, which used to make every level after the first
+ * fail to save and then fail to load. Sets live in IndexedDB; a memory cache
+ * keeps the read API synchronous. */
+const DB_NAME = 'vocab-game';
+const STORE = 'sets';
+const memorySets = new Map<string, StoredVocabulary>();
+
+function openDb(): Promise<IDBDatabase | null> {
+  return new Promise(resolve => {
+    try {
+      const request = indexedDB.open(DB_NAME, 1);
+      request.onupgradeneeded = () => {
+        if (!request.result.objectStoreNames.contains(STORE)) request.result.createObjectStore(STORE);
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => resolve(null);
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+let hydrated: Promise<void> | null = null;
+
+/** Load every stored set into memory (and migrate legacy localStorage sets). */
+export function hydrateVocabularySets(): Promise<void> {
+  if (hydrated) return hydrated;
+  hydrated = (async () => {
+    // Legacy localStorage sets first, so IndexedDB copies win when both exist.
+    listLocalSources().forEach(source => {
+      try {
+        const raw = localStorage.getItem(setKey(source));
+        if (raw) memorySets.set(source, JSON.parse(raw) as StoredVocabulary);
+      } catch {
+        /* ignore unreadable legacy entry */
+      }
+    });
+
+    const db = await openDb();
+    if (!db) return;
+    await new Promise<void>(resolve => {
+      try {
+        const tx = db.transaction(STORE, 'readonly').objectStore(STORE).openCursor();
+        tx.onsuccess = () => {
+          const cursor = tx.result;
+          if (!cursor) return resolve();
+          memorySets.set(String(cursor.key), cursor.value as StoredVocabulary);
+          cursor.continue();
+        };
+        tx.onerror = () => resolve();
+      } catch {
+        resolve();
+      }
+    });
+  })();
+  return hydrated;
+}
+
+async function writeSet(data: StoredVocabulary): Promise<void> {
+  const db = await openDb();
+  if (!db) return;
+  try {
+    db.transaction(STORE, 'readwrite').objectStore(STORE).put(data, data.source);
+  } catch (error) {
+    console.warn('Failed to save vocabulary set:', error);
+  }
+}
+
 export function listLocalSources(): string[] {
   try {
     const raw = localStorage.getItem(LIBRARY_KEY);
@@ -209,46 +278,25 @@ export function listLocalSources(): string[] {
 }
 
 export function saveVocabularySet(data: StoredVocabulary): void {
-  const register = () => {
+  memorySets.set(data.source, data);
+  try {
     const list = listLocalSources();
     if (!list.includes(data.source)) {
       localStorage.setItem(LIBRARY_KEY, JSON.stringify([...list, data.source]));
     }
-  };
-
-  try {
-    localStorage.setItem(setKey(data.source), JSON.stringify(data));
-    register();
-    return;
-  } catch {
-    // Large multi-level workbooks blow the ~5 MB browser budget. The declared
-    // expression lists are the heaviest part and can be rebuilt on re-import,
-    // so drop them before giving up on saving the set at all.
-  }
-
-  try {
-    const slim: StoredVocabulary = {
-      ...data,
-      items: data.items.map(({ entries, ...item }) => item),
-    };
-    localStorage.setItem(setKey(data.source), JSON.stringify(slim));
-    register();
   } catch (error) {
-    console.warn('Failed to save vocabulary set:', error);
+    console.warn('Failed to register vocabulary set:', error);
   }
+  void writeSet(data);
 }
 
 
 export function loadVocabularySet(source: string): StoredVocabulary | null {
-  try {
-    const raw = localStorage.getItem(setKey(source));
-    return raw ? (JSON.parse(raw) as StoredVocabulary) : null;
-  } catch {
-    return null;
-  }
+  return memorySets.get(source) ?? null;
 }
 
 export function deleteVocabularySet(source: string): void {
+  memorySets.delete(source);
   try {
     localStorage.removeItem(setKey(source));
     const list = listLocalSources().filter(s => s !== source);
@@ -256,4 +304,13 @@ export function deleteVocabularySet(source: string): void {
   } catch (error) {
     console.warn('Failed to delete vocabulary set:', error);
   }
+  void openDb().then(db => {
+    if (!db) return;
+    try {
+      db.transaction(STORE, 'readwrite').objectStore(STORE).delete(source);
+    } catch {
+      /* ignore */
+    }
+  });
 }
+

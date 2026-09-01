@@ -40,6 +40,7 @@ import {
   deleteVocabularySet,
   loadVocabularySet,
   listLocalSources,
+  hydrateVocabularySets,
   saveUiState,
   loadUiState,
   DEFAULT_COLUMNS,
@@ -208,6 +209,14 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [library, setLibrary] = useState<string[]>(() =>
     Array.from(new Set([...HOSTED_FILES, ...listLocalSources()])),
   );
+
+  // Stored sets live in IndexedDB — wait for them before deciding whether a
+  // selected file must be re-fetched.
+  const [setsReady, setSetsReady] = useState(false);
+  useEffect(() => {
+    hydrateVocabularySets().then(() => setSetsReady(true));
+  }, []);
+
 
   const cloudSource = selectedFile || 'upload';
   const userRef = useRef<any>(null);
@@ -721,7 +730,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
   const skipInitialLoadRef = useRef(Boolean(cached?.items?.length));
   useEffect(() => {
-    if (!selectedFile) return;
+    if (!selectedFile || !setsReady) return;
     saveProgress({ selectedFile });
     // On a fresh app open, keep the words that were already saved instead of
     // re-running the import flow for the remembered file.
@@ -755,9 +764,17 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       return;
     }
 
+    if (!HOSTED_FILES.includes(selectedFile)) {
+      toast({
+        title: 'Words not available offline',
+        description: `"${selectedFile}" has no saved words yet — please upload the workbook again.`,
+        variant: 'destructive',
+      });
+      return;
+    }
     loadVocabulary(selectedFile);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFile]);
+  }, [selectedFile, setsReady]);
 
   /** Keep every upload: an already used name gets " (1)", " (2)"… appended */
   const uniqueSourceName = (name: string): string => {
