@@ -209,6 +209,14 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     Array.from(new Set([...HOSTED_FILES, ...listLocalSources()])),
   );
 
+  // Stored sets live in IndexedDB — wait for them before deciding whether a
+  // selected file must be re-fetched.
+  const [setsReady, setSetsReady] = useState(false);
+  useEffect(() => {
+    hydrateVocabularySets().then(() => setSetsReady(true));
+  }, []);
+
+
   const cloudSource = selectedFile || 'upload';
   const userRef = useRef<any>(null);
   userRef.current = user;
