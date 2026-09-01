@@ -764,9 +764,17 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       return;
     }
 
+    if (!HOSTED_FILES.includes(selectedFile)) {
+      toast({
+        title: 'Words not available offline',
+        description: `"${selectedFile}" has no saved words yet — please upload the workbook again.`,
+        variant: 'destructive',
+      });
+      return;
+    }
     loadVocabulary(selectedFile);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFile]);
+  }, [selectedFile, setsReady]);
 
   /** Keep every upload: an already used name gets " (1)", " (2)"… appended */
   const uniqueSourceName = (name: string): string => {
