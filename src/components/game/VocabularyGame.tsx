@@ -730,7 +730,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
 
   const skipInitialLoadRef = useRef(Boolean(cached?.items?.length));
   useEffect(() => {
-    if (!selectedFile) return;
+    if (!selectedFile || !setsReady) return;
     saveProgress({ selectedFile });
     // On a fresh app open, keep the words that were already saved instead of
     // re-running the import flow for the remembered file.
