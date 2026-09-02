@@ -84,6 +84,9 @@ import { sampleVocabulary } from '@/data/sampleVocabulary';
 
 
 const HOSTED_FILES = ['sample-vocabulary.xlsx'];
+// The built-in HSK data pack: every level carries all 15 languages, so the MAIN
+// column can be any of them without loading another file.
+const BUILT_IN_FILES = [...HSK_LIBRARY_FILES, ...HOSTED_FILES];
 const BATCH_SIZE = 5;
 
 export interface VocabularyGameProps {
