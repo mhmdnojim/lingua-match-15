@@ -733,6 +733,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   );
 
   const skipInitialLoadRef = useRef(Boolean(cached?.items?.length));
+  /** bumped when the built-in library must be re-read (e.g. MAIN language switch) */
+  const [libraryReload, setLibraryReload] = useState(0);
   useEffect(() => {
     if (!selectedFile || !setsReady) return;
     saveProgress({ selectedFile });
