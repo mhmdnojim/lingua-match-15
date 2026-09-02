@@ -209,9 +209,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   });
 
 
-  /** Every file the user has imported, plus the bundled sample */
+  /** Every file the user has imported, plus the built-in HSK library */
   const [library, setLibrary] = useState<string[]>(() =>
-    Array.from(new Set([...HOSTED_FILES, ...listLocalSources()])),
+    Array.from(new Set([...BUILT_IN_FILES, ...listLocalSources()])),
   );
 
   // Stored sets live in IndexedDB — wait for them before deciding whether a
