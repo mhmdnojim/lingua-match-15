@@ -768,6 +768,33 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       return;
     }
 
+    // Built-in HSK level: fetch the data pack and open it with the current MAIN
+    // language as the first column — no upload and no mapping dialog.
+    const level = hskLevelOf(selectedFile);
+    if (level) {
+      setIsLoading(true);
+      loadHskLevel(level, columnsRef.current[0]?.lang || 'zh')
+        .then(sheet => {
+          applyMapping(
+            sheet,
+            Object.fromEntries(sheet.headers.map(h => [h, sheet.detected[h] || 'ignore'])),
+            selectedFile,
+            undefined,
+            true,
+            false,
+          );
+        })
+        .catch(error =>
+          toast({
+            title: 'Could not load level',
+            description: error instanceof Error ? error.message : 'Unknown error',
+            variant: 'destructive',
+          }),
+        )
+        .finally(() => setIsLoading(false));
+      return;
+    }
+
     if (!HOSTED_FILES.includes(selectedFile)) {
       toast({
         title: 'Words not available offline',
