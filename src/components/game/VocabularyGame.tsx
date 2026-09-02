@@ -807,7 +807,23 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     }
     loadVocabulary(selectedFile);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFile, setsReady]);
+  }, [selectedFile, setsReady, libraryReload]);
+
+  /** Switch the MAIN (leftmost) language of the built-in HSK library and reload the level */
+  const handleLibraryMainLang = (lang: string) => {
+    setColumns(prev => {
+      if (prev[0]?.lang === lang) return prev;
+      const existing = prev.find(c => c.lang === lang);
+      const rest = prev.filter(c => c.lang !== lang);
+      const next = [
+        existing ?? { lang, visible: true, muted: false, showRomanization: false },
+        ...rest,
+      ].slice(0, 4);
+      saveProgress({ columns: next });
+      return next;
+    });
+    setLibraryReload(n => n + 1);
+  };
 
   /** Keep every upload: an already used name gets " (1)", " (2)"… appended */
   const uniqueSourceName = (name: string): string => {
