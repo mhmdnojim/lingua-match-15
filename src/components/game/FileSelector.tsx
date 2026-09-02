@@ -105,22 +105,49 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
       </div>
 
       {levels.length > 0 && (
-        <div className="flex items-center gap-1" role="group" aria-label="Level">
-          {levels.map((file) => (
-            <button
-              key={file}
-              onClick={() => onSelectFile(file)}
-              aria-pressed={file === selectedFile}
-              className={cn(
-                'px-2.5 py-1.5 rounded-md text-xs font-semibold border transition-colors duration-200',
-                file === selectedFile
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'border-border text-muted-foreground hover:bg-secondary',
-              )}
-            >
-              {levelOf(file)}
-            </button>
-          ))}
+        <div className="relative">
+          <select
+            value={selectedFile || ''}
+            onChange={(e) => onSelectFile(e.target.value)}
+            aria-label="HSK level"
+            className={cn(
+              'appearance-none bg-secondary border border-border rounded-lg pl-3 pr-8 py-2',
+              'text-foreground focus:outline-none focus:ring-2 focus:ring-warning',
+              'cursor-pointer text-sm font-semibold min-w-[104px]',
+            )}
+          >
+            {levels.map((file) => (
+              <option key={file} value={file}>
+                {levelOf(file)}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+        </div>
+      )}
+
+      {mainLangOptions && mainLangOptions.length > 0 && onMainLangChange && (
+        <div className="relative">
+          <span className="absolute -top-2 left-2 px-1 bg-background text-[10px] font-bold tracking-wider text-primary">
+            MAIN
+          </span>
+          <select
+            value={mainLang || ''}
+            onChange={(e) => onMainLangChange(e.target.value)}
+            aria-label="Main language"
+            className={cn(
+              'appearance-none bg-secondary border border-primary/60 rounded-lg pl-3 pr-8 py-2',
+              'text-foreground focus:outline-none focus:ring-2 focus:ring-warning',
+              'cursor-pointer text-sm min-w-[150px]',
+            )}
+          >
+            {mainLangOptions.map((option) => (
+              <option key={option.code} value={option.code}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
         </div>
       )}
 
