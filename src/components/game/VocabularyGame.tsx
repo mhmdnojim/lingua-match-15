@@ -1662,7 +1662,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               availableFiles={library}
               onSelectFile={setSelectedFile}
               onUploadFiles={handleUploadFiles}
-              onDeleteFile={handleDeleteFile}
+              onDeleteFile={selectedFile && isHskLibraryFile(selectedFile) ? undefined : handleDeleteFile}
               onExportFile={handleExportExcel}
             />
           }
