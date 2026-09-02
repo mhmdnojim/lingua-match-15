@@ -27,6 +27,15 @@ const ASSETS: Record<HskLevel, string> = {
 /** Picker entries — the FileSelector groups these into one family with level chips */
 export const HSK_LIBRARY_FILES = HSK_LEVELS.map(level => `${HSK_LIBRARY_NAME} · ${level}.xlsx`);
 
+/**
+ * The 15 MAIN languages shipped inside every data pack (one per HSK_MAIN_XX
+ * workbook of the v6 delivery). Any of them can be the leftmost column without
+ * loading a different file.
+ */
+export const HSK_LIBRARY_LANGS = [
+  'zh', 'en', 'ar', 'bg', 'kk', 'id', 'ms', 'tk', 'ru', 'fa', 'ur', 'vi', 'de', 'nl', 'fr',
+] as const;
+
 export const isHskLibraryFile = (source: string) => HSK_LIBRARY_FILES.includes(source);
 
 export const hskLevelOf = (source: string): HskLevel | null => {
