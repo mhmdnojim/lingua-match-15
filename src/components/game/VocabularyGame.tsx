@@ -29,6 +29,7 @@ import {
 
 } from '@/utils/gameLogic';
 import { getMeaningSelection } from '@/utils/meanings';
+import { HSK_LIBRARY_FILES, isHskLibraryFile, hskLevelOf, loadHskLevel } from '@/data/hskLibrary';
 
 import {
   saveProgress,
@@ -84,6 +85,9 @@ import { sampleVocabulary } from '@/data/sampleVocabulary';
 
 
 const HOSTED_FILES = ['sample-vocabulary.xlsx'];
+// The built-in HSK data pack: every level carries all 15 languages, so the MAIN
+// column can be any of them without loading another file.
+const BUILT_IN_FILES = [...HSK_LIBRARY_FILES, ...HOSTED_FILES];
 const BATCH_SIZE = 5;
 
 export interface VocabularyGameProps {
@@ -205,9 +209,9 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   });
 
 
-  /** Every file the user has imported, plus the bundled sample */
+  /** Every file the user has imported, plus the built-in HSK library */
   const [library, setLibrary] = useState<string[]>(() =>
-    Array.from(new Set([...HOSTED_FILES, ...listLocalSources()])),
+    Array.from(new Set([...BUILT_IN_FILES, ...listLocalSources()])),
   );
 
   // Stored sets live in IndexedDB — wait for them before deciding whether a
@@ -764,6 +768,33 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       return;
     }
 
+    // Built-in HSK level: fetch the data pack and open it with the current MAIN
+    // language as the first column — no upload and no mapping dialog.
+    const level = hskLevelOf(selectedFile);
+    if (level) {
+      setIsLoading(true);
+      loadHskLevel(level, columnsRef.current[0]?.lang || 'zh')
+        .then(sheet => {
+          applyMapping(
+            sheet,
+            Object.fromEntries(sheet.headers.map(h => [h, sheet.detected[h] || 'ignore'])),
+            selectedFile,
+            undefined,
+            true,
+            false,
+          );
+        })
+        .catch(error =>
+          toast({
+            title: 'Could not load level',
+            description: error instanceof Error ? error.message : 'Unknown error',
+            variant: 'destructive',
+          }),
+        )
+        .finally(() => setIsLoading(false));
+      return;
+    }
+
     if (!HOSTED_FILES.includes(selectedFile)) {
       toast({
         title: 'Words not available offline',
@@ -899,6 +930,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     sourceName?: string,
     roles?: MappingRoles,
     activate = true,
+    /** built-in library levels are re-fetched on demand, never stored */
+    persist = true,
   ): boolean => {
     const mappedLangs = Object.entries(mapping)
       .filter(([, lang]) => lang && lang !== 'ignore')
@@ -945,14 +978,20 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       return false;
     }
 
-    const source = sourceName ? uniqueSourceName(sourceName) : selectedFile || 'upload';
-    saveVocabularySet({ items, mainLang: newMain, source });
-    setLibrary(prev => (prev.includes(source) ? prev : [...prev, source]));
-    if (userRef.current) {
-      setCloudStatus('saving');
-      saveCloudSet({ source, mainLang: newMain, columns: nextColumns, items }).then(ok =>
-        setCloudStatus(ok ? 'saved' : 'error'),
-      );
+    const source = persist
+      ? sourceName
+        ? uniqueSourceName(sourceName)
+        : selectedFile || 'upload'
+      : sourceName || selectedFile || 'upload';
+    if (persist) {
+      saveVocabularySet({ items, mainLang: newMain, source });
+      setLibrary(prev => (prev.includes(source) ? prev : [...prev, source]));
+      if (userRef.current) {
+        setCloudStatus('saving');
+        saveCloudSet({ source, mainLang: newMain, columns: nextColumns, items }).then(ok =>
+          setCloudStatus(ok ? 'saved' : 'error'),
+        );
+      }
     }
 
     // Levels imported alongside the first one stay in the library without
@@ -963,7 +1002,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     setSelectedFile(source);
     setColumns(nextColumns);
     setVocabulary(items);
-    saveVocabulary({ items, mainLang: newMain, source });
+    if (persist) saveVocabulary({ items, mainLang: newMain, source });
     setCurrentBatch(0);
     setScore(0);
     setCompletedBatches([]);
@@ -974,8 +1013,10 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     setAutoTranslateOn((roles?.generateLangs?.length ?? 0) > 0);
 
     toast({
-      title: 'File imported',
-      description: `${items.length} words loaded — main language: ${getLanguage(newMain).native}. Pick a language column to generate what the file is missing.`,
+      title: persist ? 'File imported' : `${sheet.level ?? ''} loaded`.trim(),
+      description: persist
+        ? `${items.length} words loaded — main language: ${getLanguage(newMain).native}. Pick a language column to generate what the file is missing.`
+        : `${items.length} senses — main language: ${getLanguage(newMain).native}. All 15 languages are already included.`,
     });
     return true;
   };
@@ -1621,7 +1662,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               availableFiles={library}
               onSelectFile={setSelectedFile}
               onUploadFiles={handleUploadFiles}
-              onDeleteFile={handleDeleteFile}
+              onDeleteFile={selectedFile && isHskLibraryFile(selectedFile) ? undefined : handleDeleteFile}
               onExportFile={handleExportExcel}
             />
           }
