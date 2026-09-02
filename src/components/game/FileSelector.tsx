@@ -20,6 +20,10 @@ interface FileSelectorProps {
   onUploadFiles: (files: File[]) => void;
   onDeleteFile?: (fileName: string) => void;
   onExportFile?: () => void;
+  /** MAIN-language picker (built-in library only) */
+  mainLang?: string;
+  mainLangOptions?: { code: string; label: string }[];
+  onMainLangChange?: (lang: string) => void;
   className?: string;
 }
 
