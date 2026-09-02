@@ -930,6 +930,8 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     sourceName?: string,
     roles?: MappingRoles,
     activate = true,
+    /** built-in library levels are re-fetched on demand, never stored */
+    persist = true,
   ): boolean => {
     const mappedLangs = Object.entries(mapping)
       .filter(([, lang]) => lang && lang !== 'ignore')
