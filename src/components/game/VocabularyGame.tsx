@@ -978,14 +978,20 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       return false;
     }
 
-    const source = sourceName ? uniqueSourceName(sourceName) : selectedFile || 'upload';
-    saveVocabularySet({ items, mainLang: newMain, source });
-    setLibrary(prev => (prev.includes(source) ? prev : [...prev, source]));
-    if (userRef.current) {
-      setCloudStatus('saving');
-      saveCloudSet({ source, mainLang: newMain, columns: nextColumns, items }).then(ok =>
-        setCloudStatus(ok ? 'saved' : 'error'),
-      );
+    const source = persist
+      ? sourceName
+        ? uniqueSourceName(sourceName)
+        : selectedFile || 'upload'
+      : sourceName || selectedFile || 'upload';
+    if (persist) {
+      saveVocabularySet({ items, mainLang: newMain, source });
+      setLibrary(prev => (prev.includes(source) ? prev : [...prev, source]));
+      if (userRef.current) {
+        setCloudStatus('saving');
+        saveCloudSet({ source, mainLang: newMain, columns: nextColumns, items }).then(ok =>
+          setCloudStatus(ok ? 'saved' : 'error'),
+        );
+      }
     }
 
     // Levels imported alongside the first one stay in the library without
