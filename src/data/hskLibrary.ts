@@ -13,15 +13,15 @@ import type { SheetData } from '@/utils/excelParser';
 export const HSK_LEVELS = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'] as const;
 export type HskLevel = (typeof HSK_LEVELS)[number];
 
-export const HSK_LIBRARY_NAME = 'HSK Library';
+export const HSK_LIBRARY_NAME = 'HSK Dataset v7';
 
 const ASSETS: Record<HskLevel, string> = {
-  HSK1: '/__l5e/assets-v1/a0c96968-a536-4d36-a70f-c82643d57734/hsk-hsk1.json',
-  HSK2: '/__l5e/assets-v1/b4434af0-ae25-4b10-ba61-61d9a323a370/hsk-hsk2.json',
-  HSK3: '/__l5e/assets-v1/bf025f32-b458-4ac4-8b40-62db9a22f1ae/hsk-hsk3.json',
-  HSK4: '/__l5e/assets-v1/188b10b1-f60d-42b8-804a-e3fae882f62c/hsk-hsk4.json',
-  HSK5: '/__l5e/assets-v1/7b38c602-5a1e-4ba1-ab06-8110c453c76b/hsk-hsk5.json',
-  HSK6: '/__l5e/assets-v1/a24a0c59-592f-4c70-aacb-39220d3208c0/hsk-hsk6.json',
+  HSK1: '/__l5e/assets-v1/c35187ea-d1f1-42fb-8174-441924cb3443/hsk-hsk1.json',
+  HSK2: '/__l5e/assets-v1/a087abd9-be94-4764-a835-f37793fc31db/hsk-hsk2.json',
+  HSK3: '/__l5e/assets-v1/d24f9a73-8e77-47dd-880a-830366102d1c/hsk-hsk3.json',
+  HSK4: '/__l5e/assets-v1/ab6ffdd0-2ed7-47cb-9ca3-d96e91bb7bfc/hsk-hsk4.json',
+  HSK5: '/__l5e/assets-v1/3a49b83c-6f2f-4544-9de7-15fb288c50bc/hsk-hsk5.json',
+  HSK6: '/__l5e/assets-v1/f082dd5a-39df-435b-987b-966a278990a2/hsk-hsk6.json',
 };
 
 /** Picker entries — the FileSelector groups these into one family with level chips */
