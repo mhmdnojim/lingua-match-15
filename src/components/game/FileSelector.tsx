@@ -35,7 +35,9 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
   onUploadFiles,
   onDeleteFile,
   onExportFile,
-
+  mainLang,
+  mainLangOptions,
+  onMainLangChange,
   className,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
