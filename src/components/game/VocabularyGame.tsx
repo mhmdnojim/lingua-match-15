@@ -1002,7 +1002,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     setSelectedFile(source);
     setColumns(nextColumns);
     setVocabulary(items);
-    saveVocabulary({ items, mainLang: newMain, source });
+    if (persist) saveVocabulary({ items, mainLang: newMain, source });
     setCurrentBatch(0);
     setScore(0);
     setCompletedBatches([]);
@@ -1013,8 +1013,10 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     setAutoTranslateOn((roles?.generateLangs?.length ?? 0) > 0);
 
     toast({
-      title: 'File imported',
-      description: `${items.length} words loaded — main language: ${getLanguage(newMain).native}. Pick a language column to generate what the file is missing.`,
+      title: persist ? 'File imported' : `${sheet.level ?? ''} loaded`.trim(),
+      description: persist
+        ? `${items.length} words loaded — main language: ${getLanguage(newMain).native}. Pick a language column to generate what the file is missing.`
+        : `${items.length} senses — main language: ${getLanguage(newMain).native}. All 15 languages are already included.`,
     });
     return true;
   };
