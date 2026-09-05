@@ -775,7 +775,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     const level = hskLevelOf(selectedFile);
     if (level) {
       setIsLoading(true);
-      loadHskLevel(level, columnsRef.current[0]?.lang || 'zh')
+      loadHskLevel(level, columnsRef.current[0]?.lang || 'zh', selectedFile)
         .then(sheet => {
           applyMapping(
             sheet,
