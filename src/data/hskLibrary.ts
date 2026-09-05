@@ -125,6 +125,10 @@ async function fetchPack(level: HskLevel, source?: string): Promise<Pack> {
   if (cached) return cached;
   const response = await fetch(DATASET_ASSETS[dataset][level]);
   if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+  const contentType = response.headers.get('content-type') ?? '';
+  if (!contentType.includes('json')) {
+    throw new Error(`Unexpected content-type "${contentType}" for ${dataset} ${level}`);
+  }
   const pack = (await response.json()) as Pack;
   cache.set(key, pack);
   return pack;
@@ -216,4 +220,66 @@ export async function loadHskLevel(level: HskLevel, mainLang: string, source?: s
     level,
     fileName: `${dataset} · ${level}.xlsx`,
   };
+}
+
+export interface HskSearchHit {
+  level: HskLevel;
+  /** Sense ID */
+  id: string;
+  /** expression per language code */
+  values: Record<string, string>;
+  /** transliteration of the main language, when present */
+  latin?: string;
+  /** English semantic definition of the sense */
+  definition?: string;
+}
+
+/**
+ * Search every level of a dataset family for a query, matching against the
+ * expression, card label, transliteration, and approved synonyms of every
+ * language. Returns at most `limit` hits, lower levels first.
+ */
+export async function searchHskLibrary(
+  query: string,
+  source?: string,
+  limit = 50,
+): Promise<HskSearchHit[]> {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  const settled = await Promise.allSettled(HSK_LEVELS.map(level => fetchPack(level, source)));
+  const packs = settled
+    .filter((r): r is PromiseFulfilledResult<Pack> => r.status === 'fulfilled')
+    .map(r => r.value);
+  if (!packs.length) throw new Error('Could not load any dataset level for search');
+  const hits: HskSearchHit[] = [];
+  for (const pack of packs) {
+    for (const row of pack.rows) {
+      const values: Record<string, string> = {};
+      let matched = false;
+      for (const lang of pack.langs) {
+        const entry = row.v[lang];
+        if (!entry?.e) continue;
+        values[lang] = entry.e;
+        if (
+          entry.e.toLowerCase().includes(q) ||
+          entry.l?.toLowerCase().includes(q) ||
+          entry.r?.toLowerCase().includes(q) ||
+          entry.a?.some(text => text.toLowerCase().includes(q))
+        ) {
+          matched = true;
+        }
+      }
+      if (!matched && (row.d?.toLowerCase().includes(q) || row.zh?.includes(q))) matched = true;
+      if (!matched) continue;
+      hits.push({
+        level: pack.level,
+        id: row.id,
+        values,
+        latin: undefined,
+        definition: row.d,
+      });
+      if (hits.length >= limit) return hits;
+    }
+  }
+  return hits;
 }

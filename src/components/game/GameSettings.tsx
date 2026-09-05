@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered, SlidersHorizontal, ChevronUp, ChevronDown, Columns3, Palette, List } from 'lucide-react';
+import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered, SlidersHorizontal, ChevronUp, ChevronDown, Columns3, Palette, List, Search } from 'lucide-react';
 import { ColumnConfig } from '@/utils/gameLogic';
 import { getLanguage, columnStyle, COLUMN_COLOR_COUNT } from '@/utils/languages';
 import { THEMES, nextThemeId, getTheme } from '@/utils/themes';
@@ -23,6 +23,7 @@ interface GameSettingsProps {
   onOpenLanguages: () => void;
   onOpenWordEditor: () => void;
   onOpenVocabularyList?: () => void;
+  onOpenWordSearch?: () => void;
   muteSfx?: boolean;
   voiceType?: VoiceType;
   /** Premium voice requests used this month */
@@ -67,6 +68,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   onOpenLanguages,
   onOpenWordEditor,
   onOpenVocabularyList,
+  onOpenWordSearch,
   muteSfx = false,
   voiceType = 'free',
   premiumUsed = 0,
@@ -156,6 +158,23 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         >
           <List className="w-4 h-4 shrink-0" />
           <span className="hidden sm:inline">Vocabs</span>
+        </button>
+      )}
+
+      {/* Search across all levels */}
+      {onOpenWordSearch && (
+        <button
+          onClick={onOpenWordSearch}
+          disabled={disabled}
+          className={cn(
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
+            'bg-secondary border-border text-muted-foreground hover:text-foreground',
+            disabled && 'opacity-50 cursor-not-allowed',
+          )}
+          title="Search a word across all HSK levels"
+        >
+          <Search className="w-4 h-4 shrink-0" />
+          <span className="hidden sm:inline">Search</span>
         </button>
       )}
 

@@ -77,6 +77,7 @@ import {
 import LanguageColumnsDialog from './LanguageColumnsDialog';
 import WordEditorDialog from './WordEditorDialog';
 import VocabularyListDialog from './VocabularyListDialog';
+import WordSearchDialog from './WordSearchDialog';
 import ImportMappingDialog, { MappingRoles } from './ImportMappingDialog';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -151,6 +152,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [languagesOpen, setLanguagesOpen] = useState(!isSmallScreen && savedUi.languagesOpen);
   const [wordEditorOpen, setWordEditorOpen] = useState(!isSmallScreen && savedUi.wordEditorOpen);
   const [vocabularyListOpen, setVocabularyListOpen] = useState(false);
+  const [wordSearchOpen, setWordSearchOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(!isSmallScreen && savedUi.settingsOpen);
   /** Top chrome (title, options, stats, progress) — collapsed for distraction-free play */
   const [headerOpen, setHeaderOpen] = useState(savedUi.headerOpen);
@@ -290,8 +292,24 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     // for the rest of the day (and changes automatically tomorrow).
     const rand = dailyMode ? createSeededRandom(dailySeed(cloudSource, mainLang, 'order')) : Math.random;
     const ordered = shuffleMode ? shuffleVocabulary(vocabulary, mainLang, rand) : [...vocabulary];
-    setBatches(createBatchesByLexeme(ordered, mainLang, batchSize));
+    const next = createBatchesByLexeme(ordered, mainLang, batchSize);
+    setBatches(next);
+    // A pending jump (from word search) lands on the batch holding that Sense ID
+    if (pendingJumpRef.current) {
+      const senseId = pendingJumpRef.current;
+      pendingJumpRef.current = null;
+      const index = next.findIndex(batch => batch.some(item => item.id === senseId));
+      if (index >= 0) {
+        setCurrentBatch(index);
+        saveProgress({ currentBatch: index });
+        setCompletedBatches([]);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vocabulary, shuffleMode, dailyMode, cloudSource, mainLang, batchSize]);
+
+  /** Sense ID to focus once the level finishes loading (word search jump) */
+  const pendingJumpRef = useRef<string | null>(null);
 
   const cancelTranslationRef = useRef(false);
   /** true once the user pressed Stop — blocks automatic translation for every file until resumed */
@@ -808,6 +826,24 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     loadVocabulary(selectedFile);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFile, setsReady, libraryReload]);
+
+  /** Jump from word search: switch level (if needed) and land on the batch holding the word */
+  const handleJumpToWord = (level: string, senseId: string) => {
+    const family = (selectedFile ?? '').replace(/\.(xlsx|xls)$/i, '').split(' · ')[0];
+    const targetFile = `${family} · ${level}.xlsx`;
+    if (targetFile === selectedFile) {
+      const index = batches.findIndex(batch => batch.some(item => item.id === senseId));
+      if (index >= 0) {
+        setCurrentBatch(index);
+        saveProgress({ currentBatch: index });
+        setCompletedBatches([]);
+        return;
+      }
+    }
+    pendingJumpRef.current = senseId;
+    setSelectedFile(targetFile);
+    saveProgress({ selectedFile: targetFile });
+  };
 
   /** Switch the MAIN (leftmost) language of the built-in HSK library and reload the level */
   const handleLibraryMainLang = (lang: string) => {
@@ -1656,6 +1692,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onOpenLanguages={() => setLanguagesOpen(true)}
           onOpenWordEditor={() => setWordEditorOpen(true)}
           onOpenVocabularyList={() => setVocabularyListOpen(true)}
+          onOpenWordSearch={selectedFile && isHskLibraryFile(selectedFile) ? () => setWordSearchOpen(true) : undefined}
           muteSfx={muteSfx}
           voiceType={voiceType}
           premiumUsed={premiumUsage.used}
@@ -1900,6 +1937,14 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onOpenChange={setVocabularyListOpen}
           items={vocabulary}
           columns={columns}
+        />
+
+        <WordSearchDialog
+          open={wordSearchOpen}
+          onOpenChange={setWordSearchOpen}
+          source={selectedFile}
+          langs={columns.map(c => c.lang)}
+          onJumpToWord={handleJumpToWord}
         />
 
         <AlertDialog open={scopePrompt !== null} onOpenChange={open => !open && setScopePrompt(null)}>

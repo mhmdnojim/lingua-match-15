@@ -6,6 +6,8 @@ import { GripHorizontal, X } from 'lucide-react';
 interface MeaningsPanelProps {
   title: string;
   meanings: string[];
+  /** optional per-meaning gloss (e.g. the English disambiguation of that sense) */
+  hints?: Record<string, string>;
   selected: string[];
   rtl?: boolean;
   fontClass?: string;
@@ -21,6 +23,7 @@ const PANEL_WIDTH = 240;
 export const MeaningsPanel: React.FC<MeaningsPanelProps> = ({
   title,
   meanings,
+  hints,
   selected,
   rtl,
   fontClass,
@@ -140,6 +143,11 @@ export const MeaningsPanel: React.FC<MeaningsPanelProps> = ({
                   />
                   <span dir={rtl ? 'rtl' : 'ltr'} className={cn('min-w-0 flex-1 break-words', fontClass)}>
                     {meaning}
+                    {hints?.[meaning] && (
+                      <span className="block text-[10px] italic leading-tight text-muted-foreground" dir="ltr">
+                        {hints[meaning]}
+                      </span>
+                    )}
                   </span>
                 </label>
               </li>
