@@ -98,24 +98,34 @@ interface Pack {
   rows: PackRow[];
 }
 
-const cache = new Map<HskLevel, Pack>();
+const cache = new Map<string, Pack>();
 
-async function fetchPack(level: HskLevel): Promise<Pack> {
-  const cached = cache.get(level);
+/** Dataset family name (the part before " · ") for a library file */
+const datasetOf = (source?: string): string => {
+  const family = (source ?? '').replace(/\.(xlsx|xls)$/i, '').split(' · ')[0];
+  return DATASET_ASSETS[family] ? family : HSK_LIBRARY_NAME;
+};
+
+async function fetchPack(level: HskLevel, source?: string): Promise<Pack> {
+  const dataset = datasetOf(source);
+  const key = `${dataset}:${level}`;
+  const cached = cache.get(key);
   if (cached) return cached;
-  const response = await fetch(ASSETS[level]);
+  const response = await fetch(DATASET_ASSETS[dataset][level]);
   if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
   const pack = (await response.json()) as Pack;
-  cache.set(level, pack);
+  cache.set(key, pack);
   return pack;
 }
 
 /**
  * Load one level as a sheet, with `mainLang` as the first column and every other
  * registered language following in the standard order.
+ * `source` (the picker file name) selects the dataset family; defaults to v7.
  */
-export async function loadHskLevel(level: HskLevel, mainLang: string): Promise<SheetData> {
-  const pack = await fetchPack(level);
+export async function loadHskLevel(level: HskLevel, mainLang: string, source?: string): Promise<SheetData> {
+  const pack = await fetchPack(level, source);
+  const dataset = datasetOf(source);
   const main = pack.langs.includes(mainLang) ? mainLang : 'zh';
   const langs = [main, ...pack.langs.filter(lang => lang !== main)];
 
