@@ -100,6 +100,18 @@ interface Pack {
 
 const cache = new Map<string, Pack>();
 
+/** Coarse script family of a string: 'cjk', 'latin', 'arabic', 'cyrillic', or 'other' */
+function scriptFamily(text: string): string {
+  for (const ch of text) {
+    const cp = ch.codePointAt(0) ?? 0;
+    if ((cp >= 0x4e00 && cp <= 0x9fff) || (cp >= 0x3400 && cp <= 0x4dbf)) return 'cjk';
+    if (cp >= 0x0600 && cp <= 0x06ff) return 'arabic';
+    if (cp >= 0x0400 && cp <= 0x04ff) return 'cyrillic';
+    if ((cp >= 0x41 && cp <= 0x5a) || (cp >= 0x61 && cp <= 0x7a) || (cp >= 0xc0 && cp <= 0x24f) || (cp >= 0x1e00 && cp <= 0x1eff)) return 'latin';
+  }
+  return 'other';
+}
+
 /** Dataset family name (the part before " · ") for a library file */
 const datasetOf = (source?: string): string => {
   const family = (source ?? '').replace(/\.(xlsx|xls)$/i, '').split(' · ')[0];
