@@ -6,6 +6,8 @@ import { GripHorizontal, X } from 'lucide-react';
 interface MeaningsPanelProps {
   title: string;
   meanings: string[];
+  /** optional per-meaning gloss (e.g. the English disambiguation of that sense) */
+  hints?: Record<string, string>;
   selected: string[];
   rtl?: boolean;
   fontClass?: string;

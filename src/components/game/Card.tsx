@@ -131,10 +131,22 @@ export const Card: React.FC<CardProps> = ({
       ? list
       : list.map((e, i) => (i === canonicalIndex ? { ...e, text: card.content } : e));
   }, [card.options, card.entries, card.content, card.vocabId]);
-  const meanings = React.useMemo(
-    () => (declared?.length ? declared.map(e => e.text) : splitMeanings(card.content)),
-    [declared, card.content],
-  );
+  const meanings = React.useMemo(() => {
+    const list = declared?.length ? declared.map(e => e.text) : splitMeanings(card.content);
+    // Two senses can share one expression (e.g. 药 "medicine"/"drug" → دواء) —
+    // identical texts are one meaning for display, not two.
+    return [...new Set(list)];
+  }, [declared, card.content]);
+
+  /** Gloss per meaning text (first sense that declares one) — shown in the meanings panel */
+  const meaningHints = React.useMemo(() => {
+    if (!declared?.length) return undefined;
+    const map: Record<string, string> = {};
+    declared.forEach(e => {
+      if (e.disambiguation && !map[e.text]) map[e.text] = e.disambiguation;
+    });
+    return Object.keys(map).length ? map : undefined;
+  }, [declared]);
 
   const hasMultiple = meanings.length > 1;
   const { selected, setSelected } = useMeaningSelection(card.vocabId, card.lang, meanings);
@@ -252,6 +264,7 @@ export const Card: React.FC<CardProps> = ({
         <MeaningsPanel
           title={`${language.name} — ${meanings.length} meanings`}
           meanings={meanings}
+          hints={meaningHints}
           selected={selected}
           rtl={language.rtl}
           fontClass={language.fontClass}
