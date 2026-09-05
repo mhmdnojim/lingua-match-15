@@ -195,6 +195,6 @@ export async function loadHskLevel(level: HskLevel, mainLang: string, source?: s
     mainLang: main,
     levels: [...HSK_LEVELS],
     level,
-    fileName: `${HSK_LIBRARY_NAME} · ${level}.xlsx`,
+    fileName: `${dataset} · ${level}.xlsx`,
   };
 }
