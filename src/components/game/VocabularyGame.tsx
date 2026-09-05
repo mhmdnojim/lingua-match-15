@@ -77,6 +77,7 @@ import {
 import LanguageColumnsDialog from './LanguageColumnsDialog';
 import WordEditorDialog from './WordEditorDialog';
 import VocabularyListDialog from './VocabularyListDialog';
+import WordSearchDialog from './WordSearchDialog';
 import ImportMappingDialog, { MappingRoles } from './ImportMappingDialog';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -151,6 +152,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   const [languagesOpen, setLanguagesOpen] = useState(!isSmallScreen && savedUi.languagesOpen);
   const [wordEditorOpen, setWordEditorOpen] = useState(!isSmallScreen && savedUi.wordEditorOpen);
   const [vocabularyListOpen, setVocabularyListOpen] = useState(false);
+  const [wordSearchOpen, setWordSearchOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(!isSmallScreen && savedUi.settingsOpen);
   /** Top chrome (title, options, stats, progress) — collapsed for distraction-free play */
   const [headerOpen, setHeaderOpen] = useState(savedUi.headerOpen);
@@ -1672,6 +1674,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onOpenLanguages={() => setLanguagesOpen(true)}
           onOpenWordEditor={() => setWordEditorOpen(true)}
           onOpenVocabularyList={() => setVocabularyListOpen(true)}
+          onOpenWordSearch={selectedFile && isHskLibraryFile(selectedFile) ? () => setWordSearchOpen(true) : undefined}
           muteSfx={muteSfx}
           voiceType={voiceType}
           premiumUsed={premiumUsage.used}
@@ -1916,6 +1919,14 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onOpenChange={setVocabularyListOpen}
           items={vocabulary}
           columns={columns}
+        />
+
+        <WordSearchDialog
+          open={wordSearchOpen}
+          onOpenChange={setWordSearchOpen}
+          source={selectedFile}
+          langs={columns.map(c => c.lang)}
+          onJumpToWord={handleJumpToWord}
         />
 
         <AlertDialog open={scopePrompt !== null} onOpenChange={open => !open && setScopePrompt(null)}>
