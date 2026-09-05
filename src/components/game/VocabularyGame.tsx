@@ -290,8 +290,24 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     // for the rest of the day (and changes automatically tomorrow).
     const rand = dailyMode ? createSeededRandom(dailySeed(cloudSource, mainLang, 'order')) : Math.random;
     const ordered = shuffleMode ? shuffleVocabulary(vocabulary, mainLang, rand) : [...vocabulary];
-    setBatches(createBatchesByLexeme(ordered, mainLang, batchSize));
+    const next = createBatchesByLexeme(ordered, mainLang, batchSize);
+    setBatches(next);
+    // A pending jump (from word search) lands on the batch holding that Sense ID
+    if (pendingJumpRef.current) {
+      const senseId = pendingJumpRef.current;
+      pendingJumpRef.current = null;
+      const index = next.findIndex(batch => batch.some(item => item.id === senseId));
+      if (index >= 0) {
+        setCurrentBatch(index);
+        saveProgress({ currentBatch: index });
+        setCompletedBatches([]);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vocabulary, shuffleMode, dailyMode, cloudSource, mainLang, batchSize]);
+
+  /** Sense ID to focus once the level finishes loading (word search jump) */
+  const pendingJumpRef = useRef<string | null>(null);
 
   const cancelTranslationRef = useRef(false);
   /** true once the user pressed Stop — blocks automatic translation for every file until resumed */
