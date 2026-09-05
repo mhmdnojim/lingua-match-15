@@ -827,6 +827,24 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFile, setsReady, libraryReload]);
 
+  /** Jump from word search: switch level (if needed) and land on the batch holding the word */
+  const handleJumpToWord = (level: string, senseId: string) => {
+    const family = (selectedFile ?? '').replace(/\.(xlsx|xls)$/i, '').split(' · ')[0];
+    const targetFile = `${family} · ${level}.xlsx`;
+    if (targetFile === selectedFile) {
+      const index = batches.findIndex(batch => batch.some(item => item.id === senseId));
+      if (index >= 0) {
+        setCurrentBatch(index);
+        saveProgress({ currentBatch: index });
+        setCompletedBatches([]);
+        return;
+      }
+    }
+    pendingJumpRef.current = senseId;
+    setSelectedFile(targetFile);
+    saveProgress({ selectedFile: targetFile });
+  };
+
   /** Switch the MAIN (leftmost) language of the built-in HSK library and reload the level */
   const handleLibraryMainLang = (lang: string) => {
     setColumns(prev => {
