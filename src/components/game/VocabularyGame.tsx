@@ -807,13 +807,22 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
             false,
           );
         })
-        .catch(error =>
+        .catch(error => {
+          // Offline or unreachable pack → fall back to the locally saved copy.
+          const fallback = loadVocabularySet(selectedFile);
+          if (fallback && fallback.items.length > 0) {
+            setVocabulary(fallback.items);
+            saveVocabulary(fallback);
+            setCurrentBatch(0);
+            setCompletedBatches([]);
+            return;
+          }
           toast({
             title: 'Could not load level',
             description: error instanceof Error ? error.message : 'Unknown error',
             variant: 'destructive',
-          }),
-        )
+          });
+        })
         .finally(() => setIsLoading(false));
       return;
     }
