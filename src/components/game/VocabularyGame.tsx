@@ -762,8 +762,11 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       skipInitialLoadRef.current = false;
       return;
     }
-    // Previously imported file → restore its own saved words instead of re-parsing
-    const stored = loadVocabularySet(selectedFile);
+    // Previously imported file → restore its own saved words instead of re-parsing.
+    // Built-in HSK datasets are always re-fetched from their data pack so loader
+    // fixes (labels, disambiguation, grouping) reach the board immediately instead
+    // of being masked by a stale locally-stored copy.
+    const stored = isHskLibraryFile(selectedFile) ? undefined : loadVocabularySet(selectedFile);
     if (stored && stored.items.length > 0) {
       setVocabulary(stored.items);
       saveVocabulary(stored);
@@ -804,13 +807,22 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
             false,
           );
         })
-        .catch(error =>
+        .catch(error => {
+          // Offline or unreachable pack → fall back to the locally saved copy.
+          const fallback = loadVocabularySet(selectedFile);
+          if (fallback && fallback.items.length > 0) {
+            setVocabulary(fallback.items);
+            saveVocabulary(fallback);
+            setCurrentBatch(0);
+            setCompletedBatches([]);
+            return;
+          }
           toast({
             title: 'Could not load level',
             description: error instanceof Error ? error.message : 'Unknown error',
             variant: 'destructive',
-          }),
-        )
+          });
+        })
         .finally(() => setIsLoading(false));
       return;
     }
