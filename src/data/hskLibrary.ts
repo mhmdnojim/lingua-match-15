@@ -14,8 +14,10 @@ export const HSK_LEVELS = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'] as co
 export type HskLevel = (typeof HSK_LEVELS)[number];
 
 export const HSK_LIBRARY_NAME = 'HSK Dataset v7';
+/** v8 — same 11,530 senses, rows pre-ordered by semantic category (related groups) */
+export const HSK_V8_LIBRARY_NAME = 'HSK Dataset v8 (Grouped)';
 
-const ASSETS: Record<HskLevel, string> = {
+const ASSETS_V7: Record<HskLevel, string> = {
   HSK1: '/__l5e/assets-v1/c35187ea-d1f1-42fb-8174-441924cb3443/hsk-hsk1.json',
   HSK2: '/__l5e/assets-v1/a087abd9-be94-4764-a835-f37793fc31db/hsk-hsk2.json',
   HSK3: '/__l5e/assets-v1/d24f9a73-8e77-47dd-880a-830366102d1c/hsk-hsk3.json',
@@ -24,8 +26,25 @@ const ASSETS: Record<HskLevel, string> = {
   HSK6: '/__l5e/assets-v1/f082dd5a-39df-435b-987b-966a278990a2/hsk-hsk6.json',
 };
 
-/** Picker entries — the FileSelector groups these into one family with level chips */
-export const HSK_LIBRARY_FILES = HSK_LEVELS.map(level => `${HSK_LIBRARY_NAME} · ${level}.xlsx`);
+const ASSETS_V8: Record<HskLevel, string> = {
+  HSK1: '/__l5e/assets-v1/99acef37-501b-46d8-ab89-e25108437e5b/hsk8-hsk1.json',
+  HSK2: '/__l5e/assets-v1/d093ec19-f2e3-477b-ba8f-cb7492a5e249/hsk8-hsk2.json',
+  HSK3: '/__l5e/assets-v1/22d0c9aa-56c8-4920-b230-a0bb82b4464b/hsk8-hsk3.json',
+  HSK4: '/__l5e/assets-v1/a387b00b-2848-4b2d-b7df-f0192e35f577/hsk8-hsk4.json',
+  HSK5: '/__l5e/assets-v1/f7a9cf35-4264-4a27-8e7e-1c9a7182d91f/hsk8-hsk5.json',
+  HSK6: '/__l5e/assets-v1/433fe188-4c6d-4c4c-976e-017aaecc95f4/hsk8-hsk6.json',
+};
+
+const DATASET_ASSETS: Record<string, Record<HskLevel, string>> = {
+  [HSK_LIBRARY_NAME]: ASSETS_V7,
+  [HSK_V8_LIBRARY_NAME]: ASSETS_V8,
+};
+
+/** Picker entries — the FileSelector groups each dataset into one family with a level dropdown */
+export const HSK_LIBRARY_FILES = [
+  ...HSK_LEVELS.map(level => `${HSK_LIBRARY_NAME} · ${level}.xlsx`),
+  ...HSK_LEVELS.map(level => `${HSK_V8_LIBRARY_NAME} · ${level}.xlsx`),
+];
 
 /**
  * The 15 MAIN languages shipped inside every data pack (one per HSK_MAIN_XX
