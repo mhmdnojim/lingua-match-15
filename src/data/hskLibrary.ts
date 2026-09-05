@@ -217,3 +217,61 @@ export async function loadHskLevel(level: HskLevel, mainLang: string, source?: s
     fileName: `${dataset} · ${level}.xlsx`,
   };
 }
+
+export interface HskSearchHit {
+  level: HskLevel;
+  /** Sense ID */
+  id: string;
+  /** expression per language code */
+  values: Record<string, string>;
+  /** transliteration of the main language, when present */
+  latin?: string;
+  /** English semantic definition of the sense */
+  definition?: string;
+}
+
+/**
+ * Search every level of a dataset family for a query, matching against the
+ * expression, card label, transliteration, and approved synonyms of every
+ * language. Returns at most `limit` hits, lower levels first.
+ */
+export async function searchHskLibrary(
+  query: string,
+  source?: string,
+  limit = 50,
+): Promise<HskSearchHit[]> {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  const packs = await Promise.all(HSK_LEVELS.map(level => fetchPack(level, source)));
+  const hits: HskSearchHit[] = [];
+  for (const pack of packs) {
+    for (const row of pack.rows) {
+      const values: Record<string, string> = {};
+      let matched = false;
+      for (const lang of pack.langs) {
+        const entry = row.v[lang];
+        if (!entry?.e) continue;
+        values[lang] = entry.e;
+        if (
+          entry.e.toLowerCase().includes(q) ||
+          entry.l?.toLowerCase().includes(q) ||
+          entry.r?.toLowerCase().includes(q) ||
+          entry.a?.some(text => text.toLowerCase().includes(q))
+        ) {
+          matched = true;
+        }
+      }
+      if (!matched && (row.d?.toLowerCase().includes(q) || row.zh?.includes(q))) matched = true;
+      if (!matched) continue;
+      hits.push({
+        level: pack.level,
+        id: row.id,
+        values,
+        latin: undefined,
+        definition: row.d,
+      });
+      if (hits.length >= limit) return hits;
+    }
+  }
+  return hits;
+}
