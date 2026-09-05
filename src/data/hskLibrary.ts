@@ -145,7 +145,14 @@ export async function loadHskLevel(level: HskLevel, mainLang: string, source?: s
     langs.forEach(lang => {
       const entry = row.v[lang];
       if (!entry?.e) return;
-      const label = entry.l || entry.e;
+      // The workbook's "Card Label / Disambiguation" column can hold a gloss in
+      // another script (e.g. an English gloss on the ZH block). Only let the
+      // label replace the expression when both share the same script family;
+      // otherwise the label is disambiguation, not display text.
+      const sameScript = entry.l && scriptFamily(entry.l) === scriptFamily(entry.e);
+      const label = sameScript ? entry.l! : entry.e;
+      const disambiguation =
+        entry.d || (!sameScript && entry.l) || (lang === main ? row.d : undefined);
       const header = nameOf(lang);
       entriesByHeader[header] = [
         {
@@ -153,7 +160,7 @@ export async function loadHskLevel(level: HskLevel, mainLang: string, source?: s
           mainEntry: entry.e,
           latin: entry.r,
           canonical: true,
-          disambiguation: entry.d || (lang === main ? row.d : undefined),
+          disambiguation,
         },
         ...(entry.a ?? [])
           .filter(text => text !== label && text !== entry.e)
