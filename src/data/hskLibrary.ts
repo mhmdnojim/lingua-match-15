@@ -125,6 +125,10 @@ async function fetchPack(level: HskLevel, source?: string): Promise<Pack> {
   if (cached) return cached;
   const response = await fetch(DATASET_ASSETS[dataset][level]);
   if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+  const contentType = response.headers.get('content-type') ?? '';
+  if (!contentType.includes('json')) {
+    throw new Error(`Unexpected content-type "${contentType}" for ${dataset} ${level}`);
+  }
   const pack = (await response.json()) as Pack;
   cache.set(key, pack);
   return pack;
@@ -242,7 +246,11 @@ export async function searchHskLibrary(
 ): Promise<HskSearchHit[]> {
   const q = query.trim().toLowerCase();
   if (!q) return [];
-  const packs = await Promise.all(HSK_LEVELS.map(level => fetchPack(level, source)));
+  const settled = await Promise.allSettled(HSK_LEVELS.map(level => fetchPack(level, source)));
+  const packs = settled
+    .filter((r): r is PromiseFulfilledResult<Pack> => r.status === 'fulfilled')
+    .map(r => r.value);
+  if (!packs.length) throw new Error('Could not load any dataset level for search');
   const hits: HskSearchHit[] = [];
   for (const pack of packs) {
     for (const row of pack.rows) {
