@@ -11,9 +11,9 @@ import { getLanguage, romanizationCodeFor } from './languages';
  *   <CODE> <field>        one block per translation language (ZH, EN, AR, …)
  *   Sense ID / Source Word ID / Part of Speech / Level  — shared identity columns
  *
- * Everything else (Card Key, Lexeme ID, Entry ID, Chinese Source Headword,
- * English Reference Gloss, Legacy Alternatives) is provenance and never becomes
- * a language column.
+ * Everything else (Card Key, Lexeme ID, Entry ID, English Reference Gloss,
+ * Legacy Alternatives) is provenance and never becomes a language column.
+ * Chinese Source Headword is the authoritative expression for the ZH block.
  */
 
 const CODE_TO_LANG: Record<string, string> = {
@@ -118,12 +118,20 @@ export function readMainLanguageWorkbook(
     const entriesByHeader: Record<string, SheetEntry[]> = {};
 
     blocks.forEach(({ prefix, lang }) => {
-      const expression = field(row, prefix, 'Expression');
+      // Every language reads its own expression block. Chinese is the one
+      // exception: the schema explicitly defines Chinese Source Headword as its
+      // authoritative value, including in Arabic/English MAIN workbooks.
+      const expression =
+        lang === 'zh' ? str(row['Chinese Source Headword']) || field(row, prefix, 'Expression') : field(row, prefix, 'Expression');
       if (!expression) return;
 
-      const label = field(row, prefix, 'Card Label') || expression;
+      const rawLabel = field(row, prefix, 'Card Label');
+      const chineseLabelIsChinese = lang !== 'zh' || !rawLabel || /[\u3400-\u9fff]/u.test(rawLabel);
+      const label = chineseLabelIsChinese ? rawLabel || expression : expression;
       const disambiguation =
-        field(row, prefix, 'Disambiguation') || field(row, prefix, 'Card Label / Disambiguation');
+        field(row, prefix, 'Disambiguation') ||
+        field(row, prefix, 'Card Label / Disambiguation') ||
+        (!chineseLabelIsChinese ? rawLabel : '');
       const latin = field(row, prefix, 'Transliteration');
       const alternatives = splitAlternatives(
         field(row, prefix, 'Approved Synonyms / Alternatives', 'Approved Synonyms', 'Alternatives'),
