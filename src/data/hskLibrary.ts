@@ -164,32 +164,32 @@ export async function loadHskLevel(level: HskLevel, mainLang: string, source?: s
       // `Chinese Source Headword` is the workbook's authoritative Chinese
       // expression. The ZH language block can contain an English reference/card
       // label, so it must never replace this source value on a Chinese card.
-      const expression = lang === 'zh' && row.zh ? row.zh : entry.e;
+      const expression = lang === 'zh' && row.zh ? row.zh : entry?.e ?? '';
       // The workbook's "Card Label / Disambiguation" column can hold a gloss in
       // another script (e.g. an English gloss on the ZH block). Only let the
       // label replace the expression when both share the same script family;
       // otherwise the label is disambiguation, not display text.
-      const sameScript = entry.l && scriptFamily(entry.l) === scriptFamily(expression);
-      const label = sameScript ? entry.l : expression;
+      const sameScript = entry?.l && scriptFamily(entry.l) === scriptFamily(expression);
+      const label = sameScript ? entry?.l ?? expression : expression;
       const disambiguation =
-        entry.d || (!sameScript && entry.l) || (lang === main ? row.d : undefined);
+        entry?.d || (!sameScript && entry?.l) || (lang === main ? row.d : undefined);
       const header = nameOf(lang);
       entriesByHeader[header] = [
         {
           text: label,
           mainEntry: expression,
-          latin: entry.r,
+          latin: entry?.r,
           canonical: true,
           disambiguation,
         },
-        ...(entry.a ?? [])
+        ...(entry?.a ?? [])
           .filter(text => text !== label && text !== expression)
           .map(text => ({ text, mainEntry: text, canonical: false })),
       ];
       out[header] = label;
 
       const rom = romanizationCodeFor(lang);
-      if (entry.r && rom) {
+      if (entry?.r && rom) {
         out[nameOf(rom)] = entry.r;
         hasLatin.add(lang);
       }
