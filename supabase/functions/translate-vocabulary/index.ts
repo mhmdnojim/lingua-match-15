@@ -112,9 +112,21 @@ Deno.serve(async (req) => {
       });
     }
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('translate-vocabulary error:', message);
-    const status = message.includes('429') ? 429 : message.includes('402') ? 402 : 500;
-    return new Response(JSON.stringify({ error: message }), {
+    const statusCode = (error as any)?.statusCode ?? (error as any)?.status;
+    console.error('translate-vocabulary error:', statusCode ?? '', message);
+
+    const isRateLimit = statusCode === 429 || message.includes('429') || /rate limit/i.test(message);
+    const isPayment =
+      statusCode === 402 || message.includes('402') || /payment required|insufficient|credit/i.test(message);
+
+    const status = isRateLimit ? 429 : isPayment ? 402 : 500;
+    const friendly = isRateLimit
+      ? 'Too many translation requests right now — please wait a moment and try again.'
+      : isPayment
+        ? 'AI credits have run out for this workspace. Add credits in Lovable to continue translating.'
+        : message;
+
+    return new Response(JSON.stringify({ error: friendly }), {
       status,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
