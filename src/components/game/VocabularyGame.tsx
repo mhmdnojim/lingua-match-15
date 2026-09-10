@@ -29,7 +29,7 @@ import {
 
 } from '@/utils/gameLogic';
 import { getMeaningSelection } from '@/utils/meanings';
-import { HSK_LIBRARY_FILES, HSK_LIBRARY_LANGS, isHskLibraryFile, hskLevelOf, loadHskLevel } from '@/data/hskLibrary';
+import { HSK_LIBRARY_FILES, libraryLangsFor, libraryDefaultMain, isHskLibraryFile, hskLevelOf, loadHskLevel } from '@/data/hskLibrary';
 
 import {
   saveProgress,
@@ -796,7 +796,13 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     const level = hskLevelOf(selectedFile);
     if (level) {
       setIsLoading(true);
-      loadHskLevel(level, columnsRef.current[0]?.lang || 'zh', selectedFile)
+      loadHskLevel(
+        level,
+        libraryLangsFor(selectedFile).includes(columnsRef.current[0]?.lang)
+          ? columnsRef.current[0].lang
+          : libraryDefaultMain(selectedFile),
+        selectedFile,
+      )
         .then(sheet => {
           applyMapping(
             sheet,
@@ -1734,7 +1740,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               mainLang={mainLang}
               mainLangOptions={
                 selectedFile && isHskLibraryFile(selectedFile)
-                  ? HSK_LIBRARY_LANGS.map(code => ({ code, label: getLanguage(code).name }))
+                  ? libraryLangsFor(selectedFile).map(code => ({ code, label: getLanguage(code).name }))
                   : undefined
               }
               onMainLangChange={handleLibraryMainLang}

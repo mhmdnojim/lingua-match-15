@@ -3,63 +3,110 @@ import { ENTRIES_COLUMN, SheetEntry } from '@/utils/appReadyWorkbook';
 import type { SheetData } from '@/utils/excelParser';
 
 /**
- * Built-in HSK vocabulary library (Schema v6 data pack).
+ * Built-in vocabulary library.
  *
- * One data file per HSK level, each carrying every one of the 15 registered
- * languages for the same Sense ID. Choosing a MAIN language therefore never
+ * Every dataset ships one compact JSON data pack per level, each carrying all of
+ * its languages for the same Sense ID. Choosing a MAIN language therefore never
  * requires a different file — the columns are simply re-ordered.
  */
 
 export const HSK_LEVELS = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'] as const;
-export type HskLevel = (typeof HSK_LEVELS)[number];
+export type HskLevel = string;
 
-export const HSK_LIBRARY_NAME = 'HSK Dataset v7';
+/** English CEFR dictionary (definition-anchored rows, one line per sense) */
+export const EN_DICT_LIBRARY_NAME = 'English Dictionary A1–C1';
 /** v8 — same 11,530 senses, rows pre-ordered by semantic category (related groups) */
 export const HSK_V8_LIBRARY_NAME = 'HSK Dataset v8 (Grouped)';
+export const HSK_LIBRARY_NAME = 'HSK Dataset v7';
 
-const ASSETS_V7: Record<HskLevel, string> = {
-  HSK1: '/__l5e/assets-v1/c35187ea-d1f1-42fb-8174-441924cb3443/hsk-hsk1.json',
-  HSK2: '/__l5e/assets-v1/a087abd9-be94-4764-a835-f37793fc31db/hsk-hsk2.json',
-  HSK3: '/__l5e/assets-v1/d24f9a73-8e77-47dd-880a-830366102d1c/hsk-hsk3.json',
-  HSK4: '/__l5e/assets-v1/ab6ffdd0-2ed7-47cb-9ca3-d96e91bb7bfc/hsk-hsk4.json',
-  HSK5: '/__l5e/assets-v1/3a49b83c-6f2f-4544-9de7-15fb288c50bc/hsk-hsk5.json',
-  HSK6: '/__l5e/assets-v1/f082dd5a-39df-435b-987b-966a278990a2/hsk-hsk6.json',
-};
-
-const ASSETS_V8: Record<HskLevel, string> = {
-  HSK1: '/__l5e/assets-v1/99acef37-501b-46d8-ab89-e25108437e5b/hsk8-hsk1.json',
-  HSK2: '/__l5e/assets-v1/d093ec19-f2e3-477b-ba8f-cb7492a5e249/hsk8-hsk2.json',
-  HSK3: '/__l5e/assets-v1/22d0c9aa-56c8-4920-b230-a0bb82b4464b/hsk8-hsk3.json',
-  HSK4: '/__l5e/assets-v1/a387b00b-2848-4b2d-b7df-f0192e35f577/hsk8-hsk4.json',
-  HSK5: '/__l5e/assets-v1/f7a9cf35-4264-4a27-8e7e-1c9a7182d91f/hsk8-hsk5.json',
-  HSK6: '/__l5e/assets-v1/433fe188-4c6d-4c4c-976e-017aaecc95f4/hsk8-hsk6.json',
-};
-
-const DATASET_ASSETS: Record<string, Record<HskLevel, string>> = {
-  [HSK_LIBRARY_NAME]: ASSETS_V7,
-  [HSK_V8_LIBRARY_NAME]: ASSETS_V8,
-};
-
-/** Picker entries — the FileSelector groups each dataset into one family with a level dropdown */
-export const HSK_LIBRARY_FILES = [
-  ...HSK_LEVELS.map(level => `${HSK_LIBRARY_NAME} · ${level}.xlsx`),
-  ...HSK_LEVELS.map(level => `${HSK_V8_LIBRARY_NAME} · ${level}.xlsx`),
+const HSK_LANGS = [
+  'zh', 'en', 'ar', 'bg', 'kk', 'id', 'ms', 'tk', 'ru', 'fa', 'ur', 'vi', 'de', 'nl', 'fr',
 ];
 
-/**
- * The 15 MAIN languages shipped inside every data pack (one per HSK_MAIN_XX
- * workbook of the v6 delivery). Any of them can be the leftmost column without
- * loading a different file.
- */
-export const HSK_LIBRARY_LANGS = [
-  'zh', 'en', 'ar', 'bg', 'kk', 'id', 'ms', 'tk', 'ru', 'fa', 'ur', 'vi', 'de', 'nl', 'fr',
-] as const;
+const EN_DICT_LANGS = ['en', 'ar', 'zh', 'ru', 'tk', 'kk', 'bg', 'id', 'ms', 'ur', 'de'];
+
+interface DatasetDef {
+  name: string;
+  levels: string[];
+  langs: string[];
+  defaultMain: string;
+  assets: Record<string, string>;
+}
+
+/** Order here is the order shown in the vocabulary picker */
+const DATASETS: DatasetDef[] = [
+  {
+    name: EN_DICT_LIBRARY_NAME,
+    levels: ['A1', 'A2', 'B1', 'B2', 'C1'],
+    langs: EN_DICT_LANGS,
+    defaultMain: 'en',
+    assets: {
+      A1: '/__l5e/assets-v1/8c404c98-4166-4661-920c-e3c8b9e83fc8/endict-a1.json',
+      A2: '/__l5e/assets-v1/dee6bfc5-2cdd-4de7-9f09-a40e2bec445a/endict-a2.json',
+      B1: '/__l5e/assets-v1/f34f7b35-559c-4b3d-bb85-805155a1728f/endict-b1.json',
+      B2: '/__l5e/assets-v1/06e946a9-054a-4828-9e35-c8158e972675/endict-b2.json',
+      C1: '/__l5e/assets-v1/b859e9ab-3f4b-4830-8902-9be04e1ff8ee/endict-c1.json',
+    },
+  },
+  {
+    name: HSK_V8_LIBRARY_NAME,
+    levels: [...HSK_LEVELS],
+    langs: HSK_LANGS,
+    defaultMain: 'zh',
+    assets: {
+      HSK1: '/__l5e/assets-v1/99acef37-501b-46d8-ab89-e25108437e5b/hsk8-hsk1.json',
+      HSK2: '/__l5e/assets-v1/d093ec19-f2e3-477b-ba8f-cb7492a5e249/hsk8-hsk2.json',
+      HSK3: '/__l5e/assets-v1/22d0c9aa-56c8-4920-b230-a0bb82b4464b/hsk8-hsk3.json',
+      HSK4: '/__l5e/assets-v1/a387b00b-2848-4b2d-b7df-f0192e35f577/hsk8-hsk4.json',
+      HSK5: '/__l5e/assets-v1/f7a9cf35-4264-4a27-8e7e-1c9a7182d91f/hsk8-hsk5.json',
+      HSK6: '/__l5e/assets-v1/433fe188-4c6d-4c4c-976e-017aaecc95f4/hsk8-hsk6.json',
+    },
+  },
+  {
+    name: HSK_LIBRARY_NAME,
+    levels: [...HSK_LEVELS],
+    langs: HSK_LANGS,
+    defaultMain: 'zh',
+    assets: {
+      HSK1: '/__l5e/assets-v1/c35187ea-d1f1-42fb-8174-441924cb3443/hsk-hsk1.json',
+      HSK2: '/__l5e/assets-v1/a087abd9-be94-4764-a835-f37793fc31db/hsk-hsk2.json',
+      HSK3: '/__l5e/assets-v1/d24f9a73-8e77-47dd-880a-830366102d1c/hsk-hsk3.json',
+      HSK4: '/__l5e/assets-v1/ab6ffdd0-2ed7-47cb-9ca3-d96e91bb7bfc/hsk-hsk4.json',
+      HSK5: '/__l5e/assets-v1/3a49b83c-6f2f-4544-9de7-15fb288c50bc/hsk-hsk5.json',
+      HSK6: '/__l5e/assets-v1/f082dd5a-39df-435b-987b-966a278990a2/hsk-hsk6.json',
+    },
+  },
+];
+
+/** Picker entries — the FileSelector groups each dataset into one family with a level dropdown */
+export const HSK_LIBRARY_FILES = DATASETS.flatMap(dataset =>
+  dataset.levels.map(level => `${dataset.name} · ${level}.xlsx`),
+);
+
+/** Languages available as MAIN in the HSK data packs */
+export const HSK_LIBRARY_LANGS = HSK_LANGS;
+
+const familyOf = (source?: string) =>
+  (source ?? '').replace(/\.(xlsx|xls)$/i, '').split(' · ')[0];
+
+const datasetOf = (source?: string): DatasetDef =>
+  DATASETS.find(dataset => dataset.name === familyOf(source)) ??
+  DATASETS.find(dataset => dataset.name === HSK_LIBRARY_NAME)!;
 
 export const isHskLibraryFile = (source: string) => HSK_LIBRARY_FILES.includes(source);
 
+/** Levels of the dataset a picker file belongs to */
+export const libraryLevelsFor = (source?: string): string[] => datasetOf(source).levels;
+
+/** MAIN-language choices of the dataset a picker file belongs to */
+export const libraryLangsFor = (source?: string): string[] => datasetOf(source).langs;
+
+/** Default MAIN language of the dataset a picker file belongs to */
+export const libraryDefaultMain = (source?: string): string => datasetOf(source).defaultMain;
+
 export const hskLevelOf = (source: string): HskLevel | null => {
   const level = source.replace(/\.(xlsx|xls)$/i, '').split(' · ')[1];
-  return (HSK_LEVELS as readonly string[]).includes(level) ? (level as HskLevel) : null;
+  return datasetOf(source).levels.includes(level) ? level : null;
 };
 
 /** One language block of a sense, as delivered by the data pack */
@@ -93,7 +140,7 @@ interface PackRow {
 }
 
 interface Pack {
-  level: HskLevel;
+  level: string;
   langs: string[];
   rows: PackRow[];
 }
@@ -112,22 +159,18 @@ function scriptFamily(text: string): string {
   return 'other';
 }
 
-/** Dataset family name (the part before " · ") for a library file */
-const datasetOf = (source?: string): string => {
-  const family = (source ?? '').replace(/\.(xlsx|xls)$/i, '').split(' · ')[0];
-  return DATASET_ASSETS[family] ? family : HSK_LIBRARY_NAME;
-};
-
-async function fetchPack(level: HskLevel, source?: string): Promise<Pack> {
+async function fetchPack(level: string, source?: string): Promise<Pack> {
   const dataset = datasetOf(source);
-  const key = `${dataset}:${level}`;
+  const key = `${dataset.name}:${level}`;
   const cached = cache.get(key);
   if (cached) return cached;
-  const response = await fetch(DATASET_ASSETS[dataset][level]);
+  const url = dataset.assets[level];
+  if (!url) throw new Error(`Unknown level "${level}" for ${dataset.name}`);
+  const response = await fetch(url);
   if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
   const contentType = response.headers.get('content-type') ?? '';
   if (!contentType.includes('json')) {
-    throw new Error(`Unexpected content-type "${contentType}" for ${dataset} ${level}`);
+    throw new Error(`Unexpected content-type "${contentType}" for ${dataset.name} ${level}`);
   }
   const pack = (await response.json()) as Pack;
   cache.set(key, pack);
@@ -137,12 +180,12 @@ async function fetchPack(level: HskLevel, source?: string): Promise<Pack> {
 /**
  * Load one level as a sheet, with `mainLang` as the first column and every other
  * registered language following in the standard order.
- * `source` (the picker file name) selects the dataset family; defaults to v7.
+ * `source` (the picker file name) selects the dataset family.
  */
-export async function loadHskLevel(level: HskLevel, mainLang: string, source?: string): Promise<SheetData> {
+export async function loadHskLevel(level: string, mainLang: string, source?: string): Promise<SheetData> {
   const pack = await fetchPack(level, source);
   const dataset = datasetOf(source);
-  const main = pack.langs.includes(mainLang) ? mainLang : 'zh';
+  const main = pack.langs.includes(mainLang) ? mainLang : dataset.defaultMain;
   const langs = [main, ...pack.langs.filter(lang => lang !== main)];
 
   const nameOf = (code: string) => getLanguage(code).name;
@@ -220,14 +263,14 @@ export async function loadHskLevel(level: HskLevel, mainLang: string, source?: s
     rows,
     detected,
     mainLang: main,
-    levels: [...HSK_LEVELS],
+    levels: [...dataset.levels],
     level,
-    fileName: `${dataset} · ${level}.xlsx`,
+    fileName: `${dataset.name} · ${level}.xlsx`,
   };
 }
 
 export interface HskSearchHit {
-  level: HskLevel;
+  level: string;
   /** Sense ID */
   id: string;
   /** expression per language code */
@@ -250,7 +293,8 @@ export async function searchHskLibrary(
 ): Promise<HskSearchHit[]> {
   const q = query.trim().toLowerCase();
   if (!q) return [];
-  const settled = await Promise.allSettled(HSK_LEVELS.map(level => fetchPack(level, source)));
+  const dataset = datasetOf(source);
+  const settled = await Promise.allSettled(dataset.levels.map(level => fetchPack(level, source)));
   const packs = settled
     .filter((r): r is PromiseFulfilledResult<Pack> => r.status === 'fulfilled')
     .map(r => r.value);

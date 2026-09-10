@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Loader2, Search } from 'lucide-react';
-import { HSK_LEVELS, HskLevel, HskSearchHit, searchHskLibrary } from '@/data/hskLibrary';
+import { HskLevel, HskSearchHit, libraryLevelsFor, searchHskLibrary } from '@/data/hskLibrary';
 import { getLanguage, romanizationCodeFor } from '@/utils/languages';
 import { cn } from '@/lib/utils';
 
@@ -31,6 +31,7 @@ export const WordSearchDialog: React.FC<WordSearchDialogProps> = ({
   const [searching, setSearching] = useState(false);
   const requestRef = useRef(0);
   const mainLang = langs[0] || 'zh';
+  const levels = useMemo(() => libraryLevelsFor(source ?? undefined), [source]);
 
   useEffect(() => {
     if (!open) return;
@@ -56,6 +57,10 @@ export const WordSearchDialog: React.FC<WordSearchDialogProps> = ({
     }, 250);
     return () => clearTimeout(timer);
   }, [query, open, source]);
+
+  useEffect(() => {
+    setLevelFilter('all');
+  }, [source]);
 
   const filtered = useMemo(
     () => (levelFilter === 'all' ? hits : hits.filter(h => h.level === levelFilter)),
@@ -90,7 +95,7 @@ export const WordSearchDialog: React.FC<WordSearchDialogProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          {(['all', ...HSK_LEVELS] as const).map(level => (
+          {(['all', ...levels]).map(level => (
             <button
               key={level}
               onClick={() => setLevelFilter(level)}
@@ -112,7 +117,7 @@ export const WordSearchDialog: React.FC<WordSearchDialogProps> = ({
         <div className="min-h-0 flex-1 overflow-y-auto rounded-md border border-border">
           {!query.trim() ? (
             <p className="p-4 text-sm text-muted-foreground">
-              Search every word in HSK1–HSK6 of this dataset, then tap a result to jump straight to it.
+              Search every word in every level of this dataset, then tap a result to jump straight to it.
             </p>
           ) : !searching && filtered.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground">No words match “{query.trim()}”.</p>
