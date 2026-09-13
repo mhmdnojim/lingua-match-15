@@ -234,19 +234,26 @@ export async function loadHskLevel(level: string, mainLang: string, source?: str
       const disambiguation =
         entry?.d || (!sameScript && entry?.l) || (lang === main ? row.d : undefined);
       const header = nameOf(lang);
+      // In definition-anchored datasets, expressions listed in one cell and
+      // separated by a comma / semicolon ARE synonyms of that one meaning.
+      const parts = dataset.splitSynonyms
+        ? label.split(/[,;،؛，；]/).map(part => part.trim()).filter(Boolean)
+        : [label];
+      const primary = parts[0] || label;
+      const synonyms = [...parts.slice(1), ...(entry?.a ?? [])];
       entriesByHeader[header] = [
         {
-          text: label,
+          text: primary,
           mainEntry: expression,
           latin: entry?.r,
           canonical: true,
           disambiguation,
         },
-        ...(entry?.a ?? [])
-          .filter(text => text !== label && text !== expression)
+        ...synonyms
+          .filter((text, i, all) => text !== primary && all.indexOf(text) === i)
           .map(text => ({ text, mainEntry: text, canonical: false })),
       ];
-      out[header] = label;
+      out[header] = primary;
 
       const rom = romanizationCodeFor(lang);
       if (entry?.r && rom) {
