@@ -105,6 +105,13 @@ const datasetOf = (source?: string): DatasetDef =>
 
 export const isHskLibraryFile = (source: string) => HSK_LIBRARY_FILES.includes(source);
 
+/**
+ * Whether senses sharing a headword should be merged into one card.
+ * Definition-anchored datasets (English Dictionary) keep every sense separate.
+ */
+export const libraryGroupsSenses = (source?: string): boolean =>
+  datasetOf(source).groupSenses !== false;
+
 /** Levels of the dataset a picker file belongs to */
 export const libraryLevelsFor = (source?: string): string[] => datasetOf(source).levels;
 
