@@ -292,7 +292,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     // for the rest of the day (and changes automatically tomorrow).
     const rand = dailyMode ? createSeededRandom(dailySeed(cloudSource, mainLang, 'order')) : Math.random;
     const ordered = shuffleMode ? shuffleVocabulary(vocabulary, mainLang, rand) : [...vocabulary];
-    const next = createBatchesByLexeme(ordered, mainLang, batchSize);
+    const next = createBatchesByLexeme(ordered, mainLang, batchSize, groupSenses);
     setBatches(next);
     // A pending jump (from word search) lands on the batch holding that Sense ID
     if (pendingJumpRef.current) {
