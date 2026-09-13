@@ -675,7 +675,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       const batch = batches[batchIndex];
       if (!batch) return;
       const dealSeed = dailyMode ? dailySeed(cloudSource, mainLang, 'deal', batchIndex) : undefined;
-      setCards(createColumnCards(batch, columns, true, dealSeed, mainLang));
+      setCards(createColumnCards(batch, columns, true, dealSeed, mainLang, groupSenses));
       setSelectedCards([]);
       setMatchedPairs(0);
       setTime(0);
