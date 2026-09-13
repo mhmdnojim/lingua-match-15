@@ -206,8 +206,9 @@ export function createBatchesByLexeme(
   items: VocabularyItem[],
   mainLang: string,
   batchSize: number,
+  group = true,
 ): VocabularyItem[][] {
-  const groups = groupByLexeme(items, mainLang);
+  const groups = groupByLexeme(items, mainLang, group);
   const batches: VocabularyItem[][] = [];
   for (let i = 0; i < groups.length; i += batchSize) {
     batches.push(groups.slice(i, i + batchSize).flat());
