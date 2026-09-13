@@ -29,7 +29,7 @@ import {
 
 } from '@/utils/gameLogic';
 import { getMeaningSelection } from '@/utils/meanings';
-import { HSK_LIBRARY_FILES, libraryLangsFor, libraryDefaultMain, isHskLibraryFile, hskLevelOf, loadHskLevel } from '@/data/hskLibrary';
+import { HSK_LIBRARY_FILES, libraryLangsFor, libraryDefaultMain, libraryGroupsSenses, isHskLibraryFile, hskLevelOf, loadHskLevel } from '@/data/hskLibrary';
 
 import {
   saveProgress,
