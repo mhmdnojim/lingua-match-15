@@ -279,9 +279,11 @@ export function createColumnCards(
   seed?: string,
   /** headword grouping is anchored on the main language column */
   mainLang?: string,
+  /** false keeps every sense as its own card (definition-anchored datasets) */
+  group = true,
 ): Record<string, GameCard[]> {
   const result: Record<string, GameCard[]> = {};
-  const groups = groupByLexeme(items, mainLang ?? columns[0]?.lang ?? '');
+  const groups = groupByLexeme(items, mainLang ?? columns[0]?.lang ?? '', group);
 
   columns.forEach(column => {
     const cards = groups
