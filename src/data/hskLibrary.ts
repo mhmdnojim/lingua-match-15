@@ -30,6 +30,14 @@ interface DatasetDef {
   levels: string[];
   langs: string[];
   defaultMain: string;
+  /**
+   * false = definition-anchored dataset: two rows of the same word are two
+   * different meanings and must stay separate cards. Synonyms only ever come
+   * from one cell, comma/semicolon separated.
+   */
+  groupSenses?: boolean;
+  /** split a cell on commas/semicolons into canonical + synonym expressions */
+  splitSynonyms?: boolean;
   assets: Record<string, string>;
 }
 
@@ -40,6 +48,8 @@ const DATASETS: DatasetDef[] = [
     levels: ['A1', 'A2', 'B1', 'B2', 'C1'],
     langs: EN_DICT_LANGS,
     defaultMain: 'en',
+    groupSenses: false,
+    splitSynonyms: true,
     assets: {
       A1: '/__l5e/assets-v1/8c404c98-4166-4661-920c-e3c8b9e83fc8/endict-a1.json',
       A2: '/__l5e/assets-v1/dee6bfc5-2cdd-4de7-9f09-a40e2bec445a/endict-a2.json',
@@ -94,6 +104,13 @@ const datasetOf = (source?: string): DatasetDef =>
   DATASETS.find(dataset => dataset.name === HSK_LIBRARY_NAME)!;
 
 export const isHskLibraryFile = (source: string) => HSK_LIBRARY_FILES.includes(source);
+
+/**
+ * Whether senses sharing a headword should be merged into one card.
+ * Definition-anchored datasets (English Dictionary) keep every sense separate.
+ */
+export const libraryGroupsSenses = (source?: string): boolean =>
+  datasetOf(source).groupSenses !== false;
 
 /** Levels of the dataset a picker file belongs to */
 export const libraryLevelsFor = (source?: string): string[] => datasetOf(source).levels;
@@ -217,19 +234,26 @@ export async function loadHskLevel(level: string, mainLang: string, source?: str
       const disambiguation =
         entry?.d || (!sameScript && entry?.l) || (lang === main ? row.d : undefined);
       const header = nameOf(lang);
+      // In definition-anchored datasets, expressions listed in one cell and
+      // separated by a comma / semicolon ARE synonyms of that one meaning.
+      const parts = dataset.splitSynonyms
+        ? label.split(/[,;،؛，；]/).map(part => part.trim()).filter(Boolean)
+        : [label];
+      const primary = parts[0] || label;
+      const synonyms = [...parts.slice(1), ...(entry?.a ?? [])];
       entriesByHeader[header] = [
         {
-          text: label,
+          text: primary,
           mainEntry: expression,
           latin: entry?.r,
           canonical: true,
           disambiguation,
         },
-        ...(entry?.a ?? [])
-          .filter(text => text !== label && text !== expression)
+        ...synonyms
+          .filter((text, i, all) => text !== primary && all.indexOf(text) === i)
           .map(text => ({ text, mainEntry: text, canonical: false })),
       ];
-      out[header] = label;
+      out[header] = primary;
 
       const rom = romanizationCodeFor(lang);
       if (entry?.r && rom) {

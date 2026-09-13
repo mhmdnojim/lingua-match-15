@@ -29,7 +29,7 @@ import {
 
 } from '@/utils/gameLogic';
 import { getMeaningSelection } from '@/utils/meanings';
-import { HSK_LIBRARY_FILES, libraryLangsFor, libraryDefaultMain, isHskLibraryFile, hskLevelOf, loadHskLevel } from '@/data/hskLibrary';
+import { HSK_LIBRARY_FILES, libraryLangsFor, libraryDefaultMain, libraryGroupsSenses, isHskLibraryFile, hskLevelOf, loadHskLevel } from '@/data/hskLibrary';
 
 import {
   saveProgress,
@@ -280,6 +280,15 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   }, [languagesOpen, wordEditorOpen, settingsOpen, headerOpen, navOpen]);
 
 
+  /**
+   * Definition-anchored datasets keep every meaning on its own card: the same word
+   * on two rows is two meanings, not synonyms. Synonyms only come from one cell.
+   */
+  const groupSenses = useMemo(
+    () => (selectedFile ? libraryGroupsSenses(selectedFile) : true),
+    [selectedFile],
+  );
+
   // Rebuild batches whenever vocabulary / ordering / main language changes
   useEffect(() => {
     if (vocabulary.length === 0) {
@@ -292,7 +301,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     // for the rest of the day (and changes automatically tomorrow).
     const rand = dailyMode ? createSeededRandom(dailySeed(cloudSource, mainLang, 'order')) : Math.random;
     const ordered = shuffleMode ? shuffleVocabulary(vocabulary, mainLang, rand) : [...vocabulary];
-    const next = createBatchesByLexeme(ordered, mainLang, batchSize);
+    const next = createBatchesByLexeme(ordered, mainLang, batchSize, groupSenses);
     setBatches(next);
     // A pending jump (from word search) lands on the batch holding that Sense ID
     if (pendingJumpRef.current) {
@@ -666,7 +675,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       const batch = batches[batchIndex];
       if (!batch) return;
       const dealSeed = dailyMode ? dailySeed(cloudSource, mainLang, 'deal', batchIndex) : undefined;
-      setCards(createColumnCards(batch, columns, true, dealSeed, mainLang));
+      setCards(createColumnCards(batch, columns, true, dealSeed, mainLang, groupSenses));
       setSelectedCards([]);
       setMatchedPairs(0);
       setTime(0);
@@ -675,7 +684,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       setBatchScore(0);
       setGameStarted(true);
     },
-    [batches, columns, shuffleMode, dailyMode, cloudSource, mainLang],
+    [batches, columns, shuffleMode, dailyMode, cloudSource, mainLang, groupSenses],
   );
 
   /**
@@ -699,7 +708,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     const batch = batches[currentBatch];
     if (!batch) return;
     const byId = new Map(batch.map(i => [i.id, i]));
-    const groups = groupByLexeme(batch, mainLang);
+    const groups = groupByLexeme(batch, mainLang, groupSenses);
     setCards(prev => {
       let changed = false;
       const next: Record<string, GameCard[]> = {};

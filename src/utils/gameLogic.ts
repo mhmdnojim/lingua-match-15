@@ -177,8 +177,17 @@ export function lexemeKey(item: VocabularyItem, lang: string): string {
   return raw ? `${lang}:${raw.toLowerCase()}` : '';
 }
 
-/** Group senses that share the same main-language headword, keeping file order */
-export function groupByLexeme(items: VocabularyItem[], mainLang: string): VocabularyItem[][] {
+/**
+ * Group senses that share the same main-language headword, keeping file order.
+ * When `group` is false every sense stays its own card — used by definition-anchored
+ * datasets where two rows of the same word are different meanings, not synonyms.
+ */
+export function groupByLexeme(
+  items: VocabularyItem[],
+  mainLang: string,
+  group = true,
+): VocabularyItem[][] {
+  if (!group) return items.map(item => [item]);
   const order: string[] = [];
   const groups = new Map<string, VocabularyItem[]>();
   items.forEach(item => {
@@ -197,8 +206,9 @@ export function createBatchesByLexeme(
   items: VocabularyItem[],
   mainLang: string,
   batchSize: number,
+  group = true,
 ): VocabularyItem[][] {
-  const groups = groupByLexeme(items, mainLang);
+  const groups = groupByLexeme(items, mainLang, group);
   const batches: VocabularyItem[][] = [];
   for (let i = 0; i < groups.length; i += batchSize) {
     batches.push(groups.slice(i, i + batchSize).flat());
@@ -269,9 +279,11 @@ export function createColumnCards(
   seed?: string,
   /** headword grouping is anchored on the main language column */
   mainLang?: string,
+  /** false keeps every sense as its own card (definition-anchored datasets) */
+  group = true,
 ): Record<string, GameCard[]> {
   const result: Record<string, GameCard[]> = {};
-  const groups = groupByLexeme(items, mainLang ?? columns[0]?.lang ?? '');
+  const groups = groupByLexeme(items, mainLang ?? columns[0]?.lang ?? '', group);
 
   columns.forEach(column => {
     const cards = groups
