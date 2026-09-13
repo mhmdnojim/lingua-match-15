@@ -708,7 +708,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     const batch = batches[currentBatch];
     if (!batch) return;
     const byId = new Map(batch.map(i => [i.id, i]));
-    const groups = groupByLexeme(batch, mainLang);
+    const groups = groupByLexeme(batch, mainLang, groupSenses);
     setCards(prev => {
       let changed = false;
       const next: Record<string, GameCard[]> = {};
