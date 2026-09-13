@@ -280,6 +280,15 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
   }, [languagesOpen, wordEditorOpen, settingsOpen, headerOpen, navOpen]);
 
 
+  /**
+   * Definition-anchored datasets keep every meaning on its own card: the same word
+   * on two rows is two meanings, not synonyms. Synonyms only come from one cell.
+   */
+  const groupSenses = useMemo(
+    () => (selectedFile ? libraryGroupsSenses(selectedFile) : true),
+    [selectedFile],
+  );
+
   // Rebuild batches whenever vocabulary / ordering / main language changes
   useEffect(() => {
     if (vocabulary.length === 0) {
