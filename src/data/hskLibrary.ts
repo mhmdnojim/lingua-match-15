@@ -48,6 +48,8 @@ const DATASETS: DatasetDef[] = [
     levels: ['A1', 'A2', 'B1', 'B2', 'C1'],
     langs: EN_DICT_LANGS,
     defaultMain: 'en',
+    groupSenses: false,
+    splitSynonyms: true,
     assets: {
       A1: '/__l5e/assets-v1/8c404c98-4166-4661-920c-e3c8b9e83fc8/endict-a1.json',
       A2: '/__l5e/assets-v1/dee6bfc5-2cdd-4de7-9f09-a40e2bec445a/endict-a2.json',
