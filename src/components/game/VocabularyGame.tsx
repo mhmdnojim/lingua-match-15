@@ -684,7 +684,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       setBatchScore(0);
       setGameStarted(true);
     },
-    [batches, columns, shuffleMode, dailyMode, cloudSource, mainLang],
+    [batches, columns, shuffleMode, dailyMode, cloudSource, mainLang, groupSenses],
   );
 
   /**
