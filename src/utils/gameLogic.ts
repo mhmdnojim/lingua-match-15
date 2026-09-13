@@ -177,8 +177,17 @@ export function lexemeKey(item: VocabularyItem, lang: string): string {
   return raw ? `${lang}:${raw.toLowerCase()}` : '';
 }
 
-/** Group senses that share the same main-language headword, keeping file order */
-export function groupByLexeme(items: VocabularyItem[], mainLang: string): VocabularyItem[][] {
+/**
+ * Group senses that share the same main-language headword, keeping file order.
+ * When `group` is false every sense stays its own card — used by definition-anchored
+ * datasets where two rows of the same word are different meanings, not synonyms.
+ */
+export function groupByLexeme(
+  items: VocabularyItem[],
+  mainLang: string,
+  group = true,
+): VocabularyItem[][] {
+  if (!group) return items.map(item => [item]);
   const order: string[] = [];
   const groups = new Map<string, VocabularyItem[]>();
   items.forEach(item => {
