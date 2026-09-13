@@ -30,6 +30,14 @@ interface DatasetDef {
   levels: string[];
   langs: string[];
   defaultMain: string;
+  /**
+   * false = definition-anchored dataset: two rows of the same word are two
+   * different meanings and must stay separate cards. Synonyms only ever come
+   * from one cell, comma/semicolon separated.
+   */
+  groupSenses?: boolean;
+  /** split a cell on commas/semicolons into canonical + synonym expressions */
+  splitSynonyms?: boolean;
   assets: Record<string, string>;
 }
 
