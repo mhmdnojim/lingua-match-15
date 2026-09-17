@@ -1635,7 +1635,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
       .map(source => source.replace(/\.(xlsx|xls)$/i, '').split(' · ')[1])
       .filter((level): level is string => Boolean(level));
     return uploaded.length ? uploaded : [levelOf(selectedFile) || 'Vocabulary'];
-  }, [selectedFile, library]);
+  }, [selectedFile]);
 
   const loadWorkbookLevel = useCallback(async (level: string): Promise<VocabularyItem[]> => {
     if (!selectedFile) return vocabulary;

@@ -62,7 +62,7 @@ export const VocabularyListDialog: React.FC<VocabularyListDialogProps> = ({
     }
   };
 
-  const activeItems = levelItems[activeLevel] || [];
+  const activeItems = useMemo(() => levelItems[activeLevel] || [], [levelItems, activeLevel]);
   const mainLang = columns[0]?.lang || Object.keys(activeItems[0]?.values || {})[0] || 'en';
   const filteredItems = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase();
