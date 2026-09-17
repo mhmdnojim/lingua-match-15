@@ -29,7 +29,7 @@ import {
 
 } from '@/utils/gameLogic';
 import { getMeaningSelection } from '@/utils/meanings';
-import { HSK_LIBRARY_FILES, libraryLangsFor, libraryDefaultMain, libraryGroupsSenses, isHskLibraryFile, hskLevelOf, loadHskLevel } from '@/data/hskLibrary';
+import { HSK_LIBRARY_FILES, libraryLangsFor, libraryLevelsFor, libraryDefaultMain, libraryGroupsSenses, isHskLibraryFile, hskLevelOf, loadHskLevel } from '@/data/hskLibrary';
 
 import {
   saveProgress,
@@ -49,7 +49,7 @@ import {
   FontSize,
 } from '@/utils/storage';
 import { getLanguage, romanizationCodeFor, hasRomanization, equivalentLanguages } from '@/utils/languages';
-import { exportVocabularyToExcel } from '@/utils/exportExcel';
+import { exportVocabularyToExcel, exportLevelsToExcel } from '@/utils/exportExcel';
 import { translateWords, detectPartsOfSpeech } from '@/utils/translate';
 import { fetchCloudSet, saveCloudSet, deleteCloudSet, filledCount } from '@/utils/cloudVocabulary';
 import { useAudio } from '@/hooks/useAudio';
