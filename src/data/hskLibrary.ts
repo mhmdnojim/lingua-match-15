@@ -52,12 +52,13 @@ const DATASETS: DatasetDef[] = [
     groupSenses: false,
     splitSynonyms: true,
     assets: {
-      A1: '/__l5e/assets-v1/f490d132-43a8-4ad6-adc0-f2254ed2ae97/endict-a1.json',
-      A2: '/__l5e/assets-v1/f488b04c-912a-4c69-a80f-e2688f217a4c/endict-a2.json',
-      B1: '/__l5e/assets-v1/63ccab59-b520-4eaf-ad76-7ce6054d6e69/endict-b1.json',
-      B2: '/__l5e/assets-v1/43b9ec5f-c17c-4636-8f81-789aecb32eca/endict-b2.json',
-      C1: '/__l5e/assets-v1/503d7098-efbc-4761-a39d-45df1f358c07/endict-c1.json',
+      A1: '/__l5e/assets-v1/0eb402b4-2871-417e-880f-9eb4f4aeb2e6/endict-A1.json',
+      A2: '/__l5e/assets-v1/6bde35cc-70c7-4b83-9807-01cff2573f79/endict-A2.json',
+      B1: '/__l5e/assets-v1/7fdf9b9d-8919-4c0e-b4cf-aa4576daa0a1/endict-B1.json',
+      B2: '/__l5e/assets-v1/88b48871-bc96-471e-ae0c-a4eac47df91c/endict-B2.json',
+      C1: '/__l5e/assets-v1/7f4e955b-fc87-46da-99ca-ce42af3cd149/endict-C1.json',
     },
+
   },
   {
     name: HSK_V8_LIBRARY_NAME,
@@ -65,12 +66,12 @@ const DATASETS: DatasetDef[] = [
     langs: HSK_LANGS,
     defaultMain: 'zh',
     assets: {
-      HSK1: '/__l5e/assets-v1/99acef37-501b-46d8-ab89-e25108437e5b/hsk8-hsk1.json',
-      HSK2: '/__l5e/assets-v1/d093ec19-f2e3-477b-ba8f-cb7492a5e249/hsk8-hsk2.json',
-      HSK3: '/__l5e/assets-v1/22d0c9aa-56c8-4920-b230-a0bb82b4464b/hsk8-hsk3.json',
-      HSK4: '/__l5e/assets-v1/a387b00b-2848-4b2d-b7df-f0192e35f577/hsk8-hsk4.json',
-      HSK5: '/__l5e/assets-v1/f7a9cf35-4264-4a27-8e7e-1c9a7182d91f/hsk8-hsk5.json',
-      HSK6: '/__l5e/assets-v1/433fe188-4c6d-4c4c-976e-017aaecc95f4/hsk8-hsk6.json',
+      HSK1: '/__l5e/assets-v1/d5f7f5d7-48bf-4bd4-992f-d21ec7895230/hsk8-HSK1.json',
+      HSK2: '/__l5e/assets-v1/206fe5b8-56bd-47c6-a52f-4fdbd39fdfcb/hsk8-HSK2.json',
+      HSK3: '/__l5e/assets-v1/9375b685-b0bc-4037-a244-8576a94691c8/hsk8-HSK3.json',
+      HSK4: '/__l5e/assets-v1/4eb1465b-ce9a-4de0-88dd-c10bf6c448f9/hsk8-HSK4.json',
+      HSK5: '/__l5e/assets-v1/a39601fe-efbb-42f8-8533-58f324c3eb9a/hsk8-HSK5.json',
+      HSK6: '/__l5e/assets-v1/9936f437-3eae-4a6a-b14b-07c857fd2b57/hsk8-HSK6.json',
     },
   },
   {
@@ -79,13 +80,14 @@ const DATASETS: DatasetDef[] = [
     langs: HSK_LANGS,
     defaultMain: 'zh',
     assets: {
-      HSK1: '/__l5e/assets-v1/c35187ea-d1f1-42fb-8174-441924cb3443/hsk-hsk1.json',
-      HSK2: '/__l5e/assets-v1/a087abd9-be94-4764-a835-f37793fc31db/hsk-hsk2.json',
-      HSK3: '/__l5e/assets-v1/d24f9a73-8e77-47dd-880a-830366102d1c/hsk-hsk3.json',
-      HSK4: '/__l5e/assets-v1/ab6ffdd0-2ed7-47cb-9ca3-d96e91bb7bfc/hsk-hsk4.json',
-      HSK5: '/__l5e/assets-v1/3a49b83c-6f2f-4544-9de7-15fb288c50bc/hsk-hsk5.json',
-      HSK6: '/__l5e/assets-v1/f082dd5a-39df-435b-987b-966a278990a2/hsk-hsk6.json',
+      HSK1: '/__l5e/assets-v1/def45027-9e21-4c77-88c7-b2e2f1bb4b60/hsk-HSK1.json',
+      HSK2: '/__l5e/assets-v1/ba16b245-c42e-4774-ae58-ca6b6da7888a/hsk-HSK2.json',
+      HSK3: '/__l5e/assets-v1/03f1d3b2-343b-4d81-9815-65833d680eac/hsk-HSK3.json',
+      HSK4: '/__l5e/assets-v1/51e8cc44-c82c-4c44-a8b6-de0c6053bec5/hsk-HSK4.json',
+      HSK5: '/__l5e/assets-v1/294d5e8f-624d-43f4-af42-a3cbe893958e/hsk-HSK5.json',
+      HSK6: '/__l5e/assets-v1/ede0d560-1056-484e-b9ee-a955ca2f643a/hsk-HSK6.json',
     },
+
   },
 ];
 
