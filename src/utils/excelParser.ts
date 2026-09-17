@@ -18,6 +18,8 @@ export interface VocabularyItem {
   edited?: Record<string, boolean>;
   /** grammatical class of the word: noun, verb, adjective, … */
   pos?: string;
+  /** semantic definition of this exact sense (definition-anchored datasets) */
+  definition?: string;
   /** file-declared expressions per language code (canonical first, then alternatives) */
   entries?: Record<string, LexicalEntry[]>;
   /** original source vocabulary item — provenance only, never a matching key */
@@ -105,7 +107,7 @@ function readBook(workbook: XLSX.WorkBook, sheetName?: string): SheetData {
     return { success: false, error: 'The file is empty', headers: [], rows: [], detected: {} };
   }
 
-  const META = new Set(['word id', 'sense id', 'vocab word id']);
+  const META = new Set(['word id', 'sense id', 'vocab word id', 'definition']);
   const rawHeaders = appReady ? appReady.headers : Object.keys(rows[0]);
 
   // A part-of-speech column is metadata, not a language — copy it onto a stable
@@ -274,11 +276,13 @@ export function buildVocabulary(sheet: SheetData, mapping: ColumnMapping, mainLa
       const stableId = String(row['Sense ID'] ?? row['Word ID'] ?? '').trim();
       const sourceWordId = String(row['Vocab Word ID'] ?? '').trim();
       const pos = normalizePos(String(row[POS_HEADER] ?? ''));
+      const definition = String(row['Definition'] ?? '').trim();
       return {
         id: stableId || `vocab-${index}`,
         values,
         edited: {},
         ...(pos ? { pos } : {}),
+        ...(definition ? { definition } : {}),
         ...(declared ? { entries: declared } : {}),
         ...(sourceWordId ? { sourceWordId } : {}),
       };
