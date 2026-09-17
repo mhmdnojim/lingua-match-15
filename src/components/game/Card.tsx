@@ -4,7 +4,7 @@ import { GameCard } from '@/utils/gameLogic';
 import { getLanguage, columnStyle } from '@/utils/languages';
 import { splitMeanings, joinMeanings, useMeaningSelection } from '@/utils/meanings';
 import MeaningsPanel from './MeaningsPanel';
-import { Layers } from 'lucide-react';
+import { Layers, Info } from 'lucide-react';
 
 /** Compact tag for a grammatical class, e.g. adjective -> adj. */
 export const posAbbrev = (pos?: string): string => {
@@ -166,6 +166,7 @@ export const Card: React.FC<CardProps> = ({
 
   const cardRef = React.useRef<HTMLDivElement>(null);
   const [anchor, setAnchor] = React.useState<DOMRect | null>(null);
+  const [showDefinition, setShowDefinition] = React.useState(false);
 
   const { boxRef, px } = useAutoFit(displayed, maxPx);
 
@@ -245,19 +246,50 @@ export const Card: React.FC<CardProps> = ({
         </span>
       )}
 
-      {hasMultiple && !card.isMatched && (
-        <button
+      {!card.isMatched && (hasMultiple || !!card.definition) && (
+        <div className="absolute -top-1 -right-1 flex items-center gap-1 z-20">
+          {!!card.definition && (
+            <button
+              onClick={e => {
+                e.stopPropagation();
+                setShowDefinition(value => !value);
+              }}
+              className="flex items-center rounded-full bg-background/85 p-1 shadow-md ring-1 ring-foreground/20 backdrop-blur-sm transition-all hover:scale-110 hover:bg-background"
+              title={card.definition}
+              aria-label="Definition"
+            >
+              <Info className="h-4 w-4 text-foreground" />
+            </button>
+          )}
+          {hasMultiple && (
+            <button
+              onClick={e => {
+                e.stopPropagation();
+                setAnchor(cardRef.current?.getBoundingClientRect() ?? null);
+              }}
+              className="flex items-center gap-0.5 rounded-full bg-background/85 px-1.5 py-1 shadow-md ring-1 ring-foreground/20 backdrop-blur-sm transition-all hover:scale-110 hover:bg-background"
+              title={`${meanings.length} meanings — pick which ones to show`}
+              aria-label="Other meanings"
+            >
+              <Layers className="h-4 w-4 text-foreground" />
+              <span className="text-[10px] font-semibold leading-none text-foreground">{meanings.length}</span>
+            </button>
+          )}
+        </div>
+      )}
+
+      {showDefinition && !!card.definition && (
+        <div
           onClick={e => {
             e.stopPropagation();
-            setAnchor(cardRef.current?.getBoundingClientRect() ?? null);
+            setShowDefinition(false);
           }}
-          className="absolute -top-1 -right-1 flex items-center gap-0.5 rounded-full bg-background/85 px-1.5 py-1 shadow-md ring-1 ring-foreground/20 backdrop-blur-sm transition-all hover:scale-110 hover:bg-background z-20"
-          title={`${meanings.length} meanings — pick which ones to show`}
-          aria-label="Other meanings"
+          className="absolute inset-0 z-30 flex items-center justify-center rounded-lg bg-background/95 p-1.5 text-center backdrop-blur-sm"
         >
-          <Layers className="h-4 w-4 text-foreground" />
-          <span className="text-[10px] font-semibold leading-none text-foreground">{meanings.length}</span>
-        </button>
+          <span className="max-h-full overflow-y-auto text-[10px] leading-snug text-foreground sm:text-xs">
+            {card.definition}
+          </span>
+        </div>
       )}
 
       {anchor && (
