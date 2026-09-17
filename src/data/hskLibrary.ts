@@ -216,6 +216,7 @@ export async function loadHskLevel(level: string, mainLang: string, source?: str
       'Word ID': row.id,
       'Vocab Word ID': row.w ?? '',
       'Part of Speech': row.p ?? '',
+      Definition: row.d ?? '',
     };
     const entriesByHeader: Record<string, SheetEntry[]> = {};
 
