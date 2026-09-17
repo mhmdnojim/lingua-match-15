@@ -88,7 +88,7 @@ export const isHskLibraryFile = (source: string) => HSK_LIBRARY_FILES.includes(s
 
 /**
  * Whether senses sharing a headword should be merged into one card.
- * Definition-anchored datasets (English Dictionary) keep every sense separate.
+ * Definition-anchored datasets keep every sense separate.
  */
 export const libraryGroupsSenses = (source?: string): boolean =>
   datasetOf(source).groupSenses !== false;
