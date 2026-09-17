@@ -233,8 +233,9 @@ export async function loadHskLevel(level: string, mainLang: string, source?: str
       // otherwise the label is disambiguation, not display text.
       const sameScript = entry?.l && scriptFamily(entry.l) === scriptFamily(expression);
       const label = sameScript ? entry?.l ?? expression : expression;
-      const disambiguation =
-        entry?.d || (!sameScript && entry?.l) || (lang === main ? row.d : undefined);
+      // The sense definition is shown through the card's definition button, not
+      // as a cramped subtitle.
+      const disambiguation = entry?.d || (!sameScript && entry?.l) || undefined;
       const header = nameOf(lang);
       // In definition-anchored datasets, expressions listed in one cell and
       // separated by a comma / semicolon ARE synonyms of that one meaning.

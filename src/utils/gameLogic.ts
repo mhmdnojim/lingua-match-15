@@ -37,6 +37,8 @@ export interface GameCard {
   romanization?: string;
   /** grammatical class of the underlying word (noun, verb, …) */
   pos?: string;
+  /** semantic definition of the sense this card stands for */
+  definition?: string;
   /** file-declared expressions of this sense in this language (canonical first) */
   entries?: LexicalEntry[];
   /** every expression available on this card, each carrying its own Sense ID */
@@ -263,6 +265,7 @@ export function buildGroupCard(group: VocabularyItem[], lang: string): GameCard 
     content: primary.text,
     romanization: primary.latin,
     pos: group.find(i => i.pos)?.pos,
+    definition: group.find(i => i.definition)?.definition,
     entries: first.entries?.[lang],
     options,
     isSelected: false,
