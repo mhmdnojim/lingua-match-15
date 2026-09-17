@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Upload, FileSpreadsheet, ChevronDown, Trash2, Download } from 'lucide-react';
+import { Upload, FileSpreadsheet, ChevronDown, Trash2, Download, BookOpen } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +21,7 @@ interface FileSelectorProps {
   onUploadFiles: (files: File[]) => void;
   onDeleteFile?: (fileName: string) => void;
   onExportFile?: () => void;
+  onExploreFile?: () => void;
   /** MAIN-language picker (built-in library only) */
   mainLang?: string;
   mainLangOptions?: { code: string; label: string }[];
@@ -35,6 +37,7 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
   onUploadFiles,
   onDeleteFile,
   onExportFile,
+  onExploreFile,
   mainLang,
   mainLangOptions,
   onMainLangChange,
@@ -178,6 +181,20 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
         >
           <Download className="w-4 h-4" />
         </button>
+      )}
+
+      {onExploreFile && selectedFile && (
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={onExploreFile}
+          title={`Explore ${selectedFile.replace('.xlsx', '')}`}
+          aria-label="Explore workbook"
+          className="border-primary text-primary hover:bg-primary/10"
+        >
+          <BookOpen className="h-4 w-4" />
+        </Button>
       )}
 
       {onDeleteFile && selectedFile && (

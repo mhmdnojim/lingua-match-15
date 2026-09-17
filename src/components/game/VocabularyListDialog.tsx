@@ -1,211 +1,207 @@
-import React, { useMemo, useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { VocabularyItem } from '@/utils/excelParser';
-import { ColumnConfig, valueFor, romanizationFor } from '@/utils/gameLogic';
+import { ColumnConfig, romanizationFor, valueFor } from '@/utils/gameLogic';
 import { getLanguage } from '@/utils/languages';
-import { Search, Type, List, ArrowUpAZ, ArrowDownAZ, ListOrdered } from 'lucide-react';
-import { posAbbrev } from './Card';
-
 import { cn } from '@/lib/utils';
+import { BookOpen, ChevronDown, ChevronRight, Loader2, Search } from 'lucide-react';
+import { posAbbrev } from './Card';
 
 interface VocabularyListDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  source?: string | null;
   items: VocabularyItem[];
   columns: ColumnConfig[];
+  levels: string[];
+  currentLevel: string;
+  onLoadLevel: (level: string) => Promise<VocabularyItem[]>;
 }
 
-type SortMode = 'file' | 'asc' | 'desc';
-
-const SORT_MODES: { mode: SortMode; label: string; Icon: typeof ListOrdered }[] = [
-  { mode: 'file', label: 'File order', Icon: ListOrdered },
-  { mode: 'asc', label: 'A → Z', Icon: ArrowUpAZ },
-  { mode: 'desc', label: 'Z → A', Icon: ArrowDownAZ },
-];
-
-// 6 cycling font steps; after the largest it wraps back to the smallest
-const FONT_STEPS = [
-  { row: 'h-9', value: 'text-[11px]', detail: 'text-[10px]' },
-  { row: 'h-10', value: 'text-xs', detail: 'text-[11px]' },
-  { row: 'h-11', value: 'text-sm', detail: 'text-xs' },
-  { row: 'h-12', value: 'text-base', detail: 'text-sm' },
-  { row: 'h-14', value: 'text-lg', detail: 'text-base' },
-  { row: 'h-16', value: 'text-xl', detail: 'text-lg' },
-];
+const familyOf = (source?: string | null) =>
+  (source || 'Vocabulary workbook').replace(/\.(xlsx|xls)$/i, '').split(' · ')[0];
 
 export const VocabularyListDialog: React.FC<VocabularyListDialogProps> = ({
   open,
   onOpenChange,
+  source,
   items,
   columns,
+  levels,
+  currentLevel,
+  onLoadLevel,
 }) => {
+  const initialLevel = currentLevel || levels[0] || 'Vocabulary';
+  const [activeLevel, setActiveLevel] = useState(initialLevel);
+  const [levelItems, setLevelItems] = useState<Record<string, VocabularyItem[]>>({});
+  const [loadingLevel, setLoadingLevel] = useState<string | null>(null);
   const [query, setQuery] = useState('');
-  const [fontStep, setFontStep] = useState(2);
-  const [sortMode, setSortMode] = useState<SortMode>('file');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const visibleColumns = useMemo(() => columns.filter(c => c.visible), [columns]);
-  const mainColumn = visibleColumns[0] || columns[0];
-  const otherColumns = useMemo(
-    () => visibleColumns.filter(c => c.lang !== mainColumn?.lang),
-    [visibleColumns, mainColumn],
-  );
-  const listColumns = mainColumn ? [mainColumn, ...otherColumns] : [];
+  useEffect(() => {
+    if (!open) return;
+    const level = currentLevel || levels[0] || 'Vocabulary';
+    setActiveLevel(level);
+    setLevelItems({ [level]: items });
+    setQuery('');
+    setExpandedId(null);
+  }, [open, source, currentLevel, levels, items]);
 
+  const loadLevel = async (level: string) => {
+    setActiveLevel(level);
+    setExpandedId(null);
+    if (levelItems[level]) return;
+    setLoadingLevel(level);
+    try {
+      const loaded = await onLoadLevel(level);
+      setLevelItems(previous => ({ ...previous, [level]: loaded }));
+    } finally {
+      setLoadingLevel(null);
+    }
+  };
+
+  const activeItems = levelItems[activeLevel] || [];
+  const mainLang = columns[0]?.lang || Object.keys(activeItems[0]?.values || {})[0] || 'en';
   const filteredItems = useMemo(() => {
-    const q = query.toLowerCase().trim();
-    const base = !q
-      ? items
-      : items.filter(item =>
-          listColumns.some(column => {
-            const value = valueFor(item, column.lang).toLowerCase();
-            const romanization = (romanizationFor(item, column.lang) || '').toLowerCase();
-            return value.includes(q) || romanization.includes(q);
-          }),
-        );
-
-    if (sortMode === 'file') return base;
-    const lang = mainColumn?.lang || '';
-    const sorted = [...base].sort((a, b) =>
-      valueFor(a, lang).localeCompare(valueFor(b, lang), undefined, { sensitivity: 'base', numeric: true }),
-    );
-    return sortMode === 'desc' ? sorted.reverse() : sorted;
-  }, [items, listColumns, query, sortMode, mainColumn]);
-
-  const sizes = FONT_STEPS[fontStep];
-  const activeSort = SORT_MODES.find(s => s.mode === sortMode)!;
-  const SortIcon = activeSort.Icon;
-
+    const normalized = query.trim().toLocaleLowerCase();
+    if (!normalized) return activeItems;
+    return activeItems.filter(item => {
+      const texts = [
+        item.id,
+        item.sourceWordId,
+        item.pos,
+        item.definition,
+        ...Object.values(item.values || {}),
+        ...Object.keys(item.values || {}).map(lang => romanizationFor(item, lang) || ''),
+      ];
+      return texts.some(text => String(text || '').toLocaleLowerCase().includes(normalized));
+    });
+  }, [activeItems, query]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[88vh] w-[calc(100%-1.5rem)] max-w-4xl flex-col gap-0 overflow-hidden rounded-lg border-border bg-popover p-0 shadow-2xl [&>button]:right-5 [&>button]:top-5 [&>button]:z-20 [&>button]:rounded-full [&>button]:p-2">
-        <DialogHeader className="shrink-0 border-b border-border bg-popover px-5 pb-4 pt-5 pr-14 sm:px-7 sm:pb-5 sm:pt-6 sm:pr-16">
-          <div className="space-y-1">
-            <DialogTitle className="flex items-center gap-2 font-mono text-xl font-semibold sm:text-2xl">
-              <List className="h-5 w-5 text-primary" />
-              Vocabs
-            </DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              {filteredItems.length} of {items.length} word{items.length === 1 ? '' : 's'}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 pt-4">
-            <div className="relative flex-1 min-w-[12rem]">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Find a word…"
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                className="h-10 rounded-md border-border bg-secondary/50 pl-9 text-sm"
-              />
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                const i = SORT_MODES.findIndex(s => s.mode === sortMode);
-                setSortMode(SORT_MODES[(i + 1) % SORT_MODES.length].mode);
-              }}
-              className="h-10 shrink-0 gap-2 rounded-md border-border bg-secondary/50 px-3 font-mono text-xs"
-              aria-label={`Sort: ${activeSort.label}`}
-              title={`Sort: ${activeSort.label}`}
-            >
-              <SortIcon className="h-4 w-4 text-primary" />
-              <span className="hidden sm:inline">{activeSort.label}</span>
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setFontStep(step => (step + 1) % FONT_STEPS.length)}
-              className="h-10 w-10 shrink-0 rounded-md border-border bg-secondary/50 p-0"
-              aria-label={`Font size ${fontStep + 1} of ${FONT_STEPS.length}`}
-              title={`Font size ${fontStep + 1} of ${FONT_STEPS.length}`}
-            >
-              <Type className="h-4 w-4 text-primary" style={{ transform: `scale(${0.75 + fontStep * 0.1})` }} />
-            </Button>
-
-          </div>
+      <DialogContent className="flex h-[92vh] w-[calc(100%-1rem)] max-w-6xl flex-col gap-0 overflow-hidden border-border bg-popover p-0 sm:h-[88vh] [&>button]:right-4 [&>button]:top-4 [&>button]:z-30">
+        <DialogHeader className="shrink-0 border-b border-border px-4 pb-3 pt-4 pr-14 sm:px-6">
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <BookOpen className="h-5 w-5 text-primary" />
+            {familyOf(source)}
+          </DialogTitle>
+          <p className="text-sm text-muted-foreground">Explore workbook sheets, definitions, readings, and translations.</p>
         </DialogHeader>
 
-        <div className="grid shrink-0 grid-cols-[2.25rem_minmax(0,1fr)_minmax(0,1.4fr)] border-b border-border bg-secondary/40 px-4 py-2 font-mono text-[10px] font-semibold uppercase text-muted-foreground sm:grid-cols-[3rem_minmax(0,1fr)_minmax(0,1.5fr)] sm:px-7">
-          <span>#</span>
-          <span className="truncate">{mainColumn ? getLanguage(mainColumn.lang).name : 'Main'}</span>
-          <span className="truncate pl-4">Translations</span>
-        </div>
+        <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
+          <aside className="flex shrink-0 gap-1 overflow-x-auto border-b border-border bg-secondary/25 p-2 sm:w-36 sm:flex-col sm:overflow-y-auto sm:border-b-0 sm:border-r">
+            {(levels.length ? levels : [initialLevel]).map(level => {
+              const count = levelItems[level]?.length;
+              return (
+                <Button
+                  key={level}
+                  type="button"
+                  variant={activeLevel === level ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => void loadLevel(level)}
+                  className="h-9 shrink-0 justify-between gap-3 sm:w-full"
+                >
+                  <span>{level}</span>
+                  <span className="text-[10px] tabular-nums opacity-70">{count ?? '—'}</span>
+                </Button>
+              );
+            })}
+          </aside>
 
-        <div className="h-[min(58vh,34rem)] min-h-0 overflow-y-auto overscroll-contain [scrollbar-color:hsl(var(--border))_transparent] [scrollbar-width:thin]" data-testid="vocabs-scroll-region">
-          {filteredItems.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center text-muted-foreground">
-              <Search className="mb-3 h-8 w-8 opacity-40" />
-              <p className="text-sm">No words match your search.</p>
+          <section className="flex min-w-0 flex-1 flex-col">
+            <div className="shrink-0 border-b border-border p-3 sm:p-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={query}
+                  onChange={event => setQuery(event.target.value)}
+                  placeholder={`Search ${activeLevel} in any language…`}
+                  className="pl-9"
+                />
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {filteredItems.length} of {activeItems.length} entries
+              </p>
             </div>
-          ) : (
-            <div className="divide-y divide-border/60 px-4 sm:px-7">
-              {filteredItems.map((item, index) => {
-                const mainValue = valueFor(item, mainColumn?.lang || '');
-                const translations = otherColumns.map(column => {
-                  const value = valueFor(item, column.lang) || '—';
-                  const romanization = column.showRomanization ? romanizationFor(item, column.lang) : undefined;
-                  return {
-                    lang: getLanguage(column.lang),
-                    text: romanization ? `${value} (${romanization})` : value,
-                  };
-                });
 
-                return (
-                  <div
-                    key={item.id}
-                    className={cn(
-                      'group grid grid-cols-[2.25rem_minmax(0,1fr)_minmax(0,1.4fr)] items-center transition-colors hover:bg-secondary/40 sm:grid-cols-[3rem_minmax(0,1fr)_minmax(0,1.5fr)]',
-                      sizes.row,
-                    )}
-                  >
-                    <span className="font-mono text-[10px] tabular-nums text-muted-foreground">{index + 1}</span>
-                    <span className={cn('flex min-w-0 items-center gap-1.5 truncate pr-3 font-semibold text-primary', sizes.value)} title={mainValue}>
-                      <span className="truncate">{mainValue || '—'}</span>
-                      {!!posAbbrev(item.pos) && (
-                        <span
-                          className="shrink-0 rounded-full bg-secondary px-1.5 py-[1px] font-mono text-[9px] font-semibold uppercase text-muted-foreground"
-                          title={item.pos}
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              {loadingLevel === activeLevel ? (
+                <div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" /> Loading {activeLevel}…
+                </div>
+              ) : filteredItems.length === 0 ? (
+                <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No matching entries.</div>
+              ) : (
+                <div className="divide-y divide-border/70">
+                  {filteredItems.map((item, index) => {
+                    const expanded = expandedId === item.id;
+                    const mainText = valueFor(item, mainLang) || '—';
+                    const mainReading = romanizationFor(item, mainLang);
+                    const languageCodes = Object.keys(item.values || {}).filter(lang => item.values[lang]);
+                    const previews = languageCodes
+                      .filter(lang => lang !== mainLang)
+                      .slice(0, 3)
+                      .map(lang => item.values[lang]);
+                    return (
+                      <div key={`${activeLevel}-${item.id}`}>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => setExpandedId(expanded ? null : item.id)}
+                          className="h-auto w-full justify-start rounded-none px-3 py-3 text-left hover:bg-secondary/40 sm:px-5"
                         >
-                          {posAbbrev(item.pos)}
-                        </span>
-                      )}
-                    </span>
+                          {expanded ? <ChevronDown className="mr-2 h-4 w-4 shrink-0" /> : <ChevronRight className="mr-2 h-4 w-4 shrink-0" />}
+                          <span className="mr-3 w-8 shrink-0 font-mono text-[10px] text-muted-foreground">{index + 1}</span>
+                          <span className="min-w-0 flex-1">
+                            <span className="flex min-w-0 items-center gap-2">
+                              <span className={cn('truncate text-base font-semibold text-primary', getLanguage(mainLang).fontClass)} dir={getLanguage(mainLang).rtl ? 'rtl' : 'ltr'}>
+                                {mainText}
+                              </span>
+                              {item.pos && <span className="shrink-0 font-mono text-[10px] text-muted-foreground">{posAbbrev(item.pos)}</span>}
+                              {mainReading && <span className="hidden truncate text-xs text-muted-foreground sm:inline">{mainReading}</span>}
+                            </span>
+                            <span className="block truncate text-xs text-muted-foreground">
+                              {item.definition || previews.join(' · ') || 'No definition'}
+                            </span>
+                          </span>
+                        </Button>
 
-                    <div className={cn('flex min-w-0 items-center gap-3 overflow-hidden border-l border-border/50 pl-4 text-foreground', sizes.detail)}>
-                      {translations.length > 0 ? translations.map(({ lang, text }) => (
-                        <span key={lang.code} className="min-w-0 truncate" dir={lang.rtl ? 'rtl' : 'ltr'} title={`${lang.name}: ${text}`}>
-                          <span className="mr-1 font-mono text-[9px] uppercase text-muted-foreground">{lang.short}</span>
-                          {text}
-                        </span>
-                      )) : <span className="text-muted-foreground">No visible translations</span>}
-                    </div>
-                  </div>
-                );
-              })}
+                        {expanded && (
+                          <div className="border-t border-border/40 bg-secondary/20 px-6 py-4 sm:px-14">
+                            <div className="mb-4 grid gap-2 text-sm sm:grid-cols-2">
+                              <p><span className="text-muted-foreground">Sense ID:</span> <span className="font-mono text-xs">{item.id}</span></p>
+                              {item.sourceWordId && <p><span className="text-muted-foreground">Word ID:</span> <span className="font-mono text-xs">{item.sourceWordId}</span></p>}
+                              {item.definition && <p className="sm:col-span-2"><span className="text-muted-foreground">Definition:</span> {item.definition}</p>}
+                            </div>
+                            <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+                              {languageCodes.map(lang => {
+                                const language = getLanguage(lang);
+                                const reading = romanizationFor(item, lang);
+                                return (
+                                  <div key={lang} className="min-w-0 border-l-2 border-primary/35 pl-3">
+                                    <p className="text-[10px] font-semibold uppercase text-muted-foreground">{language.name}</p>
+                                    <p className={cn('break-words text-sm text-foreground', language.fontClass)} dir={language.rtl ? 'rtl' : 'ltr'}>{item.values[lang]}</p>
+                                    {reading && <p className="break-words text-xs text-muted-foreground">{reading}</p>}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          )}
-        </div>
-
-        <div className="flex shrink-0 items-center justify-center border-t border-border bg-secondary/30 px-5 py-3">
-          <p className="font-mono text-[10px] uppercase text-muted-foreground">
-            Showing {filteredItems.length} word{filteredItems.length === 1 ? '' : 's'}
-          </p>
+          </section>
         </div>
       </DialogContent>
     </Dialog>
   );
-}
+};
 
 export default VocabularyListDialog;
