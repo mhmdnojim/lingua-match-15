@@ -154,10 +154,10 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
             'bg-secondary border-border text-muted-foreground hover:text-foreground',
             disabled && 'opacity-50 cursor-not-allowed',
           )}
-          title="Show all words and translations"
+          title="Explore every sheet, word, definition, and translation"
         >
           <List className="w-4 h-4 shrink-0" />
-          <span className="hidden sm:inline">Vocabs</span>
+          <span className="hidden sm:inline">Explore</span>
         </button>
       )}
 

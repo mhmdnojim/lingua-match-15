@@ -1626,6 +1626,30 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     }
   };
 
+  const workbookLevels = useMemo(() => {
+    if (!selectedFile) return ['Vocabulary'];
+    if (isHskLibraryFile(selectedFile)) return libraryLevelsFor(selectedFile);
+    const family = selectedFile.replace(/\.(xlsx|xls)$/i, '').split(' · ')[0];
+    const uploaded = listLocalSources()
+      .filter(source => source.startsWith(`${family} · `))
+      .map(source => source.replace(/\.(xlsx|xls)$/i, '').split(' · ')[1])
+      .filter((level): level is string => Boolean(level));
+    return uploaded.length ? uploaded : [levelOf(selectedFile) || 'Vocabulary'];
+  }, [selectedFile]);
+
+  const loadWorkbookLevel = useCallback(async (level: string): Promise<VocabularyItem[]> => {
+    if (!selectedFile) return vocabulary;
+    const family = selectedFile.replace(/\.(xlsx|xls)$/i, '').split(' · ')[0];
+    const source = level === 'Vocabulary' ? selectedFile : `${family} · ${level}.xlsx`;
+    if (source === selectedFile) return vocabulary;
+    const saved = loadVocabularySet(source);
+    if (saved?.items.length) return saved.items;
+    if (!isHskLibraryFile(selectedFile)) return [];
+    const sheet = await loadHskLevel(level, mainLang, source);
+    const mapping = Object.fromEntries(sheet.headers.map(header => [header, sheet.detected[header] || 'ignore']));
+    return buildVocabulary(sheet, mapping, sheet.mainLang || mainLang);
+  }, [selectedFile, vocabulary, mainLang]);
+
 
   /** Single fold control: all hidden → batch nav → + menu → + options → all hidden */
   const foldStage = !navOpen && !headerOpen ? 0 : !headerOpen ? 1 : settingsOpen ? 3 : 2;
@@ -1790,6 +1814,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               onUploadFiles={handleUploadFiles}
               onDeleteFile={selectedFile && isHskLibraryFile(selectedFile) ? undefined : handleDeleteFile}
               onExportFile={handleExportExcel}
+              onExploreFile={() => setVocabularyListOpen(true)}
               mainLang={mainLang}
               mainLangOptions={
                 selectedFile && isHskLibraryFile(selectedFile)
@@ -2008,6 +2033,10 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onOpenChange={setVocabularyListOpen}
           items={vocabulary}
           columns={columns}
+          source={selectedFile}
+          levels={workbookLevels}
+          currentLevel={selectedFile ? levelOf(selectedFile) || 'Vocabulary' : 'Vocabulary'}
+          onLoadLevel={loadWorkbookLevel}
         />
 
         <WordSearchDialog
