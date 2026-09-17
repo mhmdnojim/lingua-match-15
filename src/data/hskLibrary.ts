@@ -13,8 +13,6 @@ import type { SheetData } from '@/utils/excelParser';
 export const HSK_LEVELS = ['HSK1', 'HSK2', 'HSK3', 'HSK4', 'HSK5', 'HSK6'] as const;
 export type HskLevel = string;
 
-/** English CEFR dictionary (definition-anchored rows, one line per sense) */
-export const EN_DICT_LIBRARY_NAME = 'English Dictionary A1–C1';
 /** v8 — same 11,530 senses, rows pre-ordered by semantic category (related groups) */
 export const HSK_V8_LIBRARY_NAME = 'HSK Dataset v8 (Grouped)';
 export const HSK_LIBRARY_NAME = 'HSK Dataset v7';
@@ -22,8 +20,6 @@ export const HSK_LIBRARY_NAME = 'HSK Dataset v7';
 const HSK_LANGS = [
   'zh', 'en', 'ar', 'bg', 'kk', 'id', 'ms', 'tk', 'ru', 'fa', 'ur', 'vi', 'de', 'nl', 'fr',
 ];
-
-const EN_DICT_LANGS = ['en', 'ar', 'zh', 'ru', 'tk', 'kk', 'bg', 'id', 'ms', 'ur', 'de'];
 
 interface DatasetDef {
   name: string;
@@ -43,21 +39,6 @@ interface DatasetDef {
 
 /** Order here is the order shown in the vocabulary picker */
 const DATASETS: DatasetDef[] = [
-  {
-    name: EN_DICT_LIBRARY_NAME,
-    levels: ['A1', 'A2', 'B1', 'B2', 'C1'],
-    langs: EN_DICT_LANGS,
-    defaultMain: 'en',
-    groupSenses: false,
-    splitSynonyms: true,
-    assets: {
-      A1: '/__l5e/assets-v1/8c404c98-4166-4661-920c-e3c8b9e83fc8/endict-a1.json',
-      A2: '/__l5e/assets-v1/dee6bfc5-2cdd-4de7-9f09-a40e2bec445a/endict-a2.json',
-      B1: '/__l5e/assets-v1/f34f7b35-559c-4b3d-bb85-805155a1728f/endict-b1.json',
-      B2: '/__l5e/assets-v1/06e946a9-054a-4828-9e35-c8158e972675/endict-b2.json',
-      C1: '/__l5e/assets-v1/b859e9ab-3f4b-4830-8902-9be04e1ff8ee/endict-c1.json',
-    },
-  },
   {
     name: HSK_V8_LIBRARY_NAME,
     levels: [...HSK_LEVELS],
@@ -107,7 +88,7 @@ export const isHskLibraryFile = (source: string) => HSK_LIBRARY_FILES.includes(s
 
 /**
  * Whether senses sharing a headword should be merged into one card.
- * Definition-anchored datasets (English Dictionary) keep every sense separate.
+ * Definition-anchored datasets keep every sense separate.
  */
 export const libraryGroupsSenses = (source?: string): boolean =>
   datasetOf(source).groupSenses !== false;
