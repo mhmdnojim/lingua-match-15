@@ -246,36 +246,35 @@ export const Card: React.FC<CardProps> = ({
         </span>
       )}
 
-      {!card.isMatched && (hasMultiple || !!card.definition) && (
-        <div className="absolute -top-1 -right-1 flex items-center gap-1 z-20">
-          {!!card.definition && (
-            <button
-              onClick={e => {
-                e.stopPropagation();
-                setShowDefinition(value => !value);
-              }}
-              className="flex items-center rounded-full bg-background/85 p-1 shadow-md ring-1 ring-foreground/20 backdrop-blur-sm transition-all hover:scale-110 hover:bg-background"
-              title={card.definition}
-              aria-label="Definition"
-            >
-              <Info className="h-4 w-4 text-foreground" />
-            </button>
-          )}
-          {hasMultiple && (
-            <button
-              onClick={e => {
-                e.stopPropagation();
-                setAnchor(cardRef.current?.getBoundingClientRect() ?? null);
-              }}
-              className="flex items-center gap-0.5 rounded-full bg-background/85 px-1.5 py-1 shadow-md ring-1 ring-foreground/20 backdrop-blur-sm transition-all hover:scale-110 hover:bg-background"
-              title={`${meanings.length} meanings — pick which ones to show`}
-              aria-label="Other meanings"
-            >
-              <Layers className="h-4 w-4 text-foreground" />
-              <span className="text-[10px] font-semibold leading-none text-foreground">{meanings.length}</span>
-            </button>
-          )}
+      {!card.isMatched && hasMultiple && (
+        <div className="absolute -top-1 -right-1 z-20">
+          <button
+            onClick={e => {
+              e.stopPropagation();
+              setAnchor(cardRef.current?.getBoundingClientRect() ?? null);
+            }}
+            className="flex items-center gap-0.5 rounded-full bg-background/85 px-1.5 py-1 shadow-md ring-1 ring-foreground/20 backdrop-blur-sm transition-all hover:scale-110 hover:bg-background"
+            title={`${meanings.length} meanings — pick which ones to show`}
+            aria-label="Other meanings"
+          >
+            <Layers className="h-4 w-4 text-foreground" />
+            <span className="text-[10px] font-semibold leading-none text-foreground">{meanings.length}</span>
+          </button>
         </div>
+      )}
+
+      {!card.isMatched && !!card.definition && (
+        <button
+          onClick={e => {
+            e.stopPropagation();
+            setShowDefinition(value => !value);
+          }}
+          className="absolute bottom-0.5 right-0.5 z-20 flex items-center rounded-full bg-background/85 p-1 shadow-md ring-1 ring-foreground/20 backdrop-blur-sm transition-all hover:scale-110 hover:bg-background"
+          title={card.definition}
+          aria-label="Definition"
+        >
+          <Info className="h-4 w-4 text-foreground" />
+        </button>
       )}
 
       {showDefinition && !!card.definition && (
