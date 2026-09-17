@@ -25,6 +25,8 @@ interface CardProps {
   card: GameCard;
   columnIndex: number;
   showRomanization?: boolean;
+  /** Definitions belong to the MAIN/source-language card only. */
+  showDefinitionAction?: boolean;
   fontSize?: FontSize;
   /** hint mode: blink this card without selecting or matching it */
   isHinted?: boolean;
@@ -102,6 +104,7 @@ export const Card: React.FC<CardProps> = ({
   card,
   columnIndex,
   showRomanization = true,
+  showDefinitionAction = false,
   fontSize = 'medium',
   isHinted = false,
   isBusy = false,
@@ -263,7 +266,7 @@ export const Card: React.FC<CardProps> = ({
         </div>
       )}
 
-      {!card.isMatched && !!card.definition && (
+      {showDefinitionAction && !card.isMatched && !!card.definition && (
         <button
           onClick={e => {
             e.stopPropagation();
@@ -277,7 +280,7 @@ export const Card: React.FC<CardProps> = ({
         </button>
       )}
 
-      {showDefinition && !!card.definition && (
+      {showDefinitionAction && showDefinition && !!card.definition && (
         <div
           onClick={e => {
             e.stopPropagation();
