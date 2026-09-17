@@ -37,8 +37,28 @@ interface DatasetDef {
   assets: Record<string, string>;
 }
 
+/** Definition-anchored English dictionary: one row = one exact meaning */
+export const ENDICT_LIBRARY_NAME = 'English Dictionary A1–C1';
+
+const ENDICT_LANGS = ['en', 'ar', 'zh', 'ru', 'tk', 'kk', 'bg', 'id', 'ms', 'ur', 'de', 'fr', 'fa'];
+
 /** Order here is the order shown in the vocabulary picker */
 const DATASETS: DatasetDef[] = [
+  {
+    name: ENDICT_LIBRARY_NAME,
+    levels: ['A1', 'A2', 'B1', 'B2', 'C1'],
+    langs: ENDICT_LANGS,
+    defaultMain: 'en',
+    groupSenses: false,
+    splitSynonyms: true,
+    assets: {
+      A1: '/__l5e/assets-v1/f490d132-43a8-4ad6-adc0-f2254ed2ae97/endict-a1.json',
+      A2: '/__l5e/assets-v1/f488b04c-912a-4c69-a80f-e2688f217a4c/endict-a2.json',
+      B1: '/__l5e/assets-v1/63ccab59-b520-4eaf-ad76-7ce6054d6e69/endict-b1.json',
+      B2: '/__l5e/assets-v1/43b9ec5f-c17c-4636-8f81-789aecb32eca/endict-b2.json',
+      C1: '/__l5e/assets-v1/503d7098-efbc-4761-a39d-45df1f358c07/endict-c1.json',
+    },
+  },
   {
     name: HSK_V8_LIBRARY_NAME,
     levels: [...HSK_LEVELS],
