@@ -29,7 +29,7 @@ import {
 
 } from '@/utils/gameLogic';
 import { getMeaningSelection } from '@/utils/meanings';
-import { HSK_LIBRARY_FILES, libraryLangsFor, libraryDefaultMain, libraryGroupsSenses, isHskLibraryFile, hskLevelOf, loadHskLevel } from '@/data/hskLibrary';
+import { HSK_LIBRARY_FILES, libraryLangsFor, libraryLevelsFor, libraryDefaultMain, libraryGroupsSenses, isHskLibraryFile, hskLevelOf, loadHskLevel } from '@/data/hskLibrary';
 
 import {
   saveProgress,
@@ -49,7 +49,7 @@ import {
   FontSize,
 } from '@/utils/storage';
 import { getLanguage, romanizationCodeFor, hasRomanization, equivalentLanguages } from '@/utils/languages';
-import { exportVocabularyToExcel } from '@/utils/exportExcel';
+import { exportVocabularyToExcel, exportLevelsToExcel } from '@/utils/exportExcel';
 import { translateWords, detectPartsOfSpeech } from '@/utils/translate';
 import { fetchCloudSet, saveCloudSet, deleteCloudSet, filledCount } from '@/utils/cloudVocabulary';
 import { useAudio } from '@/hooks/useAudio';
@@ -1574,12 +1574,56 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     });
   };
 
-  const handleExportExcel = () => {
-    exportVocabularyToExcel(vocabulary, columns, mainLang, selectedFile || 'vocabulary');
-    toast({
-      title: 'Excel exported',
-      description: `${vocabulary.length} words with all ${columns.length} language columns.`,
-    });
+  const handleExportExcel = async () => {
+    const family = (selectedFile ?? '').replace(/\.(xlsx|xls)$/i, '').split(' · ')[0];
+    const isLibrary = selectedFile ? isHskLibraryFile(selectedFile) : false;
+    // Sibling levels of the same workbook — built-in datasets ship every level,
+    // uploads persist each level sheet as its own saved set.
+    const siblingSources = isLibrary && selectedFile
+      ? libraryLevelsFor(selectedFile).map(level => `${family} · ${level}.xlsx`)
+      : listLocalSources().filter(source => source.startsWith(`${family} · `));
+
+    if (siblingSources.length <= 1) {
+      exportVocabularyToExcel(vocabulary, columns, mainLang, selectedFile || 'vocabulary');
+      toast({
+        title: 'Excel exported',
+        description: `${vocabulary.length} words with all ${columns.length} language columns.`,
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const levels: { name: string; items: VocabularyItem[] }[] = [];
+      for (const source of siblingSources) {
+        const level = source.replace(/\.(xlsx|xls)$/i, '').split(' · ')[1] || source;
+        const saved = loadVocabularySet(source);
+        if (saved && saved.items.length > 0) {
+          levels.push({ name: level, items: saved.items });
+          continue;
+        }
+        // Never-opened built-in level: fetch its data pack fresh.
+        if (isLibrary) {
+          const sheet = await loadHskLevel(level, mainLang, source);
+          const mapping = Object.fromEntries(sheet.headers.map(h => [h, sheet.detected[h] || 'ignore']));
+          levels.push({ name: level, items: buildVocabulary(sheet, mapping, sheet.mainLang || mainLang) });
+        }
+      }
+      if (levels.length === 0) throw new Error('No level data available offline');
+      exportLevelsToExcel(levels, columns, mainLang, family);
+      toast({
+        title: 'Workbook exported',
+        description: `${levels.length} level sheets · ${levels.reduce((sum, l) => sum + l.items.length, 0)} words.`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Could not export workbook',
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
 
