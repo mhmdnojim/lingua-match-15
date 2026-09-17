@@ -212,6 +212,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   card={card}
                   columnIndex={column.colorIndex ?? originalIndex}
                   showRomanization={column.showRomanization}
+                  showDefinitionAction={originalIndex === 0}
                   fontSize={column.fontSize ?? fontSize}
                   isHinted={hintedIds.includes(card.id)}
                   isBusy={regeneratingIds.includes(card.id)}
@@ -256,9 +257,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     disabled={regeneratingIds.includes(card.id)}
                     className={cn(
                       'absolute -right-2 -bottom-2 grid h-7 w-7 place-items-center rounded-full bg-primary text-primary-foreground ring-2 ring-background shadow-lg transition-all hover:scale-110 z-20',
-                      regeneratingIds.includes(card.id)
-                        ? 'opacity-100'
-                        : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
+                      regeneratingIds.includes(card.id) && 'opacity-100',
                     )}
                     title="Regenerate translation"
                   >
