@@ -4,22 +4,15 @@ import { ColumnConfig } from './gameLogic';
 import { getLanguage, romanizationCodeFor } from './languages';
 
 /**
- * Export the full vocabulary list (all batches, including AI-generated columns)
- * to an .xlsx file the user downloads.
+ * Every language stored on the words — including romanization / Latin
+ * pseudo-columns and languages that are currently hidden — in column order:
+ * MAIN first, then the rest as configured.
  */
-export const exportVocabularyToExcel = (
-  items: VocabularyItem[],
-  columns: ColumnConfig[],
-  mainLang: string,
-  source = 'vocabulary',
-) => {
+const collectLangs = (items: VocabularyItem[], columns: ColumnConfig[], mainLang: string) => {
   const ordered = [
     ...columns.filter(c => c.lang === mainLang),
     ...columns.filter(c => c.lang !== mainLang),
   ];
-
-  // Keep every language stored on the words — including romanization / Latin
-  // pseudo-columns and languages that are currently hidden.
   const langs: string[] = [];
   const push = (code: string) => {
     if (code && !langs.includes(code)) langs.push(code);
@@ -30,8 +23,12 @@ export const exportVocabularyToExcel = (
     if (rom && items.some(i => (i.values?.[rom] || '').trim())) push(rom);
   });
   items.forEach(item => Object.keys(item.values || {}).forEach(push));
+  return langs;
+};
 
-  // Sense ID stays the identity of a line; the source Word ID is provenance only.
+/** One level sheet: Sense ID identity, source provenance, then one column per language. */
+const buildLevelSheet = (items: VocabularyItem[], columns: ColumnConfig[], mainLang: string) => {
+  const langs = collectLangs(items, columns, mainLang);
   const headers = [
     'Sense ID',
     'Source Word ID',
@@ -45,14 +42,41 @@ export const exportVocabularyToExcel = (
     ...langs.map(code => item.values?.[code] ?? ''),
   ]);
 
-
   const sheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
   sheet['!cols'] = headers.map(() => ({ wch: 24 }));
+  return sheet;
+};
 
-
+/**
+ * Export the full vocabulary list (all batches, including AI-generated columns)
+ * to an .xlsx file the user downloads — one "Vocabulary" sheet.
+ */
+export const exportVocabularyToExcel = (
+  items: VocabularyItem[],
+  columns: ColumnConfig[],
+  mainLang: string,
+  source = 'vocabulary',
+) => {
   const book = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(book, sheet, 'Vocabulary');
+  XLSX.utils.book_append_sheet(book, buildLevelSheet(items, columns, mainLang), 'Vocabulary');
 
   const base = source.replace(/\.(xlsx|xls)$/i, '') || 'vocabulary';
   XLSX.writeFile(book, `${base}-translated.xlsx`);
+};
+
+/**
+ * Export a whole workbook family — one sheet per level (HSK1…HSK6 / A1…C1),
+ * matching the original files' structure.
+ */
+export const exportLevelsToExcel = (
+  levels: { name: string; items: VocabularyItem[] }[],
+  columns: ColumnConfig[],
+  mainLang: string,
+  base: string,
+) => {
+  const book = XLSX.utils.book_new();
+  levels.forEach(({ name, items }) => {
+    XLSX.utils.book_append_sheet(book, buildLevelSheet(items, columns, mainLang), name.slice(0, 31) || 'Vocabulary');
+  });
+  XLSX.writeFile(book, `${base}-all-levels.xlsx`);
 };
