@@ -22,10 +22,6 @@ interface FileSelectorProps {
   onDeleteFile?: (fileName: string) => void;
   onExportFile?: () => void;
   onExploreFile?: () => void;
-  /** MAIN-language picker (built-in library only) */
-  mainLang?: string;
-  mainLangOptions?: { code: string; label: string }[];
-  onMainLangChange?: (lang: string) => void;
   className?: string;
 }
 
@@ -38,9 +34,6 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
   onDeleteFile,
   onExportFile,
   onExploreFile,
-  mainLang,
-  mainLangOptions,
-  onMainLangChange,
   className,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -85,7 +78,7 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
   };
 
   return (
-    <div className={cn('flex flex-wrap items-center gap-3', className)}>
+    <div className={cn('flex shrink-0 flex-nowrap items-center gap-3', className)}>
       <div className="relative">
         <FileSpreadsheet className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
         <select
@@ -128,32 +121,6 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
           <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
         </div>
       )}
-
-      {mainLangOptions && mainLangOptions.length > 0 && onMainLangChange && (
-        <div className="relative">
-          <span className="absolute -top-2 left-2 px-1 bg-background text-[10px] font-bold tracking-wider text-primary">
-            MAIN
-          </span>
-          <select
-            value={mainLang || ''}
-            onChange={(e) => onMainLangChange(e.target.value)}
-            aria-label="Main language"
-            className={cn(
-              'appearance-none bg-secondary border border-primary/60 rounded-lg pl-3 pr-8 py-2',
-              'text-foreground focus:outline-none focus:ring-2 focus:ring-warning',
-              'cursor-pointer text-sm min-w-[150px]',
-            )}
-          >
-            {mainLangOptions.map((option) => (
-              <option key={option.code} value={option.code}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-        </div>
-      )}
-
 
       <button
         onClick={handleUploadClick}
