@@ -209,11 +209,18 @@ async function fetchPack(level: string, source?: string): Promise<Pack> {
   if (!url) throw new Error(`Unknown level "${level}" for ${dataset.name}`);
   const response = await fetch(url);
   if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
-  const contentType = response.headers.get('content-type') ?? '';
-  if (!contentType.includes('json')) {
-    throw new Error(`Unexpected content-type "${contentType}" for ${dataset.name} ${level}`);
+  // Some hosts serve the CDN packs with a generic content-type; trust the body
+  // instead of the header and only fail when it really isn't JSON.
+  const text = await response.text();
+  let pack: Pack;
+  try {
+    pack = JSON.parse(text) as Pack;
+  } catch {
+    throw new Error(`Could not read the data pack for ${dataset.name} ${level}`);
   }
-  const pack = (await response.json()) as Pack;
+  if (!pack || !Array.isArray(pack.rows)) {
+    throw new Error(`Empty data pack for ${dataset.name} ${level}`);
+  }
   cache.set(key, pack);
   return pack;
 }
