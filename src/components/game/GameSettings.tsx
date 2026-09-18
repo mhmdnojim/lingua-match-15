@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered, SlidersHorizontal, ChevronUp, ChevronDown, Columns3, Palette, List, Search } from 'lucide-react';
+import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered, SlidersHorizontal, ChevronUp, ChevronDown, Columns3, Palette, Search } from 'lucide-react';
 import { ColumnConfig } from '@/utils/gameLogic';
 import { getLanguage, columnStyle, COLUMN_COLOR_COUNT } from '@/utils/languages';
 import { THEMES, nextThemeId, getTheme } from '@/utils/themes';
@@ -22,7 +22,6 @@ interface GameSettingsProps {
   onColumnFontSizeChange?: (lang: string, size: FontSize) => void;
   onOpenLanguages: () => void;
   onOpenWordEditor: () => void;
-  onOpenVocabularyList?: () => void;
   onOpenWordSearch?: () => void;
   muteSfx?: boolean;
   voiceType?: VoiceType;
@@ -67,7 +66,6 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   onColumnFontSizeChange,
   onOpenLanguages,
   onOpenWordEditor,
-  onOpenVocabularyList,
   onOpenWordSearch,
   muteSfx = false,
   voiceType = 'free',
@@ -143,23 +141,6 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         {shuffleMode ? <Shuffle className="w-4 h-4 shrink-0" /> : <ListOrdered className="w-4 h-4 shrink-0" />}
         <span className="hidden sm:inline text-center w-[3.75rem]">{shuffleMode ? 'Shuffle' : 'Order'}</span>
       </button>
-
-      {/* Vocabs */}
-      {onOpenVocabularyList && (
-        <button
-          onClick={onOpenVocabularyList}
-          disabled={disabled}
-          className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
-            'bg-secondary border-border text-muted-foreground hover:text-foreground',
-            disabled && 'opacity-50 cursor-not-allowed',
-          )}
-          title="Explore every sheet, word, definition, and translation"
-        >
-          <List className="w-4 h-4 shrink-0" />
-          <span className="hidden sm:inline">Explore</span>
-        </button>
-      )}
 
       {/* Search across all levels */}
       {onOpenWordSearch && (

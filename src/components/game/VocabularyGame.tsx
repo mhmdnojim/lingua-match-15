@@ -1786,7 +1786,6 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onColumnFontSizeChange={handleColumnFontSizeChange}
           onOpenLanguages={() => setLanguagesOpen(true)}
           onOpenWordEditor={() => setWordEditorOpen(true)}
-          onOpenVocabularyList={() => setVocabularyListOpen(true)}
           onOpenWordSearch={selectedFile && isHskLibraryFile(selectedFile) ? () => setWordSearchOpen(true) : undefined}
           muteSfx={muteSfx}
           voiceType={voiceType}
