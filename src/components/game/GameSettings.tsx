@@ -66,7 +66,6 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   onColumnFontSizeChange,
   onOpenLanguages,
   onOpenWordEditor,
-  onOpenVocabularyList,
   onOpenWordSearch,
   muteSfx = false,
   voiceType = 'free',
@@ -142,23 +141,6 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         {shuffleMode ? <Shuffle className="w-4 h-4 shrink-0" /> : <ListOrdered className="w-4 h-4 shrink-0" />}
         <span className="hidden sm:inline text-center w-[3.75rem]">{shuffleMode ? 'Shuffle' : 'Order'}</span>
       </button>
-
-      {/* Vocabs */}
-      {onOpenVocabularyList && (
-        <button
-          onClick={onOpenVocabularyList}
-          disabled={disabled}
-          className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
-            'bg-secondary border-border text-muted-foreground hover:text-foreground',
-            disabled && 'opacity-50 cursor-not-allowed',
-          )}
-          title="Explore every sheet, word, definition, and translation"
-        >
-          <List className="w-4 h-4 shrink-0" />
-          <span className="hidden sm:inline">Explore</span>
-        </button>
-      )}
 
       {/* Search across all levels */}
       {onOpenWordSearch && (
