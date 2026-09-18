@@ -42,7 +42,7 @@ export const ENDICT_LIBRARY_NAME = 'English Dictionary A1–C1';
 
 const ENDICT_LANGS = ['en', 'ar', 'zh', 'ru', 'tk', 'kk', 'bg', 'id', 'ms', 'ur', 'de', 'fr', 'fa'];
 
-/** New HSK 3.0 multilingual workbook: 5,400 headwords, HSK1–HSK6, 12 languages */
+/** New HSK 3.0 multilingual workbook: 6,183 part-specific senses, HSK1–HSK6, 12 languages */
 export const NHSK_LIBRARY_NAME = 'New HSK 1–6 (Multilingual)';
 
 const NHSK_LANGS = ['zh', 'en', 'ar', 'ru', 'tk', 'ur', 'de', 'fr', 'id', 'kk', 'fa', 'vi'];
@@ -57,12 +57,12 @@ const DATASETS: DatasetDef[] = [
     groupSenses: false,
     splitSynonyms: true,
     assets: {
-      HSK1: '/__l5e/assets-v1/2a788fdd-92b0-4e2c-8309-a506f518c228/nhsk-HSK1.json',
-      HSK2: '/__l5e/assets-v1/38d7c978-01e7-4bd3-b96c-d5881c1f6421/nhsk-HSK2.json',
-      HSK3: '/__l5e/assets-v1/fd3c78f6-1c54-4208-becc-15ea99ddfd86/nhsk-HSK3.json',
-      HSK4: '/__l5e/assets-v1/6dec151e-5bb7-44c1-abaa-48f38d810534/nhsk-HSK4.json',
-      HSK5: '/__l5e/assets-v1/813b34c6-38cf-44f1-9c7a-ed5bb094e985/nhsk-HSK5.json',
-      HSK6: '/__l5e/assets-v1/be233595-82ae-44b6-9e6d-a6f5ae0c2c34/nhsk-HSK6.json',
+      HSK1: '/__l5e/assets-v1/6decc229-c604-4333-bf49-f74103e250bb/nhsk-HSK1.json',
+      HSK2: '/__l5e/assets-v1/6e927dec-5663-4e0e-a353-16cc8a10ca81/nhsk-HSK2.json',
+      HSK3: '/__l5e/assets-v1/be9d25f8-9e9c-4e35-a09b-5ad54cf0146f/nhsk-HSK3.json',
+      HSK4: '/__l5e/assets-v1/f6ae236f-8dcc-4a6f-b690-841af1a58f70/nhsk-HSK4.json',
+      HSK5: '/__l5e/assets-v1/e1a06c9f-6cfe-4ac9-af95-3a852bb76d52/nhsk-HSK5.json',
+      HSK6: '/__l5e/assets-v1/664d0ea3-3268-470c-9e93-e6f270ebfc03/nhsk-HSK6.json',
     },
   },
   {
