@@ -5,18 +5,7 @@ import Card, { FontSize } from './Card';
 import { GameCard, ColumnConfig } from '@/utils/gameLogic';
 import { Select, SelectContent, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getLanguage, columnStyle, MAIN_LANGUAGES, PICKABLE_LANGUAGES, romanizationCodeFor } from '@/utils/languages';
-import { HelpCircle, RefreshCw, Pencil, Check } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-
+import { HelpCircle, Check } from 'lucide-react';
 
 interface GameBoardProps {
   columns: ColumnConfig[];
@@ -30,9 +19,6 @@ interface GameBoardProps {
   onCardClick: (card: GameCard) => void;
   onSpeak: (card: GameCard) => void;
   onHint: (card: GameCard) => void;
-  onRegenerateCard?: (card: GameCard) => void;
-  /** save a manual edit of one card; editing the main column retranslates the row */
-  onEditCard?: (card: GameCard, value: string) => void;
   /** change the language of a column straight from its title */
   onColumnLangChange?: (index: number, lang: string) => void;
   regeneratingIds?: string[];
@@ -50,31 +36,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   onCardClick,
   onSpeak,
   onHint,
-  onRegenerateCard,
-  onEditCard,
   onColumnLangChange,
   regeneratingIds = [],
   hintedIds = [],
 }) => {
 
-  const [editingId, setEditingId] = React.useState<string | null>(null);
-  const [editingCard, setEditingCard] = React.useState<GameCard | null>(null);
-  const [draft, setDraft] = React.useState('');
-
-  const startEdit = (card: GameCard) => {
-    setEditingId(card.id);
-    setEditingCard(card);
-    setDraft(card.content);
-  };
-  const closeEdit = () => {
-    setEditingId(null);
-    setEditingCard(null);
-  };
-  const commitEdit = (card: GameCard) => {
-    const value = draft.trim();
-    closeEdit();
-    if (value && value !== card.content) onEditCard?.(card, value);
-  };
   // A column the user turned on always stays on the board — even while its words
   // are still empty (it shows placeholders instead of vanishing).
   const visibleColumns = columns.filter(c => c.visible);
@@ -83,7 +49,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
 
   return (
-    <>
     <div
       className={cn(
         'grid gap-x-2 gap-y-1.5 md:gap-x-4 md:gap-y-2',
@@ -204,9 +169,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   className="h-[56px] sm:h-[72px] md:h-[84px] rounded-xl border border-border bg-muted/30 animate-pulse"
                 />
               ))}
-            {columnCards.map(card => {
-              const isEditing = editingId === card.id;
-              return (
+            {columnCards.map(card => (
               <div key={card.id} className="relative group">
                 <Card
                   card={card}
@@ -220,102 +183,24 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   onSpeak={column.muted ? undefined : onSpeak}
                 />
 
-                {!card.isMatched && !isEditing && (
+                {!card.isMatched && (
                   <button
                     onClick={e => {
                       e.stopPropagation();
                       onHint(card);
                     }}
-                    className="absolute -left-2 -bottom-2 grid h-7 w-7 place-items-center rounded-full bg-warning text-warning-foreground ring-2 ring-background shadow-lg opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-all hover:scale-110 z-20"
+                    className="absolute -left-2 -top-2 grid h-7 w-7 place-items-center rounded-full bg-warning text-warning-foreground ring-2 ring-background shadow-lg opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-all hover:scale-110 z-20"
                     title="Get hint (-5 points)"
                   >
                     <HelpCircle className="w-4 h-4" />
                   </button>
                 )}
-                {onEditCard && !card.isMatched && !isEditing && (
-                  <button
-                    onClick={e => {
-                      e.stopPropagation();
-                      startEdit(card);
-                    }}
-                    className="absolute -left-2 -top-2 grid h-7 w-7 place-items-center rounded-full bg-secondary text-secondary-foreground ring-2 ring-background shadow-lg opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-all hover:scale-110 z-20"
-                    title={
-                      originalIndex === 0
-                        ? 'Edit word (retranslates the other columns)'
-                        : 'Edit translation'
-                    }
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                )}
-                {onRegenerateCard && originalIndex !== 0 && !card.isMatched && (
-                  <button
-                    onClick={e => {
-                      e.stopPropagation();
-                      onRegenerateCard(card);
-                    }}
-                    disabled={regeneratingIds.includes(card.id)}
-                    className={cn(
-                      'absolute -right-2 -bottom-2 grid h-7 w-7 place-items-center rounded-full bg-primary text-primary-foreground ring-2 ring-background shadow-lg transition-all hover:scale-110 z-20',
-                      regeneratingIds.includes(card.id) && 'opacity-100',
-                    )}
-                    title="Regenerate translation"
-                  >
-                    <RefreshCw className={cn('w-4 h-4', regeneratingIds.includes(card.id) && 'animate-spin')} />
-                  </button>
-                )}
-
               </div>
-              );
-            })}
+            ))}
           </div>
         );
       })}
     </div>
-
-    <Dialog open={!!editingCard} onOpenChange={open => !open && closeEdit()}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>
-            {editingCard ? getLanguage(editingCard.lang).name : ''} — edit word
-          </DialogTitle>
-          <DialogDescription>
-            {editingCard && columns.findIndex(c => c.lang === editingCard.lang) === 0
-              ? 'Editing the main word retranslates the other columns.'
-              : 'Fix or rewrite this translation manually.'}
-          </DialogDescription>
-        </DialogHeader>
-        {editingCard && (
-          <>
-            <Textarea
-              autoFocus
-              value={draft}
-              onChange={e => setDraft(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) commitEdit(editingCard);
-                if (e.key === 'Escape') closeEdit();
-              }}
-              dir={getLanguage(editingCard.lang).rtl ? 'rtl' : 'ltr'}
-              rows={4}
-              className={cn(
-                'min-h-[120px] text-xl leading-relaxed',
-                getLanguage(editingCard.lang).fontClass,
-              )}
-              aria-label="Edit word"
-            />
-            <DialogFooter>
-              <Button variant="ghost" onClick={() => closeEdit()}>
-                Cancel
-              </Button>
-              <Button onClick={() => commitEdit(editingCard)}>
-                <Check className="mr-1 h-4 w-4" /> Save
-              </Button>
-            </DialogFooter>
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
-    </>
   );
 
 };
