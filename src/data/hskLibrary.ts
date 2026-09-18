@@ -57,12 +57,12 @@ const DATASETS: DatasetDef[] = [
     groupSenses: false,
     splitSynonyms: true,
     assets: {
-      HSK1: '/__l5e/assets-v1/6decc229-c604-4333-bf49-f74103e250bb/nhsk-HSK1.json',
-      HSK2: '/__l5e/assets-v1/6e927dec-5663-4e0e-a353-16cc8a10ca81/nhsk-HSK2.json',
-      HSK3: '/__l5e/assets-v1/be9d25f8-9e9c-4e35-a09b-5ad54cf0146f/nhsk-HSK3.json',
-      HSK4: '/__l5e/assets-v1/f6ae236f-8dcc-4a6f-b690-841af1a58f70/nhsk-HSK4.json',
-      HSK5: '/__l5e/assets-v1/e1a06c9f-6cfe-4ac9-af95-3a852bb76d52/nhsk-HSK5.json',
-      HSK6: '/__l5e/assets-v1/664d0ea3-3268-470c-9e93-e6f270ebfc03/nhsk-HSK6.json',
+      HSK1: '/__l5e/assets-v1/df667a7d-2c9c-430e-b558-82d620554df4/nhsk-HSK1.json',
+      HSK2: '/__l5e/assets-v1/5a385105-bac0-4043-8293-16104e09fedf/nhsk-HSK2.json',
+      HSK3: '/__l5e/assets-v1/b3bdfb92-7d2f-49fc-8258-287f4364ff37/nhsk-HSK3.json',
+      HSK4: '/__l5e/assets-v1/a030bc4a-6045-4b7b-bf31-bb796ad7a9e5/nhsk-HSK4.json',
+      HSK5: '/__l5e/assets-v1/7e06e4d2-f5b8-4911-b99c-a3599f9520bb/nhsk-HSK5.json',
+      HSK6: '/__l5e/assets-v1/1061a40a-f992-4811-9dfd-7a8c0f2bd189/nhsk-HSK6.json',
     },
   },
   {
