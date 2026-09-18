@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered, SlidersHorizontal, ChevronUp, ChevronDown, Columns3, Palette, List, Search } from 'lucide-react';
+import { Eye, EyeOff, Volume2, VolumeX, Music, Music2, Mic, Crown, Type, Shuffle, ListOrdered, SlidersHorizontal, ChevronUp, ChevronDown, Columns3, Palette, Search } from 'lucide-react';
 import { ColumnConfig } from '@/utils/gameLogic';
 import { getLanguage, columnStyle, COLUMN_COLOR_COUNT } from '@/utils/languages';
 import { THEMES, nextThemeId, getTheme } from '@/utils/themes';
@@ -22,7 +22,6 @@ interface GameSettingsProps {
   onColumnFontSizeChange?: (lang: string, size: FontSize) => void;
   onOpenLanguages: () => void;
   onOpenWordEditor: () => void;
-  onOpenVocabularyList?: () => void;
   onOpenWordSearch?: () => void;
   muteSfx?: boolean;
   voiceType?: VoiceType;
