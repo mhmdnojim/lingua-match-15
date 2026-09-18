@@ -1566,6 +1566,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     setIsLoading(true);
     try {
       const levels: { name: string; items: VocabularyItem[] }[] = [];
+      const skipped: string[] = [];
       for (const source of siblingSources) {
         const level = source.replace(/\.(xlsx|xls)$/i, '').split(' · ')[1] || source;
         const saved = loadVocabularySet(source);
@@ -1573,18 +1574,25 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           levels.push({ name: level, items: saved.items });
           continue;
         }
-        // Never-opened built-in level: fetch its data pack fresh.
+        // Never-opened built-in level: fetch its data pack fresh. One level
+        // failing must not lose the whole export.
         if (isLibrary) {
-          const sheet = await loadHskLevel(level, mainLang, source);
-          const mapping = Object.fromEntries(sheet.headers.map(h => [h, sheet.detected[h] || 'ignore']));
-          levels.push({ name: level, items: buildVocabulary(sheet, mapping, sheet.mainLang || mainLang) });
+          try {
+            const sheet = await loadHskLevel(level, mainLang, source);
+            const mapping = Object.fromEntries(sheet.headers.map(h => [h, sheet.detected[h] || 'ignore']));
+            levels.push({ name: level, items: buildVocabulary(sheet, mapping, sheet.mainLang || mainLang) });
+          } catch {
+            skipped.push(level);
+          }
         }
       }
       if (levels.length === 0) throw new Error('No level data available offline');
       exportLevelsToExcel(levels, columns, mainLang, family);
       toast({
         title: 'Workbook exported',
-        description: `${levels.length} level sheets · ${levels.reduce((sum, l) => sum + l.items.length, 0)} words.`,
+        description:
+          `${levels.length} level sheets · ${levels.reduce((sum, l) => sum + l.items.length, 0)} words.` +
+          (skipped.length ? ` Could not load: ${skipped.join(', ')}.` : ''),
       });
     } catch (error) {
       toast({
