@@ -50,6 +50,8 @@ interface GameSettingsProps {
   /** Selected color theme id */
   themeId?: string;
   onThemeChange?: (id: string) => void;
+  /** Regenerate AI translations for every word in the current round */
+  onRegenerateRound?: () => void;
 }
 
 
@@ -66,6 +68,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
   onColumnFontSizeChange,
   onOpenLanguages,
   onOpenWordEditor,
+  onRegenerateRound,
   onOpenWordSearch,
   muteSfx = false,
   voiceType = 'free',
@@ -156,6 +159,40 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
         >
           <Search className="w-4 h-4 shrink-0" />
           <span className="hidden sm:inline">Search</span>
+        </button>
+      )}
+
+      {/* Edit words & translations (moved off the cards) */}
+      {onOpenWordEditor && (
+        <button
+          onClick={onOpenWordEditor}
+          disabled={disabled}
+          className={cn(
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
+            'bg-secondary border-border text-muted-foreground hover:text-foreground',
+            disabled && 'opacity-50 cursor-not-allowed',
+          )}
+          title="Edit words and translations"
+        >
+          <Pencil className="w-4 h-4 shrink-0" />
+          <span className="hidden sm:inline">Edit</span>
+        </button>
+      )}
+
+      {/* Regenerate translations for the current round (moved off the cards) */}
+      {onRegenerateRound && (
+        <button
+          onClick={onRegenerateRound}
+          disabled={disabled || translating}
+          className={cn(
+            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
+            'bg-secondary border-border text-muted-foreground hover:text-foreground',
+            (disabled || translating) && 'opacity-50 cursor-not-allowed',
+          )}
+          title="Regenerate translations for this round"
+        >
+          <RefreshCw className={cn('w-4 h-4 shrink-0', translating && 'animate-spin')} />
+          <span className="hidden sm:inline">Regenerate</span>
         </button>
       )}
 
