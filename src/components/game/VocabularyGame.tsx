@@ -1786,13 +1786,6 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               onDeleteFile={selectedFile && isHskLibraryFile(selectedFile) ? undefined : handleDeleteFile}
               onExportFile={handleExportExcel}
               onExploreFile={() => setVocabularyListOpen(true)}
-              mainLang={mainLang}
-              mainLangOptions={
-                selectedFile && isHskLibraryFile(selectedFile)
-                  ? libraryLangsFor(selectedFile).map(code => ({ code, label: getLanguage(code).name }))
-                  : undefined
-              }
-              onMainLangChange={handleLibraryMainLang}
             />
           }
         />
