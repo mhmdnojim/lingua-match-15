@@ -52,11 +52,11 @@ const DATASETS: DatasetDef[] = [
     groupSenses: false,
     splitSynonyms: true,
     assets: {
-      A1: '/__l5e/assets-v1/0eb402b4-2871-417e-880f-9eb4f4aeb2e6/endict-A1.json',
-      A2: '/__l5e/assets-v1/6bde35cc-70c7-4b83-9807-01cff2573f79/endict-A2.json',
-      B1: '/__l5e/assets-v1/7fdf9b9d-8919-4c0e-b4cf-aa4576daa0a1/endict-B1.json',
-      B2: '/__l5e/assets-v1/88b48871-bc96-471e-ae0c-a4eac47df91c/endict-B2.json',
-      C1: '/__l5e/assets-v1/7f4e955b-fc87-46da-99ca-ce42af3cd149/endict-C1.json',
+      A1: '/__l5e/assets-v1/d78e0b3a-9fe8-4d06-a482-3713355db84f/endict-A1.json',
+      A2: '/__l5e/assets-v1/adb2590c-53f9-43dc-9246-120a16f27b9d/endict-A2.json',
+      B1: '/__l5e/assets-v1/029cacfb-df92-4bc8-9f11-48b664f310ed/endict-B1.json',
+      B2: '/__l5e/assets-v1/373c077e-3d17-409f-b46b-e46351e5e807/endict-B2.json',
+      C1: '/__l5e/assets-v1/c8f66430-6968-4851-af8c-c032d2274bd9/endict-C1.json',
     },
 
   },
