@@ -42,8 +42,29 @@ export const ENDICT_LIBRARY_NAME = 'English Dictionary A1–C1';
 
 const ENDICT_LANGS = ['en', 'ar', 'zh', 'ru', 'tk', 'kk', 'bg', 'id', 'ms', 'ur', 'de', 'fr', 'fa'];
 
+/** New HSK 3.0 multilingual workbook: 5,400 headwords, HSK1–HSK6, 12 languages */
+export const NHSK_LIBRARY_NAME = 'New HSK 1–6 (Multilingual)';
+
+const NHSK_LANGS = ['zh', 'en', 'ar', 'ru', 'tk', 'ur', 'de', 'fr', 'id', 'kk', 'fa', 'vi'];
+
 /** Order here is the order shown in the vocabulary picker */
 const DATASETS: DatasetDef[] = [
+  {
+    name: NHSK_LIBRARY_NAME,
+    levels: [...HSK_LEVELS],
+    langs: NHSK_LANGS,
+    defaultMain: 'zh',
+    groupSenses: false,
+    splitSynonyms: true,
+    assets: {
+      HSK1: '/__l5e/assets-v1/2a788fdd-92b0-4e2c-8309-a506f518c228/nhsk-HSK1.json',
+      HSK2: '/__l5e/assets-v1/38d7c978-01e7-4bd3-b96c-d5881c1f6421/nhsk-HSK2.json',
+      HSK3: '/__l5e/assets-v1/fd3c78f6-1c54-4208-becc-15ea99ddfd86/nhsk-HSK3.json',
+      HSK4: '/__l5e/assets-v1/6dec151e-5bb7-44c1-abaa-48f38d810534/nhsk-HSK4.json',
+      HSK5: '/__l5e/assets-v1/813b34c6-38cf-44f1-9c7a-ed5bb094e985/nhsk-HSK5.json',
+      HSK6: '/__l5e/assets-v1/be233595-82ae-44b6-9e6d-a6f5ae0c2c34/nhsk-HSK6.json',
+    },
+  },
   {
     name: ENDICT_LIBRARY_NAME,
     levels: ['A1', 'A2', 'B1', 'B2', 'C1'],
