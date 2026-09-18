@@ -1469,45 +1469,6 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     });
   };
 
-  const [regeneratingCards, setRegeneratingCards] = useState<string[]>([]);
-
-  const handleRegenerateCard = async (card: GameCard) => {
-    setRegeneratingCards(prev => [...prev, card.id]);
-    try {
-      await handleRegenerateOne(card.vocabId, card.lang);
-    } finally {
-      setRegeneratingCards(prev => prev.filter(id => id !== card.id));
-    }
-  };
-
-  /** Inline edit from a board card. Editing the main word retranslates its row. */
-  const handleCardEdit = async (card: GameCard, value: string) => {
-    const item = vocabulary.find(i => i.id === card.vocabId);
-    if (!item) return;
-
-    if (card.lang !== mainLang) {
-      handleEditValue(card.vocabId, card.lang, value);
-      return;
-    }
-
-    const updated: VocabularyItem = {
-      ...item,
-      values: { [mainLang]: value },
-      edited: { [mainLang]: true },
-    };
-    setVocabulary(prev => {
-      const next = prev.map(i => (i.id === updated.id ? updated : i));
-      persistVocabulary(next, mainLang);
-      return next;
-    });
-
-    setRegeneratingCards(prev => [...prev, card.id]);
-    try {
-      await translateMissing([updated], columns, mainLang, undefined, true);
-    } finally {
-      setRegeneratingCards(prev => prev.filter(id => id !== card.id));
-    }
-  };
 
   const handleRegenerateOne = async (vocabId: string, lang: string, instruction?: string) => {
     const item = vocabulary.find(i => i.id === vocabId);
@@ -1563,6 +1524,16 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
     const column = columns.find(c => c.lang === lang);
     if (!column || currentItems.length === 0) return;
     await translateMissing(currentItems, [columns[0], column], mainLang, instruction, true);
+  };
+
+  /** Regenerate every target column for every word in the current round */
+  const handleRegenerateRound = async () => {
+    if (currentItems.length === 0 || columns.length <= 1) return;
+    await translateMissing(currentItems, columns, mainLang, undefined, true);
+    toast({
+      title: 'Round translations regenerated',
+      description: `Updated ${currentItems.length} words in this round.`,
+    });
   };
 
   const handleRegenerateAll = async (instruction?: string) => {
@@ -1786,6 +1757,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
           onColumnFontSizeChange={handleColumnFontSizeChange}
           onOpenLanguages={() => setLanguagesOpen(true)}
           onOpenWordEditor={() => setWordEditorOpen(true)}
+          onRegenerateRound={handleRegenerateRound}
           onOpenWordSearch={selectedFile && isHskLibraryFile(selectedFile) ? () => setWordSearchOpen(true) : undefined}
           muteSfx={muteSfx}
           voiceType={voiceType}
@@ -1989,10 +1961,7 @@ export const VocabularyGame: React.FC<VocabularyGameProps> = ({
               onCardClick={handleCardClick}
               onSpeak={handleSpeak}
               onHint={handleHint}
-              onRegenerateCard={handleRegenerateCard}
-              onEditCard={handleCardEdit}
               onColumnLangChange={handleColumnLangChange}
-              regeneratingIds={regeneratingCards}
               hintedIds={hintedIds}
 
             />
