@@ -432,6 +432,7 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
           {muteSfx ? <Music2 className="w-4 h-4" /> : <Music className="w-4 h-4" />}
         </button>
       )}
+          </div>
         </div>
       )}
     </div>
