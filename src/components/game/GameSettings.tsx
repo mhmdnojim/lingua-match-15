@@ -123,8 +123,14 @@ export const GameSettings: React.FC<GameSettingsProps> = ({
 
       {/* Everything else — hidden until needed */}
       {settingsOpen && (
-        <div className="flex flex-nowrap items-center justify-start gap-2 overflow-x-auto rounded-lg border border-border bg-card/60 p-2">
-      {extraControls}
+        <div className="flex flex-col gap-2 rounded-lg border border-border bg-card/60 p-2">
+          {/* Row 1 — workbook & level dropdowns with upload / export / explore */}
+          <div className="flex flex-nowrap items-center justify-start gap-2 overflow-x-auto">
+            {extraControls}
+          </div>
+
+          {/* Row 2 — the main icon row: order, search, edit, regenerate, voices */}
+          <div className="flex flex-nowrap items-center justify-start gap-2 overflow-x-auto">
 
 
 
